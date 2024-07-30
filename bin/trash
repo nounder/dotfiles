@@ -1,0 +1,3 @@
+#!/bin/sh
+
+osascript -e "tell application \"Finder\" to delete POSIX file \"${PWD}/${1}\""

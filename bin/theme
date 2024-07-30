@@ -1,0 +1,19 @@
+#!/usr/bin/env python3
+import subprocess
+
+theme_mode = "dark"
+
+theme_string = open("/Users/soji/.config/theme-mode", "r").readlines()[0].strip()
+
+if theme_string == "light":
+    theme_mode = "light"
+
+subprocess.run(
+    [
+        "killall",
+        "-s",
+        "SIGUSR1",
+        "kitty",
+        "fish",
+    ]
+)

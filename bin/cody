@@ -1,0 +1,5 @@
+#!/bin/sh
+
+export SRC_ACCESS_TOKEN=sgp_a0d7ccb4f752ea73_15e2edc58b56ad321369f2d97f2653a71c7bb7c0
+
+exec /opt/homebrew/bin/cody $@
