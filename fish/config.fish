@@ -2,7 +2,7 @@ set TERM xterm-256color
 
 set EDITOR nvim
 
-set SHELL (which fish)
+set SHELL /opt/homebrew/bin/fish
 
 set PATH \
     "$HOME/dotfiles/bin" \
@@ -58,14 +58,45 @@ alias dw="deno run --allow-read --allow-sys --allow-hrtime --allow-env --allow-n
 function fish_greeting
 end
 
+function fish_mode_prompt
+end
+
+
+function fish_mode_indicator
+    switch $fish_bind_mode
+        case default
+            set_color --bold red
+            echo N
+        case insert
+            set_color --bold green
+            echo I
+        case replace_one
+            set_color --bold green
+            echo R
+        case visual
+            set_color --bold brmagenta
+            echo V
+        case '*'
+            set_color --bold red
+            echo '?'
+    end
+    set_color normal
+end
+
+
 function fish_prompt
-    set -g __fish_git_prompt_showupstream auto
-    echo
-    set_color $fish_color_cwd
+    set_color brblack
     echo -n (prompt_pwd) (fish_git_prompt)
     set_color $fish_color_status
-    echo -n ' λ '
     set_color normal
+    echo
+    set_color --bold red
+    echo -n '$ '
+    set_color normal
+end
+
+function add_newline --on-event fish_postexec
+    echo
 end
 
 function get_theme_mode
@@ -125,5 +156,5 @@ end
 
 direnv hook fish | source
 zoxide init fish | source
-atuin init fish | source
+atuin init fish --disable-up-arrow | source
 fzf --fish | source
