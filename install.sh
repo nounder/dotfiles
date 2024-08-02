@@ -9,8 +9,8 @@ fi
 
 cd ~/.config
 
-ln -s $LN_OPTS ../dotfiles/kitty kitty
+ln -s $LN_OPTS ../dotfiles/kitty/ kitty
 
-ln -s $LN_OPTS ../dotfiles/atuin atuin
+ln -s $LN_OPTS ../dotfiles/atuin/ atuin
 
-ln -s $LN_OPTS ../dotfiles/fish fish
+ln -s $LN_OPTS ../dotfiles/fish/ fish
