@@ -1,3 +1,0 @@
-#!/bin/sh
-
-exec ai -m claude:claude-3-5-sonnet-20240620 $@
