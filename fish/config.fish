@@ -1,23 +1,22 @@
 set TERM xterm-256color
 
-set EDITOR nvim
-
-set SHELL /opt/homebrew/bin/fish
-
 set PATH \
     "$HOME/dotfiles/bin" \
+    "$HOME/.cargo/bin" \
     "$HOME/.local/bin" \
     "$HOME/bin" \
     $HOME/.deno/bin \
     /usr/local/bin \
     /opt/homebrew/bin \
     /opt/homebrew/sbin \
-    ~/Library/Python/3.8/bin \
     $HOME/go/bin \
-    /opt/homebrew/share/google-cloud-sdk/bin \
     $PATH
 
-set XDG_CONFIG_HOME "$HOME/.config"
+set -x EDITOR (which nvim)
+
+set -x SHELL (which fish)
+
+set -x XDG_CONFIG_HOME "$HOME/.config"
 
 set HOMEBREW_PREFIX /opt/homebrew
 set HOMEBREW_CELLAR /opt/homebrew/Cellar
@@ -131,6 +130,8 @@ function set_theme_mode -a new_mode --on-event fish_start --on-signal USR1
 
     echo $new_mode
 
+    set -U AICHAT_LIGHT_THEME true
+
     set theme (get_theme_mode)
 
     set -U -x THEME_MODE $theme
@@ -156,5 +157,5 @@ end
 
 direnv hook fish | source
 zoxide init fish | source
-atuin init fish --disable-up-arrow | source
 fzf --fish | source
+atuin init fish --disable-up-arrow | source
