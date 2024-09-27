@@ -5,16 +5,34 @@ function dotfiles-edit
 end
 
 function today
+    set -l DAYS 0
+    if set -q argv[1]
+        set DAYS $argv[1]
+        if test $DAYS -gt 0
+            set DAYS "+$DAYS"
+        else if test $DAYS -lt 0
+            set DAYS "-"(math abs $DAYS)
+        end
+    end
+
     set -l NAME (date "+%Y-%m-%d")
+
+    if ! test $DAYS -eq 0
+        set -l NAME (date -v"$DAYS"d "+%Y-%m-%d")
+    end
+
+    echo $NAME
+
     set -l FILE ~/Documents/Journal/$NAME.md
 
     if test -f $FILE
-        e $FILE
+        $EDITOR $FILE
     else
         echo $NAME \n==========\n\n >$FILE
-        e +4 $FILE
+        $EDITOR +4 $FILE
     end
 end
+
 
 
 function tomorrow

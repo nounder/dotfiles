@@ -1,0 +1,25 @@
+theme = "base16_transparent"
+
+[editor]
+gutters = []
+
+[keys.normal]
+C-h = "select_prev_sibling"
+C-j = "shrink_selection"
+C-k = "expand_selection"
+C-l = "select_next_sibling"
+
+s = "goto_word"
+# vim stuff
+D = ["ensure_selections_forward", "extend_to_line_end", "delete_selection"]
+"{" = ["goto_prev_paragraph", "collapse_selection"]
+"}" = ["goto_next_paragraph", "collapse_selection"]
+0 = "goto_line_start"
+"$" = "goto_line_end"
+G = "goto_file_end"
+
+# vim muslce memory
+[keys.select]
+s = "goto_word"
+0 = "goto_line_start"
+"$" = "goto_line_end"
