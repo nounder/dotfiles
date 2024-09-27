@@ -1,17 +1,16 @@
-
-[language-server.tailwindcss-ls]
+# [language-server.tailwindcss-ls]
 # command = "deno"
 # args = ["run", "--node-modules-dir=false", "-R", "-A", "-S=cpus", "npm:@tailwindcss/language-server", "--stdio"]
-command = "bunx"
-args = ["@tailwindcss/language-server", "--stdio"]
+# command = "bunx"
+# args = ["@tailwindcss/language-server", "--stdio"]
 
 
-[language-server.svelteserver]
+# [language-server.svelteserver]
 # command = "deno"
 # args = ["run","-E","-R","-S=cpus,homedir,uid", "--allow-run", "--allow-write=.", "--allow-ffi","npm:svelte-language-server","--stdio"]
-command = "bunx"
-args = ["svelte-language-server", "--stdio"]
-environment = {"DENO_FUTURE" = "1" }
+# command = "bunx"
+# args = ["svelte-language-server", "--stdio"]
+# environment = {"DENO_FUTURE" = "1" }
 
 
 # [language-server.svelteserver]
@@ -45,7 +44,6 @@ typeCheckingMode = "basic"
 [language-server.ruff]
 command = "ruff-lsp"
 
-
 [[language]]
 name = "javascript"
 shebangs = ["deno"]
@@ -66,9 +64,6 @@ indent = { tab-width = 4, unit = " " }
 command = "deno"
 args = ["lsp"]
 
-[language-server.lsp-ai]
-command = "lsp-ai"
-
 [language-server.deno-lsp.config.deno]
 enable = true
 unstable = true
@@ -79,18 +74,4 @@ inlayHints.variableTypes.enabled = true
 inlayHints.propertyDeclarationTypes.enabled  = true
 inlayHints.functionLikeReturnTypes.enabled = true
 inlayHints.enumMemberValues.enabled = true
-
-[language-server.lsp-ai.config.models.gpt4o]
-type="open_ai"
-chat_endpoint = "https://api.openai.com/v1/chat/completions"
-completions_endpoint = "https://api.openai.com/v1/chat/completions"
-model = "gpt-4o"
-auth_token = "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"
-
-[language-server.lsp-ai.config.completion]
-  model = "gpt4o"
-  parameters = {    max_context = 2000, max_tokens = 32 }
-
-[language-server.lsp-ai.config.memory]
-file_store = {}
 
