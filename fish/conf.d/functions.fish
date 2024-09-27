@@ -1,8 +1,15 @@
 function dotfiles-edit
-    cd ~/dotfiles
+    set -l DOTFILES_DIR ~/dotfiles
+    set -l picked_file (fzf --walker-root $DOTFILES_DIR)
 
-    e
+    if test -f $picked_file
+        $EDITOR $picked_file
+    else
+        echo 'No file selected'
+    end
 end
+
+alias co=dotfiles-edit
 
 function today
     set -l DAYS 0
@@ -32,8 +39,6 @@ function today
         $EDITOR +4 $FILE
     end
 end
-
-
 
 function tomorrow
     set -l NAME (date -v+1d "+%Y-%m-%d")
