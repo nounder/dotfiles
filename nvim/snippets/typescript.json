@@ -1,0 +1,47 @@
+{
+  "plain function": {
+    "prefix": "c",
+    "body": ["const $1 = $0"],
+    "description": "const"
+  },
+  "async named function": {
+    "prefix": "anf",
+    "body": ["async function $1($2) {", "\t$3", "}"],
+    "description": "Async named function"
+  },
+  "named function": {
+    "prefix": "nf",
+    "body": ["function $1($2) {", "\t$3", "}"],
+    "description": "Named function"
+  },
+  "export default": {
+    "prefix": "export default",
+    "body": ["export default $1"],
+    "description": "Export default"
+  },
+  "export default function": {
+    "prefix": "edf",
+    "body": ["export default function $1($2) {", "\t$3", "}"],
+    "description": "Export default function"
+  },
+  "export defauly async function": {
+    "prefix": "edaf",
+    "body": ["export default async function $1($2) {", "\t$3", "}"],
+    "description": "Export default async function"
+  },
+  "export named function": {
+    "prefix": "enf",
+    "body": ["export function $1($2) {", "\t$3", "}"],
+    "description": "Export named function"
+  },
+  "export named async function": {
+    "prefix": "enaf",
+    "body": ["export async function $1($2) {", "\t$3", "}"],
+    "description": "Export named async function"
+  },
+  "SvelteKit server load": {
+    "prefix": "skl",
+    "body": ["export async function load(req) {", "\t$0", "}"],
+    "description": "SvelteKit server loadd"
+  }
+}
