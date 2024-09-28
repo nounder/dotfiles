@@ -1,6 +1,5 @@
 {
   "extras": [
-    "lazyvim.plugins.extras.dap.core",
     "lazyvim.plugins.extras.editor.fzf",
     "lazyvim.plugins.extras.editor.mini-diff",
     "lazyvim.plugins.extras.editor.mini-files",
@@ -10,8 +9,7 @@
     "lazyvim.plugins.extras.lang.svelte",
     "lazyvim.plugins.extras.lang.typescript",
     "lazyvim.plugins.extras.lang.yaml",
-    "lazyvim.plugins.extras.test.core",
-    "lazyvim.plugins.extras.vscode"
+    "lazyvim.plugins.extras.test.core"
   ],
   "news": {
     "NEWS.md": "6520"
