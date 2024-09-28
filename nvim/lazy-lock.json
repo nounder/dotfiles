@@ -31,6 +31,7 @@
   "mini.indentscope": { "branch": "main", "commit": "da9af64649e114aa79480c238fd23f6524bc0903" },
   "mini.move": { "branch": "main", "commit": "4caa1c212f5ca3d1633d21cfb184808090ed74b1" },
   "mini.pairs": { "branch": "main", "commit": "919a89ed3c9f4142215a44c9fffca72fa8c8e792" },
+  "mini.surround": { "branch": "main", "commit": "e1ac1ce5c7499aa4cc2ca9fb1adec9e730dd9394" },
   "molten-nvim": { "branch": "main", "commit": "eafa6aa0335a239ee333e6ca45076888b9b011ae" },
   "neogit": { "branch": "master", "commit": "641ae8fc7dc76ba9f1e72a6223b966fb0d7ff8f8" },
   "neotest": { "branch": "master", "commit": "48f8b5fce704594eb0ff94338e080defca14f0dc" },
