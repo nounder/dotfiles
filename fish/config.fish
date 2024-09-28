@@ -2,6 +2,7 @@ set TERM xterm-256color
 
 set PATH \
     "$HOME/dotfiles/bin" \
+    "$HOME/.bun/bin" \
     "$HOME/.cargo/bin" \
     "$HOME/.local/bin" \
     "$HOME/bin" \
