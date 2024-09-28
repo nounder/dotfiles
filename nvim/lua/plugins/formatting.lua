@@ -4,6 +4,7 @@ return {
     formatters_by_ft = {
       markdown = {}, -- This disables formatting for markdown
       python = { "dprint" },
+      svelte = { "dprint" },
       javascript = { "dprint" },
       typescript = { "dprint" },
       json = { "dprint" },
