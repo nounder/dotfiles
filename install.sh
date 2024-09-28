@@ -16,3 +16,5 @@ ln -s $LN_OPTS ../dotfiles/atuin/ atuin
 ln -s $LN_OPTS ../dotfiles/fish/ fish
 
 ln -s $LN_OPTS ../dotfiles/helix/ helix
+
+ln -s $LN_OPTS ../dotfiles/nvim/ nvim
