@@ -1,15 +1,23 @@
 function dotfiles-edit
-    set -l DOTFILES_DIR ~/dotfiles
-    set -l picked_file (fzf --walker-root $DOTFILES_DIR)
+    cd ~/dotfiles
 
-    if test -f $picked_file
-        $EDITOR $picked_file
-    else
-        echo 'No file selected'
-    end
+    edit-with-fallback
 end
 
 alias co=dotfiles-edit
+
+function edit-with-fallback
+    if test (count $argv) -gt 0
+        nvim $argv
+    else
+        nvim -c ":lua require('telescope').extensions['recent-files'].recent_files({})"
+    end
+end
+
+alias er=edit-recent-cwd
+alias eg="nvim -c ':Neogit kind=replace"
+alias es="nvim -c ':Neogit kind=replace"
+
 
 function today
     set -l DAYS 0
