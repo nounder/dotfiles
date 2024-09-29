@@ -1,44 +1,78 @@
 return {
   {
-    "ibhagwan/fzf-lua",
+    'nvim-telescope/telescope.nvim',
+
+    opts = {
+      defaults = {
+        layout_strategy = "horizontal",
+        mappings = {
+          i = {
+            ["<esc>"] = "close",
+            ["<C-h>"] = "close",
+            ["<C-j>"] = "move_selection_next",
+            ["<C-k>"] = "move_selection_previous",
+            ["<C-l>"] = "file_edit",
+          },
+        },
+      }
+    },
 
     keys = {
       {
         "fr",
-        "<cmd>FzfLua resume<cr>",
+        "<leader>sR",
         desc = "Resume",
       },
 
       {
         "<leader><space>",
-        LazyVim.pick("files", { root = false, show_untracked = true }),
+        "<leader>ff",
+        remap = true,
       },
 
       {
         "ff",
-        LazyVim.pick("files", { root = false, show_untracked = true }),
+        "<leader>ff",
+        remap = true
       },
 
       {
         "fF",
-        LazyVim.pick("auto", { root = true, show_untracked = true }),
+        "<leader>fF",
+        remap = true,
       },
 
       {
         "fs",
-        function()
-          require("fzf-lua").lsp_document_symbols({})
-        end,
+        "<leader>sS",
+        remap = true,
         desc = "Goto Symbol",
       },
 
       {
         "fS",
-        function()
-          require("fzf-lua").lsp_live_workspace_symbols({})
-        end,
+        "<leader>ss",
+        remap = true,
         desc = "Goto Symbol (Workspace)",
       },
     },
   },
+
+  {
+    'mollerhoj/telescope-recent-files.nvim',
+    dependencies = {
+      'nvim-telescope/telescope.nvim',
+    },
+    config = function()
+      require("telescope").load_extension("recent-files")
+    end,
+    keys = {
+      {
+        "<leader>ff",
+        function()
+          require('telescope').extensions['recent-files'].recent_files({})
+        end,
+      }
+    }
+  }
 }
