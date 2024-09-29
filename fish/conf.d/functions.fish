@@ -20,9 +20,11 @@ alias es="nvim -c ':Neogit kind=replace"
 
 
 function today
-    set -l DAYS 0
+    set DAYS 0
+
     if set -q argv[1]
         set DAYS $argv[1]
+
         if test $DAYS -gt 0
             set DAYS "+$DAYS"
         else if test $DAYS -lt 0
@@ -30,20 +32,19 @@ function today
         end
     end
 
-    set -l NAME (date "+%Y-%m-%d")
+    set NAME (date "+%Y-%m-%d")
 
     if ! test $DAYS -eq 0
-        set -l NAME (date -v"$DAYS"d "+%Y-%m-%d")
+        set NAME (date -v"$DAYS"d "+%Y-%m-%d")
     end
 
-    echo $NAME
-
-    set -l FILE ~/Documents/Journal/$NAME.md
+    set FILE ~/Documents/Journal/$NAME.md
 
     if test -f $FILE
         $EDITOR $FILE
     else
         echo $NAME \n==========\n\n >$FILE
+
         $EDITOR +4 $FILE
     end
 end
