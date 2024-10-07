@@ -30,7 +30,10 @@ return {
         },
         jsonls = {
           cmd = { "npx", "vscode-json-languageserver", "--stdio" }
-        }
+        },
+        tailwindcss = {
+          cmd = { "npx", "@tailwindcss/language-server", "--stdio" },
+        },
       }
     },
   },
