@@ -30,7 +30,7 @@ alias shd "cd ~/.config/fish"
 alias nr "npm run"
 alias ns "npm start"
 alias vi nvim
-alias e nvim
+alias e edit-with-fallback
 alias s sudo
 alias s3="aws s3"
 alias ip=ipython

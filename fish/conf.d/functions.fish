@@ -15,8 +15,7 @@ function edit-with-fallback
 end
 
 alias er=edit-recent-cwd
-alias eg="nvim -c ':Neogit kind=replace"
-alias es="nvim -c ':Neogit kind=replace"
+alias eg="nvim -c ':Neogit kind=replace'"
 
 
 function today
