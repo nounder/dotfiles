@@ -6,8 +6,10 @@ logo = string.rep("\n", 8) .. logo .. "\n\n"
 
 return {
   {
-    "folke/which-key.nvim",
-    enabled = false
+    "lukas-reineke/indent-blankline.nvim",
+    opts = {
+      enabled = false,
+    },
   },
   {
     "folke/noice.nvim",
