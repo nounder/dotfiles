@@ -52,8 +52,8 @@ alias gc="git checkout"
 alias py="python"
 
 alias dt="deno task"
-alias dr="deno run --allow-read --allow-sys --allow-hrtime --allow-env --allow-net"
-alias dw="deno run --allow-read --allow-sys --allow-hrtime --allow-env --allow-net --watch"
+alias dr="deno run --allow-read --allow-sys --allow-env --allow-net"
+alias dw="deno run --allow-read --allow-sys --allow-env --allow-net --watch"
 
 function fish_greeting
 end
