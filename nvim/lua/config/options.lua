@@ -14,7 +14,10 @@ vim.g.root_spec = { "cwd" }
 
 vim.opt.conceallevel = 0
 
-vim.opt.tabstop = 4
+vim.opt.tabstop = 2
+
+vim.g.tabstop = 2
+
 vim.opt.list = false -- Hide some invisible characters (tabs...
 
 -- some watches cannot handle vim write behaviorr. this fixes it.
