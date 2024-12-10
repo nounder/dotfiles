@@ -1,5 +1,3 @@
-local Util = require("lazyvim.util")
-
 vim.keymap.del("n", ";")
 vim.keymap.del("n", "f")
 
@@ -35,7 +33,3 @@ vim.keymap.set(
   ':let @+=substitute(system("git rev-parse --show-toplevel"), "\\n", "", "") . "/" . expand("%:~:.")<CR>',
   { noremap = true, silent = true, desc = "Copy buffer file path (relative)" }
 )
-
-vim.keymap.set("n", "<C-/>", function()
-  Util.terminal(nil, { border = "rounded" })
-end, { desc = "Terminal (root dir )" })
