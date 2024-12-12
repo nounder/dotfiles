@@ -33,7 +33,7 @@ vim.g.lazyvim_prettier_needs_config = true
 
 vim.opt.statuscolumn = ""
 
-vim.o.statusline = "%t:%l"
+vim.o.statusline = "%f:%l"
 
 -- More:
 -- https://neovide.dev/configuration.html
