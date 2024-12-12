@@ -6,9 +6,9 @@ return {
       python = { "dprint" },
       sql = { "dprint" },
       svelte = { "dprint" },
-      javascript = { "dprint" },
-      typescript = { "dprint" },
-      json = { "dprint" },
+      javascript = { "prettier", "dprint" },
+      typescript = { "prettier", "dprint" },
+      json = { "prettier", "dprint" },
     },
 
     formatters = {
