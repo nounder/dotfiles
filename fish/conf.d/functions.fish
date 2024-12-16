@@ -1,7 +1,7 @@
 function dotfiles-edit
     cd ~/dotfiles
 
-    edit-with-fallback
+    e
 end
 
 alias co=dotfiles-edit
