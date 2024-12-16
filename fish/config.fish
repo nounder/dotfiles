@@ -30,10 +30,12 @@ alias shd "cd ~/.config/fish"
 alias nr "npm run"
 alias ns "npm start"
 alias vi nvim
-alias e edit-with-fallback
+alias e nvim #edit-with-fallback
 alias s sudo
 alias s3="aws s3"
 alias ip=ipython
+alias dce="devcontainers exec --workspace-folder ."
+alias dcu="devcontainers up --workspace-folder ."
 
 alias g="kitten hyperlinked_grep"
 alias hg="kitten hyperlinked_grep"
