@@ -18,3 +18,6 @@ ln -s $LN_OPTS ../dotfiles/fish/ fish
 ln -s $LN_OPTS ../dotfiles/helix/ helix
 
 ln -s $LN_OPTS ../dotfiles/nvim/ nvim
+
+mkdir direnv && ln -s $LN_OPTS ../dotfiles/direnv.toml direnv/direnv.toml
+
