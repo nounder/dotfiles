@@ -1,7 +1,6 @@
 set TERM xterm-256color
 
 set PATH \
-    "$HOME/dotfiles/bin" \
     "$HOME/.bun/bin" \
     "$HOME/.cargo/bin" \
     "$HOME/.local/bin" \
@@ -159,6 +158,5 @@ function set_kitty_theme -a new_mode --on-event theme_change
 end
 
 direnv hook fish | source
-zoxide init fish | source
 fzf --fish | source
 atuin init fish --disable-up-arrow | source
