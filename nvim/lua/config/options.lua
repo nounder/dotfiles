@@ -18,6 +18,8 @@ vim.opt.tabstop = 2
 
 vim.g.tabstop = 2
 
+vim.g.ai_cmp = false
+
 vim.opt.list = false -- Hide some invisible characters (tabs...
 
 -- some watches cannot handle vim write behaviorr. this fixes it.
