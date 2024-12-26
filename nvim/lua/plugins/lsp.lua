@@ -33,14 +33,14 @@ return {
           },
         },
         jsonls = {
-          cmd = { "deno", "-E", "--no-prompt", "npm:vscode-json-languageserver", "--stdio" },
+          cmd = { "deno", "-A", "npm:vscode-json-languageserver", "--stdio" },
         },
         tailwindcss = {
           cmd = { "deno", "-A", "npm:@tailwindcss/language-server", "--stdio" },
         },
         yamlls = {
-          cmd = { "deno", "-A", "npm:yaml-language-server", "--stdio" }
-        }
+          cmd = { "deno", "-A", "npm:yaml-language-server", "--stdio" },
+        },
       },
     },
   },
