@@ -6,6 +6,10 @@ return {
       overrides = {
         BlinkCmpGhostText = { link = "GruvboxBg4" },
         NonText = { link = "GruvboxBg4" },
+        DiffText = { fg = "#1d2021" },
+        FlashLabel = { fg = "#ffffff" },
+        StatusLine = { link = "Normal" },
+        StatusLineNC = { link = "Normal" },
       },
 
       transparent_mode = true,

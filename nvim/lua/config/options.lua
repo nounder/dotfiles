@@ -35,7 +35,8 @@ vim.g.lazyvim_prettier_needs_config = true
 
 vim.opt.statuscolumn = ""
 
-vim.o.statusline = "%f:%l"
+vim.o.statusline = "%<%#NonText#── %f %h%m%r%= %l,%c ──"
+vim.o.fillchars = "stl:─"
 
 -- More:
 -- https://neovide.dev/configuration.html
