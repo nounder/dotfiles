@@ -19,5 +19,7 @@ ln -s $LN_OPTS ../dotfiles/helix/ helix
 
 ln -s $LN_OPTS ../dotfiles/nvim/ nvim
 
+ln -s $LN_OPTS ../dotfiles/ghostty/ ghostty
+
 mkdir direnv && ln -s $LN_OPTS ../dotfiles/direnv.toml direnv/direnv.toml
 
