@@ -94,6 +94,11 @@ function fish_prompt
     set_color --bold red
     echo -n '$ '
     set_color normal
+
+end
+
+function add_to_z --on-event fish_postexec
+    z --add "$PWD" &
 end
 
 function add_newline --on-event fish_postexec
