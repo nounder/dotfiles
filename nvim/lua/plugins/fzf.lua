@@ -3,6 +3,7 @@ return {
     "ibhagwan/fzf-lua",
     opts = {
       oldfiles = {
+        cwd_only = true,
         include_current_session = true,
       },
       previewers = {
@@ -24,9 +25,17 @@ return {
     keys = {
       -- Keybinding for searching within the current buffer
       {
-        "<leader>fb",
+        "<leader>fl",
         function()
           require("fzf-lua").grep_curbuf()
+        end,
+        desc = "Search in Current Buffer",
+      },
+
+      {
+        "<leader>fo",
+        function()
+          require("fzf-lua").oldfiles()
         end,
         desc = "Search in Current Buffer",
       },
