@@ -35,26 +35,6 @@ vim.keymap.set(
   { noremap = true, silent = true, desc = "Copy buffer file path (full)" }
 )
 
-vim.keymap.set("n", "ff", function()
-  local keys = vim.api.nvim_replace_termcodes("<Space>ff", true, false, true)
-  vim.api.nvim_feedkeys(keys, "m", true)
-end, { expr = true })
-
-vim.keymap.set("n", "fr", function()
-  local keys = vim.api.nvim_replace_termcodes("<Space>fr", true, false, true)
-  vim.api.nvim_feedkeys(keys, "m", true)
-end, { expr = true })
-
-vim.keymap.set("n", "fl", function()
-  local keys = vim.api.nvim_replace_termcodes("<Space>fl", true, false, true)
-  vim.api.nvim_feedkeys(keys, "m", true)
-end, { expr = true })
-
-vim.keymap.set("n", "fo", function()
-  local keys = vim.api.nvim_replace_termcodes("<Space>fo", true, false, true)
-  vim.api.nvim_feedkeys(keys, "m", true)
-end, { expr = true })
-
 vim.keymap.set(
   "n",
   "<leader>bfp",

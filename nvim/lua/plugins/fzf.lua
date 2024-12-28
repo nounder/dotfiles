@@ -1,3 +1,11 @@
+local function sim(chars)
+  local keys = vim.api.nvim_replace_termcodes(chars, true, false, true)
+
+  return function()
+    vim.api.nvim_feedkeys(keys, "m", true)
+  end
+end
+
 return {
   {
     "ibhagwan/fzf-lua",
@@ -23,22 +31,14 @@ return {
     },
 
     keys = {
-      -- Keybinding for searching within the current buffer
-      {
-        "<leader>fl",
-        function()
-          require("fzf-lua").grep_curbuf()
-        end,
-        desc = "Search in Current Buffer",
-      },
+      { "ff", sim("<leader>ff"), expr = true },
+      { "fr", sim("<leader>fr"), expr = true },
 
-      {
-        "<leader>fo",
-        function()
-          require("fzf-lua").oldfiles()
-        end,
-        desc = "Search in Current Buffer",
-      },
+      { "<leader>fo", "<cmd>FzfLua resume<cr>", desc = "Resume" },
+      { "fo", sim("<leader>fo"), expr = true },
+
+      { "<leader>fl", "<cmd>FzfLua grep_curbuf<cr>", desc = "Search in Current Buffer" },
+      { "fl", sim("<leader>fl"), expr = true },
     },
   },
 }
