@@ -164,6 +164,6 @@ function set_kitty_theme -a new_mode --on-event theme_change
     echo chaning kitty
 end
 
-direnv hook fish | source
-fzf --fish | source
-atuin init fish --disable-up-arrow | source
+type -q direnv && direnv hook fish | source
+type -q fzf && fzf --fish | source
+type -q atuin && atuin init fish --disable-up-arrow | source
