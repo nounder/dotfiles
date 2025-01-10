@@ -21,5 +21,7 @@ ln -s $LN_OPTS ../dotfiles/nvim/ nvim
 
 ln -s $LN_OPTS ../dotfiles/ghostty/ ghostty
 
+ln -s $LN_OPTS ../dotfiles/tmux.conf .tmux.conf
+
 mkdir direnv && ln -s $LN_OPTS ../dotfiles/direnv.toml direnv/direnv.toml
 
