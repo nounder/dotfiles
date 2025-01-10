@@ -14,7 +14,6 @@ sudo apt update
 
 sudo apt install -y \
   git \
-  neovim \
   fish \
   tmux \
   ripgrep \
@@ -24,11 +23,21 @@ sudo apt install -y \
 
 tmp_dir=$(mktemp -d)
 cd $tmp_dir
+wget https://github.com/neovim/neovim/releases/download/v0.10.3/nvim.appimage \
+  -O nvim.appimage
+./nvim.appimage --appimage-extract
+mkdir -p ~/dotfiles/local
+mv squashfs-root ~/dotfiles/local/nvim.appimage.d
+ln -s -f ~/dotfiles/local/nvim.appimage.d/usr/bin/nvim ~/.local/bin/nvim
+cd - && rm -r $tmp_dir
+
+tmp_dir=$(mktemp -d)
+cd $tmp_dir
 wget https://github.com/junegunn/fzf/releases/download/v0.57.0/fzf-0.57.0-linux_amd64.tar.gz \
   -O fzf.tar.gz
 atool -x fzf.tar.gz
 mkdir -p ~/.local/bin/
-sudo mv fzf ~/.local/bin/
+mv fzf ~/.local/bin/
 cd - && rm -r $tmp_dir
 
 echo -n "Install node? "
@@ -50,7 +59,7 @@ if [ "$answer" = "y" ] || [ "$answer" = "Y" ]; then
     -O deno.zip
   atool -x deno.zip
   mkdir -p ~/.local/bin/
-  sudo mv deno ~/.local/bin/
+  mv deno ~/.local/bin/
   cd - && rm -r $tmp_dir
 fi
 
