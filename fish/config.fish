@@ -88,6 +88,11 @@ end
 
 
 function fish_prompt
+    if not string match --quiet --regex '.*local1$' $hostname
+        set_color blue
+        echo -n "[$USER@"(prompt_hostname)"] "
+    end
+
     set_color brblack
     echo -n (prompt_pwd) (fish_git_prompt)
     set_color $fish_color_status
