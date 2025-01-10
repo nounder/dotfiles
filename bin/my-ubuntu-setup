@@ -1,0 +1,48 @@
+#!/bin/sh
+
+echo -n "Do you want to proceed with installation? (y/N) "
+read answer
+
+if [ "$answer" != "y" ] && [ "$answer" != "Y" ]; then
+    echo "Installation cancelled."
+    exit 0
+fi
+
+sudo apt update
+
+sudo apt update
+
+sudo apt install -y \
+  git \
+  neovim \
+  fish \
+  tmux \
+  ripgrep \
+  fzf  \
+  direnv
+
+echo -n "Install node? "
+read answer
+
+if [ "$answer" = "y" ] || [ "$answer" = "Y" ]; then
+  sudo apt install -y \
+    nodejs \
+    npm
+fi
+
+echo -n "Install deno? "
+read answer
+
+if [ "$answer" = "y" ] || [ "$answer" = "Y" ]; then
+  curl -fsSL https://deno.land/install.sh | sh
+fi
+
+echo -n "Install podman? "
+read answer
+
+if [ "$answer" = "y" ] || [ "$answer" = "Y" ]; then
+  sudo apt install -y podman
+fi
+
+echo "All done!"
+
