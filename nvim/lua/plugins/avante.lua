@@ -3,6 +3,9 @@ return {
     "yetone/avante.nvim",
     event = "VeryLazy",
     lazy = false,
+    enabled = function()
+      return os.getenv("ANTHROPIC_API_KEY") ~= nil or os.getenv("OPENAI_API_KEY") ~= nil
+    end,
     version = false, -- set this if you want to always pull the latest change
 
     opts = {
