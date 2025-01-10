@@ -18,8 +18,17 @@ sudo apt install -y \
   fish \
   tmux \
   ripgrep \
-  fzf  \
-  direnv
+  direnv \
+  atool
+
+
+tmp_dir=$(mktemp -d)
+cd $tmp_dir
+wget https://github.com/junegunn/fzf/releases/download/v0.57.0/fzf-0.57.0-linux_amd64.tar.gz
+atool -x fzf-0.57.0-linux_amd64.tar.gz
+mkdir -p ~/.local/bin/
+sudo mv fzf ~/.local/bin/
+cd - && rm -r $tmp_dir
 
 echo -n "Install node? "
 read answer
@@ -42,6 +51,13 @@ read answer
 
 if [ "$answer" = "y" ] || [ "$answer" = "Y" ]; then
   sudo apt install -y podman
+fi
+
+echo -n "Install httpie? "
+read answer
+
+if [ "$answer" = "y" ] || [ "$answer" = "Y" ]; then
+  sudo apt install -y httpie
 fi
 
 echo "All done!"
