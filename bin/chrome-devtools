@@ -1,0 +1,3 @@
+#!/bin/sh
+
+open -a "/Applications/Google Chrome.app" chrome://inspect/#devices

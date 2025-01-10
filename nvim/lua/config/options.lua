@@ -36,7 +36,13 @@ vim.g.lazyvim_prettier_needs_config = true
 vim.opt.statuscolumn = ""
 
 vim.o.statusline = "%<%#NonText#── %f %h%m%r%= %l,%c ──"
-vim.o.fillchars = "stl:─"
+
+vim.opt.fillchars = {
+  -- don't print end of buffer tilde (~)
+  eob = " ",
+  -- use vertical line in status line
+  stl = "─",
+}
 
 -- More:
 -- https://neovide.dev/configuration.html

@@ -1,6 +1,7 @@
 set TERM xterm-256color
 
 set PATH \
+    "$HOME/dotfiles/bin" \
     "$HOME/.bun/bin" \
     "$HOME/.cargo/bin" \
     "$HOME/.local/bin" \
@@ -50,6 +51,7 @@ alias ec="cd ~/.config/nvim/ && nvim"
 alias tc="cd ~/.config/kitty/ && nvim kitty.conf"
 
 alias gc="git checkout"
+alias gc1="git clone --depth=1"
 alias py="python"
 
 alias dt="deno task"

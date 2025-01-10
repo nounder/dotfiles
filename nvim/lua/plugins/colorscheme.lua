@@ -9,7 +9,7 @@ return {
         DiffText = { fg = "#1d2021" },
         FlashLabel = { fg = "#ffffff" },
         StatusLine = { link = "Normal" },
-        StatusLineNC = { link = "Normal" },
+        MsgArea = { link = "GruvboxFg4" },
       },
 
       transparent_mode = true,

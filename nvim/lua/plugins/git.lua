@@ -1,5 +1,8 @@
 return {
   {
+    "sindrets/diffview.nvim",
+  },
+  {
     "ruifm/gitlinker.nvim",
     dependencies = {
       "nvim-lua/plenary.nvim", -- required
@@ -14,16 +17,21 @@ return {
       { "<leader>gd", "<cmd>G diff<CR>" },
       { "<leader>gl", "<cmd>G log<CR>" },
       { "<leader>gp", "<cmd>G push<CR>" },
-      { "<leader>gr", "<cmd>G read<CR>" },
-      { "<leader>gw", "<cmd>G write<CR>" },
       { "<leader>gx", "<cmd>Gvdiff<CR>" },
     },
   },
   {
+    -- Adds :GBrowse command
+    -- Adds omni-completion for git messages
     "tpope/vim-rhubarb",
     dependencies = {
       "tpope/vim-fugitive", -- required
     },
   },
-  { "akinsho/git-conflict.nvim", version = "*", config = true },
+  {
+    -- Adds :GitConflict* commands
+    "akinsho/git-conflict.nvim",
+    version = "*",
+    config = true,
+  },
 }

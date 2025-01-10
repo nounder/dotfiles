@@ -7,7 +7,8 @@ return {
         enabled = false,
       },
       diagnostics = {
-        virtual_text = false,
+        update_in_insert = true,
+        underline = false,
         signs = false,
       },
       servers = {

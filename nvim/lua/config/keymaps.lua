@@ -16,12 +16,28 @@ vim.keymap.set("n", ";q", "<Space>bd", { silent = true })
 
 vim.keymap.set("i", "<M-BS>", "<C-w>", { noremap = true, silent = true })
 
+vim.keymap.set("t", "<Esc>", "<C-\\><C-n>", { noremap = true })
+
 vim.keymap.set("n", "<c-'>", function()
-  Snacks.terminal(vim.o.shell, { cwd = LazyVim.root() })
+  Snacks.terminal(vim.o.shell, {
+    cwd = LazyVim.root(),
+    win = {
+      wo = {
+        wrap = false,
+      },
+    },
+  })
 end, { desc = "Terminal (floating, cwd)" })
 
 vim.keymap.set("t", "<c-'>", function()
-  Snacks.terminal(vim.o.shell, { cwd = LazyVim.root() })
+  Snacks.terminal(vim.o.shell, {
+    cwd = LazyVim.root(),
+    win = {
+      wo = {
+        wrap = false,
+      },
+    },
+  })
 end, { desc = "Terminal (floating, cwd)" })
 
 vim.keymap.set("n", ";a", "i", { noremap = true, silent = true })

@@ -5,6 +5,7 @@
     "lazyvim.plugins.extras.coding.mini-surround",
     "lazyvim.plugins.extras.dap.core",
     "lazyvim.plugins.extras.editor.fzf",
+    "lazyvim.plugins.extras.editor.harpoon2",
     "lazyvim.plugins.extras.editor.mini-diff",
     "lazyvim.plugins.extras.editor.mini-files",
     "lazyvim.plugins.extras.editor.mini-move",
@@ -17,7 +18,6 @@
     "lazyvim.plugins.extras.lang.typescript",
     "lazyvim.plugins.extras.lang.yaml",
     "lazyvim.plugins.extras.test.core",
-    "lazyvim.plugins.extras.ui.edgy",
     "lazyvim.plugins.extras.ui.indent-blankline"
   ],
   "news": {
