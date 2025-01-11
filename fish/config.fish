@@ -41,8 +41,8 @@ alias docd="doc down"
 alias doce="doc exec"
 alias docl="doc logs"
 
-alias dece="devcontainers exec --workspace-folder ."
-alias decu="devcontainers up --workspace-folder ."
+alias dve="devcontainers exec --workspace-folder ."
+alias dvu="devcontainers up --workspace-folder ."
 
 alias g="kitten hyperlinked_grep"
 alias hg="kitten hyperlinked_grep"
