@@ -7,6 +7,8 @@ else
   LN_OPTS=""
 fi
 
+mkdir ~/.config
+
 cd ~/.config
 
 ln -s $LN_OPTS ../dotfiles/kitty/ kitty
