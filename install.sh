@@ -7,7 +7,7 @@ else
   LN_OPTS=""
 fi
 
-mkdir ~/.config
+mkdir -p ~/.config
 
 cd ~/.config
 
@@ -25,5 +25,5 @@ ln -s $LN_OPTS ../dotfiles/ghostty/ ghostty
 
 ln -s $LN_OPTS ../dotfiles/tmux.conf .tmux.conf
 
-mkdir direnv && ln -s $LN_OPTS ../dotfiles/direnv.toml direnv/direnv.toml
+mkdir -p direnv; ln -s $LN_OPTS ../../dotfiles/direnv.toml direnv/direnv.toml
 
