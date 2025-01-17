@@ -3,6 +3,7 @@ load_dotenv = true
 
 [whitelist]
 prefix = [
+  "~/Pads",
   "~/Projects",
   "~/Hacks"
 ]
