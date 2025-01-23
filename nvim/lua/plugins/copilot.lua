@@ -14,7 +14,16 @@ return {
         zig = true,
         rust = true,
       },
-      -- copilot_node_command = "node-deno",
+
+      suggestion = {
+        keymap = {
+          -- handled by link
+          accept = false,
+          next = "<C-]>",
+          prev = "<C-[>",
+          dismiss = "<C-\\>",
+        },
+      },
     },
   },
 }

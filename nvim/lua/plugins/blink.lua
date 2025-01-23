@@ -14,6 +14,7 @@ return {
       keymap = {
         preset = "default",
 
+        ["<Tab>"] = { "fallback" },
         ["<C-e>"] = { "hide" },
         ["<C-l>"] = { "select_and_accept" },
         ["<C-;>"] = {
