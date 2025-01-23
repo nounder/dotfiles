@@ -1,0 +1,11 @@
+#!/bin/sh
+
+# Shim for Node that uses Deno
+# Note that __dirname globals do not work.
+
+if [ "$1" = "--version" ]; then
+  echo "v23.5.0"
+  exit 0
+fi
+
+exec deno -A --unstable-bare-node-builtins --unstable-node-globals $@
