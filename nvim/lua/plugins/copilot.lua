@@ -3,7 +3,8 @@ return {
     "zbirenbaum/copilot.lua",
     opts = {
       filetypes = {
-        ["."] = false,
+        text = false,
+        markdown = false,
         javascript = true,
         typescript = true,
         sh = true,

@@ -35,6 +35,7 @@ alias s sudo
 alias s3="aws s3"
 alias ip=ipython
 
+alias doka="docker kill (docker ps -q)"
 alias doc="docker compose"
 alias docu="doc up"
 alias docd="doc down"
@@ -176,6 +177,7 @@ function set_kitty_theme -a new_mode --on-event theme_change
     echo chaning kitty
 end
 
+
 type -q direnv && direnv hook fish | source
-type -q fzf && fzf --fish | source
-type -q atuin && atuin init fish --disable-up-arrow | source
+
+fzf_configure_bindings

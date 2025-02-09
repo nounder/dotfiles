@@ -1,0 +1,29 @@
+# see: https://grafana.com/docs/tempo/latest/configuration/
+server:
+  http_listen_port: 3200
+  grpc_listen_port: 9095
+
+distributor:
+  receivers:
+    otlp:
+      protocols:
+        grpc:
+          endpoint: "0.0.0.0:4317"
+        http:
+          endpoint: "0.0.0.0:4318"
+
+ingester:
+  max_block_duration: 5m
+
+storage:
+  trace:
+    backend: local
+    local:
+      path: /tmp/tempo/traces
+    wal:
+      path: /tmp/tempo/wal
+# compactor:
+# compaction:
+#   block_retention: 24h
+# overrides:
+#   metrics_generator_processors: [service-graphs, span-metrics]
