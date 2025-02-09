@@ -28,7 +28,7 @@ return {
           settings = {
             typescript = {
               preferences = {
-                importModuleSpecifierEnding = "minimal",
+                importModuleSpecifierEnding = "js",
               },
             },
           },
