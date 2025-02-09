@@ -7,7 +7,11 @@ return {
     opts = {
       enabled = function()
         -- Disable for markdown or text filetypes
-        local disabled_filetypes = { "markdown", "text" }
+        local disabled_filetypes = {
+          "markdown",
+          "text",
+          "snacks_picker_input",
+        }
 
         return not vim.tbl_contains(disabled_filetypes, vim.bo.filetype)
       end,
