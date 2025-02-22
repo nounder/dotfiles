@@ -1,7 +1,7 @@
 return {
   {
     "williamboman/mason.nvim",
-    enabled = false,
+    enabled = true,
     opts = {
       PATH = "append",
     },

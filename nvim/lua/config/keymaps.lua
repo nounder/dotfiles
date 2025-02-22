@@ -12,6 +12,8 @@ vim.keymap.set("v", "x", '"_x')
 vim.keymap.set("n", "c", '"_c')
 vim.keymap.set("v", "c", '"_c')
 
+vim.keymap.set("n", "Y", "<cmd>%y<cr>")
+
 vim.keymap.set("n", ";q", "<Space>bd", { silent = true })
 
 vim.keymap.set("i", "<M-BS>", "<C-w>", { noremap = true, silent = true })

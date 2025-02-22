@@ -1,7 +1,7 @@
 # See: 
 # https://ghostty.org/docs/config/reference
 
-theme = dark:GruvboxDark,light:GruvboxLight
+theme = dark:GruvboxDark,light:catppuccin-latte
 font-size = 15
 font-family = "JetBrainsMonoNL Nerd Font Mono"
 background-opacity = 0.7
