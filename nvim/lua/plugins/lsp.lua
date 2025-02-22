@@ -20,11 +20,13 @@ return {
       },
       servers = {
         denols = {
-          enabled = is_cwd_deno,
+          -- enabled = is_cwd_deno,
+          enabled = false,
         },
         vtsls = {
           enabled = not is_cwd_deno,
-          cmd = { "deno", "--no-prompt", "-A", "npm:@vtsls/language-server", "--stdio" },
+          --cmd = { "deno", "--no-prompt", "-A", "npm:@vtsls/language-server", "--stdio" },
+          cmd = { "bunx", "@vtsls/language-server", "--stdio" },
           settings = {
             typescript = {
               preferences = {
@@ -35,20 +37,25 @@ return {
         },
         emmet_ls = {
           enabled = false,
-          cmd = { "deno", "-A", "--no-prompt", "npm:emmet-ls", "--stdio" },
+          --cmd = { "deno", "-A", "--no-prompt", "npm:emmet-ls", "--stdio" },
+          cmd = { "bunx", "emmet-ls", "--stdio" },
         },
         svelte = {
           cmd = { "deno", "--no-prompt", "npm:svelte-language-server", "--stdio" },
+          cmd = { "bunx", "svelte-language-server", "--stdio" },
         },
         jsonls = {
-          cmd = { "deno", "-A", "npm:vscode-json-languageserver", "--stdio" },
+          --cmd = { "deno", "-A", "npm:vscode-json-languageserver", "--stdio" },
+          cmd = { "bunx", "vscode-json-languageserver", "--stdio" },
         },
         tailwindcss = {
           enabled = false,
-          cmd = { "deno", "-A", "npm:@tailwindcss/language-server", "--stdio" },
+          --cmd = { "deno", "-A", "npm:@tailwindcss/language-server", "--stdio" },
+          cmd = { "bunx", "@tailwindcss/language-server", "--stdio" },
         },
         yamlls = {
-          cmd = { "deno", "-A", "npm:yaml-language-server", "--stdio" },
+          --cmd = { "deno", "-A", "npm:yaml-language-server", "--stdio" },
+          cmd = { "bunx", "yaml-language-server", "--stdio" },
         },
       },
     },
