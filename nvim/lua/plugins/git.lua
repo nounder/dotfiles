@@ -1,5 +1,18 @@
 return {
   {
+    "tpope/vim-fugitive",
+    keys = {
+      {
+        "<Space>gg",
+        function()
+          vim.cmd("Git")
+          vim.cmd("only")
+        end,
+        desc = "Open Git status (full)",
+      },
+    },
+  },
+  {
     "sindrets/diffview.nvim",
   },
   {
