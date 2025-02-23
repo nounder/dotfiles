@@ -1,17 +1,7 @@
+local Snacks = require("snacks")
+
 return {
-  {
-    "tpope/vim-fugitive",
-    keys = {
-      {
-        "<Space>gg",
-        function()
-          vim.cmd("Git")
-          vim.cmd("only")
-        end,
-        desc = "Open Git status (full)",
-      },
-    },
-  },
+
   {
     "sindrets/diffview.nvim",
   },
@@ -25,12 +15,67 @@ return {
     "tpope/vim-fugitive",
     priority = 100,
     keys = {
-      { "<leader>gb", "<cmd>G blame<CR>" },
-      { "<leader>gc", "<cmd>G commit<CR>" },
-      { "<leader>gd", "<cmd>G diff<CR>" },
-      { "<leader>gl", "<cmd>G log<CR>" },
-      { "<leader>gp", "<cmd>G push<CR>" },
-      { "<leader>gx", "<cmd>Gvdiff<CR>" },
+      {
+        "<leader>gb",
+        "<cmd>G blame<CR>",
+      },
+      {
+        "<leader>gc",
+        "<cmd>G commit<CR>",
+      },
+      {
+        "<leader>gd",
+        "<cmd>G diff<CR>",
+      },
+      {
+        "<leader>gl",
+        "<cmd>G log<CR>",
+      },
+      {
+        "<leader>gx",
+        "<cmd>Gvdiff<CR>",
+      },
+      {
+        "<leader>gg",
+        "<cmd>tabnew | Git | only<CR>",
+        desc = "Open Git status (full)",
+      },
+      {
+        "<leader>gp",
+        "<cmd>Git push<CR>",
+        desc = "Git push",
+      },
+      {
+        "<leader>gP",
+        "<cmd>Git pull<CR>",
+        desc = "Git pull",
+      },
+
+      {
+        "<leader>gP",
+        "<cmd>Git pull<CR>",
+        desc = "Git pull",
+      },
+      {
+        "<leader>gs",
+        Snacks.picker.git_branches,
+        desc = "Git pull",
+      },
+      {
+        "<leader>glf",
+        Snacks.picker.git_log_file,
+        desc = "Git pull",
+      },
+      {
+        "<leader>gll",
+        Snacks.picker.git_log_line,
+        desc = "Git pull",
+      },
+      {
+        "<leader>gd",
+        Snacks.picker.git_diff,
+        desc = "Git pull",
+      },
     },
   },
   {
