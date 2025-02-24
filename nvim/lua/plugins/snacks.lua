@@ -26,6 +26,19 @@ return {
       { "fl", sim("<leader>fl"), expr = true },
 
       { "gf", "<cmd>FzfLua lsp_finder<cr>" },
+
+      {
+        "<leader>uz",
+        function()
+          Snacks.zen()
+        end,
+      },
+      {
+        "<leader>fe",
+        function()
+          Snacks.explorer()
+        end,
+      },
     },
   },
 }
