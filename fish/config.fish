@@ -15,6 +15,9 @@ set PATH \
 
 set -x EDITOR (which nvim)
 
+set fzf_preview_file_cmd "bat --style=plain --color=always"
+set FZF_DEFAULT_OPTS '--cycle --layout=reverse --height=90% --preview-window=wrap --marker="*" --border --no-scrollbar --preview-window=border-left'
+
 set -x SHELL (which fish)
 
 set -x XDG_CONFIG_HOME "$HOME/.config"
