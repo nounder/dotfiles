@@ -13,7 +13,12 @@ return {
   },
   {
     "tpope/vim-fugitive",
-    priority = 100,
+    config = function()
+      vim.api.nvim_create_autocmd("FileType", {
+        pattern = "gitcommit",
+        command = "startinsert",
+      })
+    end,
     keys = {
       {
         "<leader>gb",
