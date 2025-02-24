@@ -6,5 +6,6 @@ return {
         return 0
       end,
     },
+    symbol = "│",
   },
 }
