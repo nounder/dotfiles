@@ -11,6 +11,30 @@ return {
     "folke/snacks.nvim",
     ---@type snacks.Config
     opts = {
+      picker = {
+        layouts = {
+          default = {
+            layout = {
+              box = "vertical",
+              width = 0.6,
+              height = 0.9,
+              {
+                box = "vertical",
+                border = "rounded",
+                title = "{title} {live} {flags}",
+                { win = "input", height = 1, border = "bottom" },
+                { win = "list", border = "none" },
+              },
+              { win = "preview", title = "{preview}", border = "rounded", height = 0.7 },
+            },
+          },
+          sidebar = {
+            layout = {
+              position = "right",
+            },
+          },
+        },
+      },
       dashboard = {
         enabled = false,
       },
