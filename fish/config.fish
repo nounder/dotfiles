@@ -38,6 +38,12 @@ alias s sudo
 alias s3="aws s3"
 alias ip=ipython
 
+alias br="bun run"
+alias brw="bun run --watch"
+alias brh="bun run --hot"
+alias bt="bun test"
+alias btw="bun test --watch"
+
 alias doka="docker kill (docker ps -q)"
 alias doc="docker compose"
 alias docu="doc up"
