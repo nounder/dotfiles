@@ -26,7 +26,9 @@ return {
         vtsls = {
           enabled = not is_cwd_deno,
           --cmd = { "deno", "--no-prompt", "-A", "npm:@vtsls/language-server", "--stdio" },
-          cmd = { "bunx", "@vtsls/language-server", "--stdio" },
+          --cmd = { "bunx", "--bun", "@vtsls/language-server", "--stdio" },
+          cmd = { "npx", "-y", "@vtsls/language-server", "--stdio" },
+          -- cmd = { "/Users/soji/bin/tsgo-build/tsgo", "lsp", "--stdio" },
           settings = {
             typescript = {
               preferences = {

@@ -1,6 +1,9 @@
 vim.keymap.del("n", ";")
 vim.keymap.del("n", "f")
 
+vim.keymap.set("n", ";;", "<C-W>w")
+vim.keymap.set("n", "<Space>\\", "<C-W>v")
+
 vim.keymap.set("n", "<return>", "<cmd>w<cr><esc>", { desc = "Save file" })
 vim.keymap.set("n", "<return>q", "<cmd>wq<cr><esc>", { desc = "Save file and quit" })
 
