@@ -112,7 +112,23 @@ function fish_prompt
     set_color --bold red
     echo -n '$ '
     set_color normal
+end
 
+function _change_cursor --on-variable fish_bind_mode
+    switch $fish_bind_mode
+        case default
+            # Block cursor for normal mode
+            echo -ne '\e[1 q'
+        case insert
+            # Line cursor for insert mode
+            echo -ne '\e[5 q'
+        case visual
+            # Optional: Beam cursor for visual mode
+            echo -ne '\e[3 q'
+        case replace_one
+            # Optional: Underline cursor for replace mode
+            echo -ne '\e[3 q'
+    end
 end
 
 function add_to_z --on-event fish_postexec
