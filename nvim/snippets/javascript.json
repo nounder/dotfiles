@@ -1,31 +1,31 @@
 {
   "Effect.tap": {
     "prefix": "et",
-    "body": "Effect.tap(${0}),"
+    "body": "Effect.tap(${0})"
   },
   "Effect.tap & Console.log": {
     "prefix": "etl",
-    "body": "Effect.tap(Console.log${0}),"
+    "body": "Effect.tap(Console.log${0})"
   },
   "Effect.gen": {
     "prefix": "eg",
-    "body": "Effect.gen(function* () {\n\t${0}\n}),"
+    "body": "Effect.gen(function* () {\n\t${0}\n})"
   },
   "Effect.andThen": {
     "prefix": "ee",
-    "body": "Effect.andThen(${0}),"
+    "body": "Effect.andThen(${0})"
   },
   "Effect Stream.tap": {
     "prefix": "est",
-    "body": "Stream.tap(${0}),"
+    "body": "Stream.tap(${0})"
   },
   "Effect Stream.tap & Console.log": {
     "prefix": "esl",
-    "body": "Stream.tap(Console.log${0}),"
+    "body": "Stream.tap(Console.log${0})"
   },
   "Effect Console.log": {
-    "prefix": "el",
-    "body": "Console.log(${0}),"
+    "prefix": "ecl",
+    "body": "Console.log(${0})"
   },
   "setImmediate": {
     "prefix": "sim",
@@ -556,8 +556,12 @@
     "body": "return (${1:arguments}) => ${2:statement}"
   },
   "yield": {
-    "prefix": "y",
+    "prefix": "yy",
     "body": "yield ${0}"
+  },
+  "yield star": {
+    "prefix": "y",
+    "body": "yield* ${0}"
   },
   "return this": {
     "prefix": "rt",
