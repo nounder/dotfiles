@@ -5,6 +5,17 @@ return {
     ---@module 'blink.cmp'
     ---@type blink.cmp.Config
     opts = {
+      sources = {
+        default = function()
+          return { "snippets", "lsp", "path" }
+        end,
+        -- Filter keywords
+        transform_items = function(_, items)
+          return vim.tbl_filter(function(item)
+            return item.kind ~= require("blink.cmp.types").CompletionItemKind.Keyword
+          end, items)
+        end,
+      },
       enabled = function()
         -- Disable for markdown or text filetypes
         local disabled_filetypes = {
