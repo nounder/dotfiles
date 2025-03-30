@@ -7,9 +7,10 @@ return {
   {
     "neovim/nvim-lspconfig",
 
-    -- disable LSP only when a buffer reads from stdin, ie. 'nvim -' AI!
     enabled = function()
-      return false
+      -- Check if buffer is reading from stdin
+      local is_stdin = vim.fn.expand('%') == ''
+      return not is_stdin
     end,
 
     ---@class PluginLspOpts
