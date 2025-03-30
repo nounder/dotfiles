@@ -7,6 +7,11 @@ return {
   {
     "neovim/nvim-lspconfig",
 
+    -- disable LSP only when a buffer reads from stdin, ie. 'nvim -' AI!
+    enabled = function()
+      return false
+    end,
+
     ---@class PluginLspOpts
     opts = {
       inlay_hints = {
