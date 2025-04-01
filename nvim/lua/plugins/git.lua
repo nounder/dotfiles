@@ -18,6 +18,13 @@ return {
         pattern = "gitcommit",
         command = "startinsert",
       })
+
+      vim.api.nvim_create_autocmd("FileType", {
+        pattern = "fugitive",
+        callback = function()
+          vim.keymap.set("n", "<Tab>", "=", { buffer = true })
+        end,
+      })
     end,
     keys = {
       {
@@ -62,8 +69,23 @@ return {
         desc = "Git pull",
       },
       {
-        "<leader>gs",
+        "<leader>gb",
         Snacks.picker.git_branches,
+        desc = "Git pull",
+      },
+      {
+        "<leader>gB",
+        "<Cmd>G blame<CR>",
+        desc = "Git blame",
+      },
+      {
+        "<leader>gs",
+        Snacks.picker.git_status,
+        desc = "Git status",
+      },
+      {
+        "<leader>gll",
+        Snacks.picker.git_log_line,
         desc = "Git pull",
       },
       {

@@ -8,6 +8,8 @@ return {
       svelte = { "dprint" },
       javascript = { "dprint" },
       typescript = { "dprint" },
+      javascriptreact = { "dprint" },
+      typescriptreact = { "dprint" },
       json = { "dprint" },
     },
 
