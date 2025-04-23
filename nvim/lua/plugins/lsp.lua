@@ -23,6 +23,11 @@ return {
         update_in_insert = true,
         underline = true,
         signs = false,
+        float = {
+          header = false,
+          focusable = true,
+          border = "rounded",
+        },
       },
       servers = {
         denols = {
