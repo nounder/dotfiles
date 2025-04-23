@@ -1,31 +1,38 @@
 {
-  "Effect.tap": {
-    "prefix": "et",
-    "body": "Effect.tap(${0})"
+  "plain function": {
+    "prefix": "c",
+    "body": ["const $1 = $0"],
+    "description": "const"
   },
-  "Effect.tap & Console.log": {
-    "prefix": "etl",
-    "body": "Effect.tap(Console.log${0})"
+  "async named function": {
+    "prefix": "anf",
+    "body": ["async function $1($2) {", "\t$3", "}"],
+    "description": "Async named function"
   },
-  "Effect.gen": {
-    "prefix": "eg",
-    "body": "Effect.gen(function* () {\n\t${0}\n})"
+  "export default": {
+    "prefix": "export default",
+    "body": ["export default $1"],
+    "description": "Export default"
   },
-  "Effect.andThen": {
-    "prefix": "ee",
-    "body": "Effect.andThen(${0})"
+  "export default function": {
+    "prefix": "edf",
+    "body": ["export default function $1($2) {", "\t$3", "}"],
+    "description": "Export default function"
   },
-  "Effect Stream.tap": {
-    "prefix": "est",
-    "body": "Stream.tap(${0})"
+  "export defauly async function": {
+    "prefix": "edaf",
+    "body": ["export default async function $1($2) {", "\t$3", "}"],
+    "description": "Export default async function"
   },
-  "Effect Stream.tap & Console.log": {
-    "prefix": "esl",
-    "body": "Stream.tap(Console.log${0})"
+  "export named async function": {
+    "prefix": "enaf",
+    "body": ["export async function $1($2) {", "\t$3", "}"],
+    "description": "Export named async function"
   },
-  "Effect Console.log": {
-    "prefix": "ecl",
-    "body": "Console.log(${0})"
+  "SvelteKit server load": {
+    "prefix": "skl",
+    "body": ["export async function load(req) {", "\t$0", "}"],
+    "description": "SvelteKit server loadd"
   },
   "setImmediate": {
     "prefix": "sim",
@@ -295,13 +302,21 @@
     "prefix": "la",
     "body": "let ${1:name} = await ${2:value}"
   },
-  "const assignment yielded": {
-    "prefix": "cy",
+  "const yield": {
+    "prefix": "cyy",
     "body": "const ${1:name} = yield ${2:value}"
   },
-  "let assignment yielded": {
-    "prefix": "ly",
+  "const yield star": {
+    "prefix": "cy",
+    "body": "const ${1:name} = yield* ${2:value}"
+  },
+  "let yield": {
+    "prefix": "lyy",
     "body": "let ${1:name} = yield ${2:value}"
+  },
+  "let yield star": {
+    "prefix": "ly",
+    "body": "let ${1:name} = yield* ${2:value}"
   },
   "const object": {
     "prefix": "co",
@@ -440,7 +455,7 @@
     "body": "({${1:arguments}}) => ${1:arguments}"
   },
   "arrow function with body": {
-    "prefix": "f",
+    "prefix": "fc",
     "body": "(${1:arguments}) => {\n\t${0}\n}"
   },
   "arrow function with return": {

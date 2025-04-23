@@ -1,47 +1,66 @@
 {
-  "plain function": {
-    "prefix": "c",
-    "body": ["const $1 = $0"],
-    "description": "const"
+  "Effect.addFinalizer": {
+    "prefix": "eaf",
+    "body": "Effect.addFinalizer(() => ${0})"
   },
-  "async named function": {
-    "prefix": "anf",
-    "body": ["async function $1($2) {", "\t$3", "}"],
-    "description": "Async named function"
+  "Effect.fork": {
+    "prefix": "eff",
+    "body": "Effect.fork(${0})"
   },
-  "named function": {
-    "prefix": "nf",
-    "body": ["function $1($2) {", "\t$3", "}"],
-    "description": "Named function"
+  "Effect.forkDaemon": {
+    "prefix": "effd",
+    "body": "Effect.forkDaemon(${0})"
   },
-  "export default": {
-    "prefix": "export default",
-    "body": ["export default $1"],
-    "description": "Export default"
+  "Effect pipe()": {
+    "prefix": "pi",
+    "body": "pipe(${0})"
   },
-  "export default function": {
-    "prefix": "edf",
-    "body": ["export default function $1($2) {", "\t$3", "}"],
-    "description": "Export default function"
+  "Effect.promise": {
+    "prefix": "ep",
+    "body": "Effect.promise(() => ${0})"
   },
-  "export defauly async function": {
-    "prefix": "edaf",
-    "body": ["export default async function $1($2) {", "\t$3", "}"],
-    "description": "Export default async function"
+  "Effect.fail": {
+    "prefix": "ef",
+    "body": "Effect.fail(${0})"
   },
-  "export named function": {
-    "prefix": "enf",
-    "body": ["export function $1($2) {", "\t$3", "}"],
-    "description": "Export named function"
+  "Effect.tap": {
+    "prefix": "et",
+    "body": "Effect.tap(${0})"
   },
-  "export named async function": {
-    "prefix": "enaf",
-    "body": ["export async function $1($2) {", "\t$3", "}"],
-    "description": "Export named async function"
+  "Effect.log": {
+    "prefix": "el",
+    "body": "Effect.log(${0})"
   },
-  "SvelteKit server load": {
-    "prefix": "skl",
-    "body": ["export async function load(req) {", "\t$0", "}"],
-    "description": "SvelteKit server loadd"
+  "Stream.tap": {
+    "prefix": "est",
+    "body": "Stream.tap(${0})"
+  },
+  "Stream.runForEach": {
+    "prefix": "esrf",
+    "body": "Stream.runForEach(${0})"
+  },
+  "Effect.tap & Console.log": {
+    "prefix": "etl",
+    "body": "Effect.tap(Console.log${0})"
+  },
+  "Effect.gen": {
+    "prefix": "eg",
+    "body": "Effect.gen(function* () {\n\t${0}\n})"
+  },
+  "Effect.andThen": {
+    "prefix": "ee",
+    "body": "Effect.andThen(${0})"
+  },
+  "Effect Stream.tap": {
+    "prefix": "est",
+    "body": "Stream.tap(${0})"
+  },
+  "Effect Stream.tap & Console.log": {
+    "prefix": "esl",
+    "body": "Stream.tap(Console.log${0})"
+  },
+  "Effect Console.log": {
+    "prefix": "ecl",
+    "body": "Console.log(${0})"
   }
 }
