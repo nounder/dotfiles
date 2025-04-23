@@ -27,6 +27,7 @@ vim.keymap.set("n", "<c-'>", function()
   Snacks.terminal(vim.o.shell, {
     cwd = LazyVim.root(),
     win = {
+      border = "rounded",
       wo = {
         wrap = false,
       },

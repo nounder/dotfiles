@@ -19,7 +19,7 @@ return {
 
       suggestion = {
         keymap = {
-          -- handled by link
+          -- handled by blink
           accept = false,
           next = "<C-]>",
           prev = "<C-[>",

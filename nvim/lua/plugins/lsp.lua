@@ -7,12 +7,6 @@ return {
   {
     "neovim/nvim-lspconfig",
 
-    enabled = function()
-      -- Check if buffer is reading from stdin
-      local is_stdin = vim.fn.expand('%') == ''
-      return not is_stdin
-    end,
-
     ---@class PluginLspOpts
     opts = {
       inlay_hints = {
@@ -25,6 +19,7 @@ return {
         signs = false,
         float = {
           header = false,
+          max_width = 140,
           focusable = true,
           border = "rounded",
         },
@@ -54,7 +49,7 @@ return {
           cmd = { "bunx", "emmet-ls", "--stdio" },
         },
         svelte = {
-          cmd = { "deno", "--no-prompt", "npm:svelte-language-server", "--stdio" },
+          --cmd = { "deno", "--no-prompt", "npm:svelte-language-server", "--stdio" },
           cmd = { "bunx", "svelte-language-server", "--stdio" },
         },
         jsonls = {
@@ -62,7 +57,7 @@ return {
           cmd = { "bunx", "vscode-json-languageserver", "--stdio" },
         },
         tailwindcss = {
-          enabled = false,
+          enabled = true,
           --cmd = { "deno", "-A", "npm:@tailwindcss/language-server", "--stdio" },
           cmd = { "bunx", "@tailwindcss/language-server", "--stdio" },
         },
