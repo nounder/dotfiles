@@ -33,7 +33,9 @@ alias shd "cd ~/.config/fish"
 alias nr "npm run"
 alias ns "npm start"
 alias vi nvim
-alias e nvim #edit-with-fallback
+alias e nvim
+alias e-js "nvim -c 'set filetype=typescript' -c 'set nomodified' -"
+alias p-js "dprint fmt --stdin main.ts"
 alias s sudo
 alias s3="aws s3"
 alias ip=ipython
