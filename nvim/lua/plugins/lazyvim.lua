@@ -13,7 +13,6 @@ return {
   },
   {
     "folke/noice.nvim",
-    enabled = true,
     opts = {
       presets = {
         lsp_doc_border = true,
@@ -23,6 +22,18 @@ return {
   {
     "rcarriga/nvim-notify",
     enabled = false,
+  },
+  {
+    "nvim-treesitter/nvim-treesitter-context",
+    opts = {
+      max_lines = 4,
+      --seperator = "─",
+      mode = "topline",
+    },
+    config = function()
+      local tsc = require("treesitter-context")
+      tsc.disable()
+    end,
   },
 
   {

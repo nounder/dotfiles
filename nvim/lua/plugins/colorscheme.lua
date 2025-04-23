@@ -11,6 +11,7 @@ return {
         DiffFile = { link = "GruvboxYellowBold" },
         BlinkCmpGhostText = { link = "GruvboxBg4" },
         NonText = { link = "GruvboxBg4" },
+        TreesitterContextBottom = { underline = true, sp = "Gray" },
         FlashLabel = { fg = "#ffffff" },
         StatusLine = { link = "Normal" },
         MsgArea = { link = "GruvboxFg4" },
