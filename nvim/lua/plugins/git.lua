@@ -1,6 +1,19 @@
 local Snacks = require("snacks")
 
 return {
+  {
+    "NeogitOrg/neogit",
+    dependencies = {
+      "nvim-lua/plenary.nvim",
+    },
+    keys = {
+      {
+        "<leader>gg",
+        "<cmd>Neogit kind=replace<CR>",
+        desc = "Open Git status (full)",
+      },
+    },
+  },
 
   {
     "sindrets/diffview.nvim",
@@ -47,11 +60,11 @@ return {
         "<leader>gx",
         "<cmd>Gvdiff<CR>",
       },
-      {
-        "<leader>gg",
-        "<cmd>tabnew | Git | only<CR>",
-        desc = "Open Git status (full)",
-      },
+      -- {
+      --   "<leader>gg",
+      --   "<cmd>tabnew | Git | only<CR>",
+      --   desc = "Open Git status (full)",
+      -- },
       {
         "<leader>gp",
         "<cmd>Git push<CR>",
