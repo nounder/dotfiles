@@ -11,7 +11,10 @@ set PATH \
     /opt/homebrew/bin \
     /opt/homebrew/sbin \
     $HOME/go/bin \
-    $PATH
+    $PATH \
+    $HOME/.bun/bin \
+    node_modules/.bin \
+    "../node_modules/.bin"
 
 set -x EDITOR (which nvim)
 
@@ -83,7 +86,6 @@ end
 function fish_mode_prompt
 end
 
-
 function fish_mode_indicator
     switch $fish_bind_mode
         case default
@@ -104,7 +106,6 @@ function fish_mode_indicator
     end
     set_color normal
 end
-
 
 function fish_prompt
     if not string match --quiet --regex '.*local1$' $hostname
@@ -165,7 +166,6 @@ function check_macos_dark_mode
     return 1 # false
 end
 
-
 function set_theme_mode -a new_mode --on-event fish_start --on-signal USR1
     if test -z "$new_mode"
         if check_macos_dark_mode
@@ -203,7 +203,6 @@ function set_kitty_theme -a new_mode --on-event theme_change
 
     echo chaning kitty
 end
-
 
 type -q direnv && direnv hook fish | source
 
