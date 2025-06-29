@@ -103,16 +103,60 @@ function M:update_files()
 end
 
 function M:get_completions(context, callback)
-  -- Check if cursor is right after @ symbol
-  if not context.line:match("@[^%s]*$") then
+  local line = context.line
+  local cursor_col = context.cursor[2]
+  
+  -- Get text before cursor
+  local before_cursor = line:sub(1, cursor_col)
+  
+  -- Debug: uncomment to see what's being matched
+  -- vim.notify("Line: '" .. line .. "', Before cursor: '" .. before_cursor .. "'", vim.log.levels.INFO)
+  
+  -- Check for different markdown link patterns
+  local should_complete = false
+  local insert_format = "plain"
+  
+  -- Pattern 1: @ symbol (existing)
+  if before_cursor:match("@[^%s]*$") then
+    should_complete = true
+    insert_format = "plain"
+  
+  -- Pattern 2: [[ wiki-style links
+  elseif before_cursor:match("%[%[[^%]]*$") then
+    should_complete = true
+    insert_format = "wiki"
+  
+  -- Pattern 3: []( markdown links  
+  elseif before_cursor:match("%]%([^%)]*$") then
+    should_complete = true
+    insert_format = "markdown"
+  end
+  
+  if not should_complete then
     return callback({ items = {} })
   end
   
   -- Update files if needed
   self:update_files()
   
-  -- Return cached items
-  callback({ items = self.items })
+  -- Transform items based on the detected pattern
+  local items = {}
+  for _, item in ipairs(self.items) do
+    local new_item = vim.deepcopy(item)
+    
+    if insert_format == "wiki" then
+      new_item.insertText = item.label .. "]]"
+    elseif insert_format == "markdown" then
+      new_item.insertText = item.label .. ")"
+    elseif insert_format == "bracket" then
+      local filename = vim.fn.fnamemodify(item.label, ":t")
+      new_item.insertText = filename .. "](" .. item.label .. ")"
+    end
+    
+    table.insert(items, new_item)
+  end
+  
+  callback({ items = items })
 end
 
 return M
