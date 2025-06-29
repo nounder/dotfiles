@@ -227,11 +227,28 @@ function M.goto_file()
   })
 end
 
+-- Insert file reference at cursor position
+local function insert_file_reference()
+  require('snacks').picker.files({
+    cwd = vim.fn.expand('%:p:h'),
+    confirm = function(picker, item)
+      picker:close()
+      if item then
+        local relative_path = vim.fn.fnamemodify(item.file, ':.')
+        local filename = vim.fn.fnamemodify(item.file, ':t')
+        local link_text = string.format('[%s](%s)', filename, relative_path)
+        vim.api.nvim_put({ link_text }, 'c', true, true)
+      end
+    end
+  })
+end
+
 function M.setup()
   vim.api.nvim_create_autocmd("FileType", {
     pattern = "markdown",
     callback = function(args)
       vim.keymap.set("n", "gd", M.goto_file, { buffer = args.buf, desc = "Goto file from fenced block" })
+      vim.keymap.set("n", "<leader>mf", insert_file_reference, { buffer = args.buf, desc = "Insert file link" })
     end,
   })
 end
