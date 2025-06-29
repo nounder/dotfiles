@@ -170,13 +170,25 @@ function M.goto_file()
   -- Set buffer options for safety
   vim.api.nvim_buf_set_option(code_bufnr, "bufhidden", "wipe")
   
-  -- Intercept save attempts and close buffer instead
-  vim.api.nvim_create_autocmd("BufWriteCmd", {
+  
+  -- Use BufWritePost to sync after formatting, then save markdown
+  vim.api.nvim_create_autocmd("BufWritePost", {
     buffer = code_bufnr,
     callback = function(args)
-      vim.api.nvim_buf_delete(args.buf, { force = true })
+      -- Sync the formatted content back to markdown
+      local sync_info = sync_buffers[args.buf]
+      if sync_info and vim.api.nvim_buf_is_valid(sync_info.md_bufnr) then
+        sync_to_markdown(args.buf, sync_info.md_bufnr, sync_info.fence_info)
+        -- Save the markdown file
+        vim.api.nvim_buf_call(sync_info.md_bufnr, function()
+          vim.cmd("write")
+        end)
+      end
     end,
   })
+  
+  -- Add a manual close command instead of auto-closing
+  vim.api.nvim_buf_set_keymap(code_bufnr, 'n', 'q', '<cmd>bd!<cr>', { noremap = true, silent = true })
   
   -- Track current code buffer
   current_code_buffer = code_bufnr
@@ -198,18 +210,18 @@ function M.goto_file()
     end,
   })
   
-  -- Clean up when buffer is deleted
-  vim.api.nvim_create_autocmd("BufDelete", {
+  -- Clean up when buffer is about to be deleted
+  vim.api.nvim_create_autocmd("BufUnload", {
     buffer = code_bufnr,
     callback = function()
-      -- Clean up temp file
-      if vim.fn.filereadable(temp_file) == 1 then
-        vim.fn.delete(temp_file)
-      end
-      -- Clean up tracking
+      -- Clean up tracking FIRST to prevent sync during deletion
       sync_buffers[code_bufnr] = nil
       if current_code_buffer == code_bufnr then
         current_code_buffer = nil
+      end
+      -- Clean up temp file
+      if vim.fn.filereadable(temp_file) == 1 then
+        vim.fn.delete(temp_file)
       end
     end,
   })
