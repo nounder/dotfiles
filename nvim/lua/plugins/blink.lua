@@ -7,8 +7,18 @@ return {
     opts = {
       sources = {
         default = function()
+          if vim.bo.filetype == "markdown" then
+            return { "markdown_files", "snippets" }
+          end
           return { "snippets", "lsp", "path" }
         end,
+        providers = {
+          markdown_files = {
+            name = "markdown_files",
+            module = "custom.markdown_files",
+            trigger_characters = { "@" },
+          },
+        },
         -- Filter keywords
         transform_items = function(_, items)
           return vim.tbl_filter(function(item)
@@ -17,9 +27,7 @@ return {
         end,
       },
       enabled = function()
-        -- Disable for markdown or text filetypes
         local disabled_filetypes = {
-          "markdown",
           "text",
           "snacks_picker_input",
         }
