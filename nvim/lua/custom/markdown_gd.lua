@@ -23,8 +23,8 @@ local function get_fence_info(bufnr, lnum)
   end
   for j = open_idx + 1, #lines do
     if lines[j]:match("^```") then
-      -- cursor must be before closing fence
-      if lnum < j then
+      -- cursor must be after opening fence and before closing fence
+      if lnum > open_idx and lnum < j then
         return {
           fence_line = lines[open_idx],
           start_line = open_idx,
@@ -100,8 +100,9 @@ function M.goto_file()
   
   -- Close existing code buffer if it exists
   if current_code_buffer and vim.api.nvim_buf_is_valid(current_code_buffer) then
-    vim.api.nvim_buf_delete(current_code_buffer, { force = true })
+    -- Clean up sync info before deleting buffer
     sync_buffers[current_code_buffer] = nil
+    vim.api.nvim_buf_delete(current_code_buffer, { force = true })
   end
   
   -- Create file next to markdown with ~snippet.ext naming
@@ -129,16 +130,6 @@ function M.goto_file()
     end,
   })
   
-  -- Auto-delete temp file when buffer is deleted
-  vim.api.nvim_create_autocmd("BufDelete", {
-    buffer = code_bufnr,
-    callback = function()
-      if vim.fn.filereadable(temp_file) == 1 then
-        vim.fn.delete(temp_file)
-      end
-    end,
-  })
-  
   -- Track current code buffer
   current_code_buffer = code_bufnr
   
@@ -163,6 +154,11 @@ function M.goto_file()
   vim.api.nvim_create_autocmd("BufDelete", {
     buffer = code_bufnr,
     callback = function()
+      -- Clean up temp file
+      if vim.fn.filereadable(temp_file) == 1 then
+        vim.fn.delete(temp_file)
+      end
+      -- Clean up tracking
       sync_buffers[code_bufnr] = nil
       if current_code_buffer == code_bufnr then
         current_code_buffer = nil
