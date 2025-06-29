@@ -6,8 +6,8 @@
 
 # Check if the correct number of arguments is provided
 if test (count $argv) -ne 4
-    echo "Usage: $argv[0] <input_file> <start_frame> <end_frame> <output_file>"
-    echo "Example: $argv[0] input.mp4 123 456 output.mp4"
+    echo "Usage: $argv[1] <input_file> <start_frame> <end_frame> <output_file>"
+    echo "Example: $argv[1] input.mp4 123 456 output.mp4"
     exit 1
 end
 

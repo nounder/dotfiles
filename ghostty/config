@@ -4,12 +4,14 @@
 theme = dark:GruvboxDark,light:catppuccin-latte
 font-size = 15
 font-family = "Fira Code"
+#font-family = "Comic Mono"
 background-opacity = 0.7
 background-blur-radius = 24
 command = /opt/homebrew/bin/fish
 # window-decoration = false
 # macos-titlebar-style = hidden
 macos-non-native-fullscreen = true
+macos-titlebar-style = tabs
 macos-option-as-alt = left
 window-padding-x = 6
 window-padding-y = 6

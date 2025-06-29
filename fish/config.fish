@@ -43,6 +43,8 @@ alias s sudo
 alias s3="aws s3"
 alias ip=ipython
 
+alias l="ls -a"
+
 alias br="bun run"
 alias brw="bun run --watch"
 alias brh="bun run --hot"

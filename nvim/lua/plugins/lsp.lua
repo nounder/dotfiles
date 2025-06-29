@@ -33,7 +33,7 @@ return {
           enabled = not is_cwd_deno,
           --cmd = { "deno", "--no-prompt", "-A", "npm:@vtsls/language-server", "--stdio" },
           --cmd = { "bunx", "--bun", "@vtsls/language-server", "--stdio" },
-          cmd = { "npx", "-y", "@vtsls/language-server", "--stdio" },
+          -- INSTALL: bun i -g @vtsls/language-server
           cmd = { "vtsls", "--stdio" },
           -- cmd = { "/Users/soji/bin/tsgo-build/tsgo", "lsp", "--stdio" },
           settings = {
@@ -59,7 +59,7 @@ return {
         },
         tailwindcss = {
           enabled = true,
-          --cmd = { "deno", "-A", "npm:@tailwindcss/language-server", "--stdio" },
+          -- INSTALL: bun i -g @tailwindcss/language-server
           cmd = { "tailwindcss-language-server", "--stdio" },
         },
         yamlls = {
