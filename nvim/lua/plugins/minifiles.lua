@@ -1,6 +1,6 @@
 return {
   "echasnovski/mini.files",
-  enabled = false,
+  enabled = true,
   opts = {
     options = {
       use_as_default_explorer = true,
