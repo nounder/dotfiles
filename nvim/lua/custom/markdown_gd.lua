@@ -309,15 +309,7 @@ local function insert_file_reference()
 end
 
 function M.setup()
-  vim.api.nvim_create_autocmd("FileType", {
-    pattern = "markdown",
-    callback = function(args)
-      vim.keymap.set("n", "gd", M.goto_file, { buffer = args.buf, desc = "Goto file from fenced block" })
-      vim.keymap.set("n", "<leader>mf", insert_file_reference, { buffer = args.buf, desc = "Insert file link" })
-    end,
-  })
+  -- Plugin setup is now handled by LazyVim configuration
 end
-
-M.setup()
 
 return M
