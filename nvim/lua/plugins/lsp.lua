@@ -25,6 +25,9 @@ return {
         },
       },
       servers = {
+        taplo = {
+          enabled = false,
+        },
         denols = {
           -- enabled = is_cwd_deno,
           enabled = false,
