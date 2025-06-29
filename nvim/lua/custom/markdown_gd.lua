@@ -8,34 +8,53 @@ local sync_buffers = {}
 -- Track current code buffer
 local current_code_buffer = nil
 
--- Detect if cursor is inside a fenced block and return the fence line and boundaries.
+-- Detect if cursor is inside a fenced code block using treesitter
 local function get_fence_info(bufnr, lnum)
-  local lines = vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)
-  local open_idx
-  for i = lnum, 1, -1 do
-    if lines[i]:match("^```") then
-      open_idx = i
-      break
-    end
-  end
-  if not open_idx then
+  local parser = vim.treesitter.get_parser(bufnr, "markdown")
+  if not parser then
     return nil
   end
-  for j = open_idx + 1, #lines do
-    if lines[j]:match("^```") then
-      -- cursor must be after opening fence and before closing fence
-      if lnum > open_idx and lnum < j then
+
+  local tree = parser:parse()[1]
+  local root = tree:root()
+  
+  -- Convert 1-based line number to 0-based for treesitter
+  local row = lnum - 1
+  local col = vim.api.nvim_win_get_cursor(0)[2]
+  
+  -- Query for fenced code blocks
+  local query = vim.treesitter.query.parse("markdown", [[
+    (fenced_code_block
+      (fenced_code_block_delimiter) @start
+      (code_fence_content) @content
+      (fenced_code_block_delimiter) @end) @block
+  ]])
+  
+  for id, node, metadata in query:iter_captures(root, bufnr, 0, -1) do
+    local capture_name = query.captures[id]
+    if capture_name == "block" then
+      local start_row, start_col, end_row, end_col = node:range()
+      
+      -- Check if cursor is within this code block
+      if row >= start_row and row <= end_row then
+        -- Get the fence info
+        local fence_start_row = start_row + 1 -- Convert to 1-based
+        local fence_end_row = end_row + 1     -- Convert to 1-based
+        
+        -- Get the opening fence line to extract language
+        local fence_line = vim.api.nvim_buf_get_lines(bufnr, start_row, start_row + 1, false)[1]
+        
         return {
-          fence_line = lines[open_idx],
-          start_line = open_idx,
-          end_line = j - 1,
-          content_start = open_idx + 1,
-          content_end = j - 1
+          fence_line = fence_line,
+          start_line = fence_start_row,
+          end_line = fence_end_row,
+          content_start = fence_start_row + 1,
+          content_end = fence_end_row - 1
         }
       end
-      return nil
     end
   end
+  
   return nil
 end
 
@@ -61,8 +80,37 @@ local function get_extension_from_lang(fence)
   end
 end
 
--- Extract code block content from markdown
+-- Extract code block content from markdown using treesitter
 local function get_code_block_content(md_bufnr, fence_info)
+  local parser = vim.treesitter.get_parser(md_bufnr, "markdown")
+  if not parser then
+    return {}
+  end
+
+  local tree = parser:parse()[1]
+  local root = tree:root()
+  
+  -- Query for fenced code blocks content only
+  local query = vim.treesitter.query.parse("markdown", [[
+    (fenced_code_block
+      (code_fence_content) @content) @block
+  ]])
+  
+  for id, node, metadata in query:iter_captures(root, md_bufnr, 0, -1) do
+    local capture_name = query.captures[id]
+    if capture_name == "content" then
+      local start_row, start_col, end_row, end_col = node:range()
+      local content_start_line = start_row + 1 -- Convert to 1-based
+      local content_end_line = end_row + 1     -- Convert to 1-based
+      
+      -- Check if this matches our fence_info range
+      if content_start_line == fence_info.content_start then
+        return vim.api.nvim_buf_get_lines(md_bufnr, start_row, end_row, false)
+      end
+    end
+  end
+  
+  -- Fallback to original method if treesitter fails
   if fence_info.content_start > fence_info.content_end then
     return {}
   end
