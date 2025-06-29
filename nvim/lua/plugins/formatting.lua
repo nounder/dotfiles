@@ -2,7 +2,8 @@ return {
   "stevearc/conform.nvim",
   opts = {
     formatters_by_ft = {
-      markdown = {}, -- This disables formatting for markdown
+      markdown = { "dprint" }, -- This disables formatting for markdown
+      html = { "dprint" },
       python = { "dprint" },
       sql = { "pg_format" },
       svelte = { "dprint" },
