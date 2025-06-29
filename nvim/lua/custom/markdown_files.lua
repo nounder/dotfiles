@@ -145,9 +145,9 @@ function M:get_completions(context, callback)
     local new_item = vim.deepcopy(item)
     
     if insert_format == "wiki" then
-      new_item.insertText = item.label .. "]]"
+      new_item.insertText = item.label
     elseif insert_format == "markdown" then
-      new_item.insertText = item.label .. ")"
+      new_item.insertText = item.label
     elseif insert_format == "bracket" then
       local filename = vim.fn.fnamemodify(item.label, ":t")
       new_item.insertText = filename .. "](" .. item.label .. ")"
