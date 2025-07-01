@@ -1,4 +1,4 @@
-#theme = "gruvbox_transparent"
+# theme = "gruvbox_transparent"
 theme = "base16_transparent"
 
 [editor]
@@ -12,7 +12,6 @@ gutters = []
 # cursor-line = "error"
 # Minimum severity to show a diagnostic on other lines:
 # other-lines = "error"
-
 
 [keys.normal]
 ret = ":write"

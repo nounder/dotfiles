@@ -5,5 +5,5 @@ load_dotenv = true
 prefix = [
   "~/Pads",
   "~/Projects",
-  "~/Hacks"
+  "~/Hacks",
 ]

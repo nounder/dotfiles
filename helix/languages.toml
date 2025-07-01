@@ -4,7 +4,6 @@
 # command = "bunx"
 # args = ["@tailwindcss/language-server", "--stdio"]
 
-
 # [language-server.svelteserver]
 # command = "deno"
 # args = ["run","-E","-R","-S=cpus,homedir,uid", "--allow-run", "--allow-write=.", "--allow-ffi","npm:svelte-language-server","--stdio"]
@@ -12,26 +11,23 @@
 # args = ["svelte-language-server", "--stdio"]
 # environment = {"DENO_FUTURE" = "1" }
 
-
 # [language-server.svelteserver]
 # command = "npx"
 # args = ["svelte-language-server", "--", "--stdio"]
 
-
 [[language]]
 name = "swift"
-language-servers = [ "sourcekit-lsp" ]
+language-servers = ["sourcekit-lsp"]
 formatter = { command = "swift-format", args = ["format"] }
 auto-format = true
-
 
 [language-server.sourcekit-lsp]
 command = "sourcekit-lsp"
 
 [[language]]
 name = "python"
-language-servers = [ "pyright", "ruff" ]
-formatter = { command = "ruff", args = ["format", "-" ] }
+language-servers = ["pyright", "ruff"]
+formatter = { command = "ruff", args = ["format", "-"] }
 auto-format = true
 
 [language-server.pyright]
@@ -71,7 +67,6 @@ suggest.imports.hosts = { "https://deno.land" = true }
 inlayHints.parameterNames.enabled = "all"
 inlayHints.parameterTypes.enabled = true
 inlayHints.variableTypes.enabled = true
-inlayHints.propertyDeclarationTypes.enabled  = true
+inlayHints.propertyDeclarationTypes.enabled = true
 inlayHints.functionLikeReturnTypes.enabled = true
 inlayHints.enumMemberValues.enabled = true
-

@@ -1,0 +1,50 @@
+{
+  "code": {
+    "prefix": "<",
+    "body": [
+      "```",
+      "$0",
+      "```"
+    ]
+  },
+  "code ts": {
+    "prefix": "<ts",
+    "body": [
+      "```ts",
+      "$0",
+      "```"
+    ]
+  },
+  "code tsx": {
+    "prefix": "<tsx",
+    "body": [
+      "```tsx",
+      "$0",
+      "```"
+    ]
+  },
+  "code js": {
+    "prefix": "<js",
+    "body": [
+      "```js",
+      "$0",
+      "```"
+    ]
+  },
+  "code jsx": {
+    "prefix": "<jsx",
+    "body": [
+      "```jsx",
+      "$0",
+      "```"
+    ]
+  },
+  "code py": {
+    "prefix": "<py",
+    "body": [
+      "```py",
+      "$0",
+      "```"
+    ]
+  }
+}
