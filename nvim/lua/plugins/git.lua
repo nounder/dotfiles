@@ -16,14 +16,23 @@ return {
   },
 
   {
+    "lewis6991/gitsigns.nvim",
+    opts = {
+      word_diff = true, -- Enable word-level diff highlighting show_deleted = true,
+    },
+  },
+
+  {
     "sindrets/diffview.nvim",
   },
+
   {
     "ruifm/gitlinker.nvim",
     dependencies = {
       "nvim-lua/plenary.nvim", -- required
     },
   },
+
   {
     "tpope/vim-fugitive",
     config = function()

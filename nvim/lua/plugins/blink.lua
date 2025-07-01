@@ -16,7 +16,7 @@ return {
           markdown_files = {
             name = "markdown_files",
             module = "custom.markdown_files",
-            trigger_characters = { "@", "[" },
+            --trigger_characters = { "@", "[" },
           },
         },
         -- Filter keywords
