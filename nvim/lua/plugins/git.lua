@@ -18,7 +18,7 @@ return {
   {
     "lewis6991/gitsigns.nvim",
     opts = {
-      word_diff = true, -- Enable word-level diff highlighting show_deleted = true,
+      --word_diff = true, -- Enable word-level diff highlighting show_deleted = true,
     },
   },
 
