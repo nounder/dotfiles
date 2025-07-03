@@ -47,6 +47,7 @@ end
 return {
   {
     "neovim/nvim-lspconfig",
+    enabled = not vim.env.NVIM_LIGHTWEIGHT,
     opts = {
       servers = {
         vtsls = {
