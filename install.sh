@@ -10,21 +10,34 @@ else
   LN_OPTS=""
 fi
 
-mkdir -p ~/.config
+CONFIG="$HOME/.config"
 
-cd ~/.config
+mkdir -p $CONFIG
 
-ln -s $LN_OPTS "$DOTFILES_DIR/kitty/" kitty
+safe_link() {
+  local source="$1"
+  local target="$2"
+  
+  # Skip if target exists and is not a symlink
+  if [ -e "$target" ] && [ ! -L "$target" ]; then
+    echo "⚠ $(basename "$target") exists - skipping"
+    return
+  fi
+  
+  # Remove existing symlink
+  [ -L "$target" ] && rm "$target"
+  
+  # Create new symlink
+  ln -s "$source" "$target"
+}
 
-ln -s $LN_OPTS "$DOTFILES_DIR/fish/" fish
+safe_link "$DOTFILES_DIR/kitty" "$CONFIG/kitty"
+safe_link "$DOTFILES_DIR/fish" "$CONFIG/fish"
+safe_link "$DOTFILES_DIR/helix" "$CONFIG/helix"
+safe_link "$DOTFILES_DIR/nvim" "$CONFIG/nvim"
+safe_link "$DOTFILES_DIR/ghostty" "$CONFIG/ghostty"
 
-ln -s $LN_OPTS "$DOTFILES_DIR/helix/" helix
+safe_link "$DOTFILES_DIR/tmux.conf" "$CONFIG/.tmux.conf"
 
-ln -s $LN_OPTS "$DOTFILES_DIR/nvim/" nvim
-
-ln -s $LN_OPTS "$DOTFILES_DIR/ghostty/" ghostty
-
-ln -s $LN_OPTS "$DOTFILES_DIR/tmux.conf" .tmux.conf
-
-mkdir -p direnv
-ln -s $LN_OPTS "$DOTFILES_DIR/direnv.toml" direnv/direnv.toml
+mkdir -p "$CONFIG/direnv"
+safe_link "$DOTFILES_DIR/direnv.toml" "$CONFIG/direnv/direnv.toml"
