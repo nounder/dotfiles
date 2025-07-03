@@ -36,6 +36,7 @@ safe_link "$DOTFILES_DIR/fish" "$CONFIG/fish"
 safe_link "$DOTFILES_DIR/helix" "$CONFIG/helix"
 safe_link "$DOTFILES_DIR/nvim" "$CONFIG/nvim"
 safe_link "$DOTFILES_DIR/ghostty" "$CONFIG/ghostty"
+safe_link "$DOTFILES_DIR/opencode" "$CONFIG/opencode"
 
 safe_link "$DOTFILES_DIR/tmux.conf" "$CONFIG/.tmux.conf"
 
