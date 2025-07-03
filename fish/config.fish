@@ -16,12 +16,14 @@ set PATH \
     node_modules/.bin \
     "../node_modules/.bin"
 
-set -x EDITOR (which nvim)
+set -x SHELL (which fish)
+
+if not set -q EDITOR
+    set -x EDITOR (which nvim)
+end
 
 set fzf_preview_file_cmd "bat --style=plain --color=always"
 set FZF_DEFAULT_OPTS '--cycle --layout=reverse --height=90% --preview-window=wrap --marker="*" --border --no-scrollbar --preview-window=border-left'
-
-set -x SHELL (which fish)
 
 set -x XDG_CONFIG_HOME "$HOME/.config"
 
