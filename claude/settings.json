@@ -7,7 +7,7 @@
       "Bash(gh:*)",
       "Bash(grep:*)",
       "Read(~/.zshrc)",
-      "*"
+      "mcp__context7:*(*)"
     ],
     "deny": []
   },

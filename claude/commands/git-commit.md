@@ -12,5 +12,5 @@ description: Create a git commit
 
 ## Your task
 
-Based on the above changes, create a single git commit.
+Based on staged changes, create a single git commit.
 If there are no staged changes, warn the user and do nothing.
