@@ -1,0 +1,4 @@
+#!/bin/sh
+
+exec bun i -g --latest @anthropic-ai/claude-code
+
