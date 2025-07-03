@@ -11,9 +11,8 @@ RUN apk add --no-cache \
     tmux \
     fzf
 
-# Get bun.js binary from official Docker image
-COPY --from=oven/bun:latest /usr/local/bin/bun /usr/local/bin/bun
-COPY --from=oven/bun:latest /usr/local/bin/bunx /usr/local/bin/bunx
+# Install bun.js using the official install script
+RUN curl -fsSL https://bun.sh/install | bash
 
 COPY . /root/dotfiles
 
