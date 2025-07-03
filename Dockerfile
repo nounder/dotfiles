@@ -11,6 +11,8 @@ RUN apk add --no-cache \
     ripgrep \ 
     tmux \
     fzf \
+    htop \
+    coreutils \
     # for bun
     libstdc++
 
