@@ -2,7 +2,7 @@ return {
   "stevearc/conform.nvim",
   opts = {
     formatters_by_ft = {
-      markdown = { "dprint" }, -- This disables formatting for markdown
+      markdown = { "dprint" },
       html = { "dprint" },
       python = { "dprint" },
       sql = { "pg_format" },
@@ -12,6 +12,8 @@ return {
       javascriptreact = { "dprint" },
       typescriptreact = { "dprint" },
       json = { "dprint" },
+      fish = { "fish_indent" },
+      sh = { "shfmt" },
     },
 
     formatters = {

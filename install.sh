@@ -17,16 +17,16 @@ mkdir -p $CONFIG
 safe_link() {
   local source="$1"
   local target="$2"
-  
+
   # Skip if target exists and is not a symlink
   if [ -e "$target" ] && [ ! -L "$target" ]; then
     echo "⚠ $(basename "$target") exists - skipping"
     return
   fi
-  
+
   # Remove existing symlink
   [ -L "$target" ] && rm "$target"
-  
+
   # Create new symlink
   ln -s "$source" "$target"
 }
@@ -46,10 +46,10 @@ mkdir -p "$HOME/.claude"
 safe_link "$DOTFILES_DIR/claude/settings.json" "$HOME/.claude/settings.json"
 safe_link "$DOTFILES_DIR/claude/commands" "$HOME/.claude/commands"
 
-# Install launch agent
-mkdir -p "$HOME/Library/LaunchAgents"
-if [ -f "$DOTFILES_DIR/org.libred.kbdcmd.plist" ]; then
-  cp "$DOTFILES_DIR/org.libred.kbdcmd.plist" "$HOME/Library/LaunchAgents/org.libred.kbdcmd.plist"
-  launchctl bootstrap gui/$(id -u) "$HOME/Library/LaunchAgents/org.libred.kbdcmd.plist"
+# Install launch agent only if LaunchAgents directory exists
+if [ -d "$HOME/Library/LaunchAgents" ]; then
+  if [ -f "$DOTFILES_DIR/org.libred.kbdcmd.plist" ]; then
+    cp "$DOTFILES_DIR/org.libred.kbdcmd.plist" "$HOME/Library/LaunchAgents/org.libred.kbdcmd.plist"
+    launchctl bootstrap gui/$(id -u) "$HOME/Library/LaunchAgents/org.libred.kbdcmd.plist"
+  fi
 fi
-
