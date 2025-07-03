@@ -41,3 +41,8 @@ safe_link "$DOTFILES_DIR/tmux.conf" "$CONFIG/.tmux.conf"
 
 mkdir -p "$CONFIG/direnv"
 safe_link "$DOTFILES_DIR/direnv.toml" "$CONFIG/direnv/direnv.toml"
+
+mkdir -p "$HOME/.claude"
+safe_link "$DOTFILES_DIR/claude/settings.json" "$HOME/.claude/settings.json"
+safe_link "$DOTFILES_DIR/claude/commands" "$HOME/.claude/commands"
+
