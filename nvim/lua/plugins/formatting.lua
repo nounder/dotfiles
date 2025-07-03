@@ -12,6 +12,7 @@ return {
       javascriptreact = { "dprint" },
       typescriptreact = { "dprint" },
       json = { "dprint" },
+      toml = { "dprint" },
       fish = { "fish_indent" },
       sh = { "shfmt" },
     },
