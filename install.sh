@@ -46,3 +46,10 @@ mkdir -p "$HOME/.claude"
 safe_link "$DOTFILES_DIR/claude/settings.json" "$HOME/.claude/settings.json"
 safe_link "$DOTFILES_DIR/claude/commands" "$HOME/.claude/commands"
 
+# Install launch agent
+mkdir -p "$HOME/Library/LaunchAgents"
+if [ -f "$DOTFILES_DIR/org.libred.kbdcmd.plist" ]; then
+  cp "$DOTFILES_DIR/org.libred.kbdcmd.plist" "$HOME/Library/LaunchAgents/org.libred.kbdcmd.plist"
+  launchctl bootstrap gui/$(id -u) "$HOME/Library/LaunchAgents/org.libred.kbdcmd.plist"
+fi
+
