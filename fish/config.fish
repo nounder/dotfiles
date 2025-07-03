@@ -113,7 +113,11 @@ end
 
 function fish_prompt
     if not string match --quiet --regex '.*local1$' $hostname
-        set_color blue
+        if string match --quiet --regex '.*\.local$' $hostname
+            set_color blue
+        else
+            set_color green
+        end
         echo -n "[$USER@"(prompt_hostname)"] "
     end
 
