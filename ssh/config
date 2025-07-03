@@ -1,0 +1,3 @@
+Host *.vm.*.internal
+    StrictHostKeyChecking no
+    UserKnownHostsFile /dev/null

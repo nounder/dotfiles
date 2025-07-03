@@ -54,3 +54,7 @@ if [ -d "$HOME/Library/LaunchAgents" ]; then
     launchctl bootstrap gui/$(id -u) "$HOME/Library/LaunchAgents/org.libred.kbdcmd.plist"
   fi
 fi
+
+if [ -f "$HOME/.ssh/config" ] && ! grep -q "Include.*dotfiles/ssh/config" "$HOME/.ssh/config" 2>/dev/null; then
+  echo "Include $DOTFILES_DIR/ssh/config" >> "$HOME/.ssh/config"
+fi
