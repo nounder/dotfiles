@@ -1,7 +1,7 @@
 return {
   {
     "zbirenbaum/copilot.lua",
-    enabled = true,
+    enabled = not vim.env.NVIM_LIGHTWEIGHT,
     opts = {
       filetypes = {
         text = false,
@@ -31,6 +31,7 @@ return {
 
   {
     "olimorris/codecompanion.nvim",
+    enabled = not vim.env.NVIM_LIGHTWEIGHT,
     opts = {},
     dependencies = {
       "nvim-lua/plenary.nvim",
