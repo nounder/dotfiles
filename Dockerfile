@@ -21,7 +21,8 @@ WORKDIR /root/dotfiles
 RUN chmod +x install.sh && ./install.sh
 
 # Set fish as default shell
-RUN echo "/usr/bin/fish" >> /etc/shells
+RUN echo "/usr/bin/fish" >> /etc/shells && \
+    chsh -s /usr/bin/fish root
 
 WORKDIR /root
 
