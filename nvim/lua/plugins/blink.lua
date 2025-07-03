@@ -8,17 +8,10 @@ return {
       sources = {
         default = function()
           if vim.bo.filetype == "markdown" then
-            return { "markdown_files", "snippets" }
+            return { "snippets", "lsp", "path", "omni" }
           end
-          return { "snippets", "lsp", "path" }
+          return { "snippets", "lsp", "path", "omni" }
         end,
-        providers = {
-          markdown_files = {
-            name = "markdown_files",
-            module = "custom.markdown_files",
-            --trigger_characters = { "@", "[" },
-          },
-        },
         -- Filter keywords
         transform_items = function(_, items)
           return vim.tbl_filter(function(item)
