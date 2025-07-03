@@ -20,5 +20,3 @@ vim.api.nvim_create_autocmd("BufWritePost", {
   pattern = vim.fn.expand("~/dotfiles/kitty/kitty.conf"),
   command = "silent !killall -SIGUSR1 kitty",
 })
-
-require("custom.markdown_gd").setup()
