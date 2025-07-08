@@ -112,14 +112,12 @@ function fish_mode_indicator
 end
 
 function fish_prompt
-    if not string match --quiet --regex '.*local1$' $hostname
-        if string match --quiet --regex '.*\.local$' $hostname
-            set_color blue
-        else
-            set_color green
-        end
-        echo -n "[$USER@"(prompt_hostname)"] "
+    if string match --quiet --regex '.*(\.local|Mac)' $hostname
+        set_color blue
+    else
+        set_color green
     end
+    echo -n "[$USER@"(prompt_hostname)"] "
 
     set_color brblack
     echo -n (prompt_pwd) (fish_git_prompt)
