@@ -8,7 +8,7 @@ return {
       sources = {
         default = function()
           if vim.bo.filetype == "markdown" then
-            return { "snippets", "lsp", "path", "omni" }
+            return { "lsp", "path", "omni" }
           end
           return { "snippets", "lsp", "path", "omni" }
         end,
