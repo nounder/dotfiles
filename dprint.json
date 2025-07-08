@@ -17,6 +17,9 @@
     "maxAttrsPerLine": 1,
     "component.selfClosing": true
   },
+  "markdown": {
+    "textWrap": "always"
+  },
   "sql": {
     "linesBetweenQueries": 3
   },

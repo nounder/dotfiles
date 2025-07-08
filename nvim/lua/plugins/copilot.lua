@@ -1,7 +1,7 @@
 return {
   {
     "zbirenbaum/copilot.lua",
-    enabled = not vim.env.NVIM_LIGHTWEIGHT,
+    enabled = false and not vim.env.NVIM_LIGHTWEIGHT,
     opts = {
       filetypes = {
         text = false,
