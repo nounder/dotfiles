@@ -47,6 +47,10 @@
     "prefix": "eg",
     "body": "Effect.gen(function* () {\n\t${0}\n})"
   },
+  "Effect.fn": {
+    "prefix": "efn",
+    "body": "Effect.fn(function* ($1) {\n\t${0}\n})"
+  },
   "Effect.andThen": {
     "prefix": "ee",
     "body": "Effect.andThen(${0})"

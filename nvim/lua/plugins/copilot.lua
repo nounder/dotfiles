@@ -1,7 +1,7 @@
 return {
   {
     "zbirenbaum/copilot.lua",
-    enabled = false and not vim.env.NVIM_LIGHTWEIGHT,
+    enabled = true and not vim.env.NVIM_LIGHTWEIGHT,
     opts = {
       filetypes = {
         text = false,
@@ -24,27 +24,6 @@ return {
           next = "<C-]>",
           prev = "<C-[>",
           dismiss = "<C-\\>",
-        },
-      },
-    },
-  },
-
-  {
-    "olimorris/codecompanion.nvim",
-    enabled = not vim.env.NVIM_LIGHTWEIGHT,
-    opts = {},
-    dependencies = {
-      "nvim-lua/plenary.nvim",
-      "nvim-treesitter/nvim-treesitter",
-    },
-  },
-
-  {
-    "saghen/blink.cmp",
-    opts = {
-      sources = {
-        per_filetype = {
-          codecompanion = { "codecompanion" },
         },
       },
     },

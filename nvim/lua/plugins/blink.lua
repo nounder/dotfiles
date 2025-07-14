@@ -55,10 +55,8 @@ return {
         },
       },
       fuzzy = {
-        implementation = vim.env.NVIM_LIGHTWEIGHT
-            and "lua"
-            or "prefer_rust_with_warning",
-      }
+        implementation = vim.env.NVIM_LIGHTWEIGHT and "lua" or "prefer_rust_with_warning",
+      },
     },
   },
 }

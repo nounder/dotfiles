@@ -7,8 +7,9 @@ return {
 
   {
     "nounder/markdown-snip.nvim",
+    dev = true,
     init = function()
-      require('markdown-snip').setup_completion()
+      require("markdown-snip").setup_completion()
     end,
     keys = {
       {
