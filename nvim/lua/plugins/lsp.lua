@@ -1,5 +1,5 @@
 local is_cwd_deno = vim.loop.fs_stat(vim.loop.cwd() .. "/deno.json") ~= nil
-    and vim.loop.fs_stat(vim.loop.cwd() .. "/bun.lock") == nil
+  and vim.loop.fs_stat(vim.loop.cwd() .. "/bun.lock") == nil
 
 return {
   {
@@ -40,7 +40,7 @@ return {
           settings = {
             typescript = {
               preferences = {
-                importModuleSpecifierEnding = "js",
+                importModuleSpecifierEnding = "minimal",
               },
             },
           },
