@@ -13,7 +13,6 @@ require("lazy").setup({
     patterns = {
       "nounder",
     },
-
     fallback = false,
   },
   spec = {
