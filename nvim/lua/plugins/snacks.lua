@@ -28,6 +28,9 @@ return {
       dashboard = {
         enabled = false,
       },
+      notifier = {
+        enabled = false,
+      },
     },
     keys = {
       { "ff", sim("<leader>ff"), expr = true },
