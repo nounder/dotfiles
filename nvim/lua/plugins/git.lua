@@ -18,8 +18,14 @@ return {
   {
     "lewis6991/gitsigns.nvim",
     opts = {
-      --word_diff = true, -- Enable word-level diff highlighting show_deleted = true,
+      word_diff = true,
     },
+    init = function()
+      -- Set highlight using LazyVim's init approach - runs before plugin loads
+      vim.api.nvim_set_hl(0, "GitSignsDeleteVirtLn", {
+        bg = "#3d1a1a",
+      })
+    end,
   },
 
   {
