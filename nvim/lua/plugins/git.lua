@@ -18,14 +18,22 @@ return {
   {
     "lewis6991/gitsigns.nvim",
     opts = {
-      word_diff = true,
+      diff_opts = {
+        algorithm = "patience",
+      },
     },
-    init = function()
-      -- Set highlight using LazyVim's init approach - runs before plugin loads
-      vim.api.nvim_set_hl(0, "GitSignsDeleteVirtLn", {
-        bg = "#3d1a1a",
-      })
-    end,
+    keys = {
+      {
+        "<leader>ud",
+        "<cmd>Gitsigns toggle_deleted<CR>",
+        desc = "Toggle deleted lines",
+      },
+      {
+        "<leader>uw",
+        "<cmd>Gitsigns toggle_word_diff<CR>",
+        desc = "Toggle word diff",
+      },
+    },
   },
 
   {

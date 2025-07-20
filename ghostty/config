@@ -5,7 +5,7 @@ theme = dark:GruvboxDark,light:catppuccin-latte
 font-size = 15
 font-family = "Fira Code"
 #font-family = "Comic Mono"
-background-opacity = 0.85
+background-opacity = 0.9
 
 background-blur-radius = 24
 command = /opt/homebrew/bin/fish
