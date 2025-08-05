@@ -32,7 +32,17 @@ return {
 
         ["<Tab>"] = { "fallback" },
         ["<C-e>"] = { "hide" },
-        ["<C-l>"] = { "select_and_accept" },
+        ["<C-l>"] = {
+          function()
+            local cmp = require("blink.cmp")
+            if cmp.is_visible() then
+              cmp.accept()
+            else
+              cmp.show()
+            end
+          end,
+        },
+        --["<C-l>"] = { "select_and_accept" },
         ["<C-;>"] = {
           LazyVim.cmp.map({ "snippet_forward", "ai_accept" }),
         },
