@@ -16,6 +16,9 @@ set PATH \
     node_modules/.bin \
     "../node_modules/.bin"
 
+set BUN_AGENT_RULE_DISABLED 1
+set CLAUDE_CODE_AGENT_RULE_DISABLED 1
+
 set -x SHELL (which fish)
 
 if not set -q EDITOR
@@ -213,3 +216,4 @@ end
 type -q direnv && direnv hook fish | source
 
 fzf_configure_bindings
+
