@@ -62,3 +62,7 @@ vim.keymap.set(
   ':let @+=substitute(system("git rev-parse --show-toplevel"), "\\n", "", "") . "/" . expand("%:~:.")<CR>',
   { noremap = true, silent = true, desc = "Copy buffer file path (relative)" }
 )
+
+vim.keymap.set("n", "z`", function()
+  require("utils.string-converter").toggle_string_quotes()
+end, { desc = "Toggle string quotes (' -> \" -> ` -> \")" })

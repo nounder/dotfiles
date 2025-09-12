@@ -1,6 +1,7 @@
 return {
   {
     "mfussenegger/nvim-dap",
+    enabled = false,
     opts = function()
       local dap = require("dap")
       if dap.adapters["pwa-node"] then
