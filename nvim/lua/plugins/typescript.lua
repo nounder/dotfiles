@@ -1,6 +1,5 @@
 -- Define a custom handler for signature help
 function custom_signature_help_handler(err, result, ctx, config)
-  print("yoo")
   if not result or not result.signatures then
     return
   end
