@@ -23,6 +23,7 @@ return {
         },
       },
       servers = {
+        sourcekit = {},
         taplo = {
           enabled = false,
         },
@@ -51,6 +52,7 @@ return {
           cmd = { "bunx", "emmet-ls", "--stdio" },
         },
         svelte = {
+          enabled = false,
           --cmd = { "deno", "--no-prompt", "npm:svelte-language-server", "--stdio" },
           cmd = { "bunx", "svelte-language-server", "--stdio" },
         },

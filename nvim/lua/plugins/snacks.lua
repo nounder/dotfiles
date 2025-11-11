@@ -45,12 +45,6 @@ return {
       { "gf", "<cmd>FzfLua lsp_finder<cr>" },
 
       {
-        "<leader>uz",
-        function()
-          Snacks.zen()
-        end,
-      },
-      {
         "<leader>fe",
         function()
           Snacks.explorer()
