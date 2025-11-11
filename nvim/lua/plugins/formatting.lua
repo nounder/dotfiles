@@ -36,6 +36,7 @@ return {
         sql = { "pg_format" },
         fish = { "fish_indent" },
         sh = { "shfmt" },
+        swift = { "swift" },
       },
     },
   },
