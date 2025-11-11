@@ -17,7 +17,6 @@ end
 alias er=edit-recent-cwd
 alias eg="nvim -c ':Neogit kind=replace'"
 
-
 function today
     set DAYS 0
 
@@ -60,14 +59,4 @@ function tomorrow
     end
 end
 
-
-
-function llama
-    mods -m llama3.1-70b $argv
-end
-
-
-alias ai="mods"
-alias ac="mods -C"
-alias ap="mods --role code"
-alias as="mods --role shell"
+alias oc="opencode"

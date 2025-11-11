@@ -1,7 +1,8 @@
 # See: 
 # https://ghostty.org/docs/config/reference
 
-theme = dark:GruvboxDark,light:catppuccin-latte
+theme = dark:Gruvbox Dark Hark,light:Catppuccin Latte
+#theme = Gruvbox Dark Hark
 font-size = 15
 font-family = "Fira Code"
 #font-family = "Comic Mono"
@@ -26,5 +27,9 @@ keybind = super+up=goto_split:up
 keybind = super+left=goto_split:left
 keybind = super+right=goto_split:right
 keybind = super+down=goto_split:down
+keybind = super+l=goto_split:next
+keybind = super+shift+equal=equalize_splits
+
+
 
 
