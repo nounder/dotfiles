@@ -217,3 +217,8 @@ type -q direnv && direnv hook fish | source
 
 fzf_configure_bindings
 
+
+# Added by LM Studio CLI (lms)
+set -gx PATH $PATH /Users/rg/.lmstudio/bin
+# End of LM Studio CLI section
+
