@@ -1,5 +1,6 @@
 return {
   {
+    -- https://github.com/stevearc/oil.nvim
     "stevearc/oil.nvim",
     enabled = false,
     opts = {

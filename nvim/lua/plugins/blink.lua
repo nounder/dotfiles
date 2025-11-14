@@ -1,5 +1,6 @@
 return {
   {
+    -- https://github.com/saghen/blink.cmp
     "saghen/blink.cmp",
 
     version = "1.*",

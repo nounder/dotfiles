@@ -8,6 +8,7 @@ end
 
 return {
   {
+    -- https://github.com/folke/snacks.nvim
     "folke/snacks.nvim",
     ---@type snacks.Config
     opts = {

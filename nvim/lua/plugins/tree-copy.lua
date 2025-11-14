@@ -1,5 +1,6 @@
 return {
   {
+    -- https://github.com/nounder/tree-copy.nvim
     "nounder/tree-copy.nvim",
     dev = true,
     config = function()

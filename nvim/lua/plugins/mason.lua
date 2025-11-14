@@ -1,5 +1,6 @@
 return {
   {
+    -- https://github.com/mason-org/mason.nvim
     "mason-org/mason.nvim",
     enabled = false,
     opts = {
@@ -8,6 +9,7 @@ return {
   },
 
   {
+    -- https://github.com/mason-org/mason-lspconfig.nvim
     "mason-org/mason-lspconfig.nvim",
     enabled = false,
   },

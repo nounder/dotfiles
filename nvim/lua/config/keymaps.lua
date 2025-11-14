@@ -65,4 +65,4 @@ vim.keymap.set(
 
 vim.keymap.set("n", "z`", function()
   require("utils.string-converter").toggle_string_quotes()
-end, { desc = "Toggle string quotes (' -> \" -> ` -> \")" })
+end, { desc = 'Toggle string quotes (\' -> " -> ` -> ")' })

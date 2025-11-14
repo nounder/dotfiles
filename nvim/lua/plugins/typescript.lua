@@ -45,6 +45,7 @@ end
 
 return {
   {
+    -- https://github.com/neovim/nvim-lspconfig
     "neovim/nvim-lspconfig",
     enabled = not vim.env.NVIM_LIGHTWEIGHT,
     opts = {
@@ -83,6 +84,7 @@ return {
   },
 
   {
+    -- https://github.com/davidosomething/format-ts-errors.nvim
     "davidosomething/format-ts-errors.nvim",
     opts = {
       add_markdown = true,

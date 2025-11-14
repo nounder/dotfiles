@@ -2,9 +2,13 @@ local Snacks = require("snacks")
 
 return {
   {
+    -- https://github.com/NeogitOrg/neogit
     "NeogitOrg/neogit",
     dependencies = {
       "nvim-lua/plenary.nvim",
+    },
+    opts = {
+      disable_hint = true,
     },
     keys = {
       {
@@ -16,6 +20,7 @@ return {
   },
 
   {
+    -- https://github.com/lewis6991/gitsigns.nvim
     "lewis6991/gitsigns.nvim",
     opts = {
       diff_opts = {
@@ -37,6 +42,7 @@ return {
   },
 
   {
+    -- https://github.com/sindrets/diffview.nvim
     "sindrets/diffview.nvim",
     cmd = {
       "DiffviewOpen",
@@ -48,6 +54,7 @@ return {
   },
 
   {
+    -- https://github.com/ruifm/gitlinker.nvim
     "ruifm/gitlinker.nvim",
     dependencies = {
       "nvim-lua/plenary.nvim", -- required
@@ -55,6 +62,7 @@ return {
   },
 
   {
+    -- https://github.com/tpope/vim-fugitive
     "tpope/vim-fugitive",
     keys = {
       {
@@ -136,6 +144,7 @@ return {
     },
   },
   {
+    -- https://github.com/tpope/vim-rhubarb
     -- Adds :GBrowse command
     -- Adds omni-completion for git messages
     "tpope/vim-rhubarb",
@@ -144,6 +153,7 @@ return {
     },
   },
   {
+    -- https://github.com/akinsho/git-conflict.nvim
     -- Adds :GitConflict* commands
     "akinsho/git-conflict.nvim",
     version = "*",
