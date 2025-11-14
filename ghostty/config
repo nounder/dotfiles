@@ -1,10 +1,10 @@
 # See: 
 # https://ghostty.org/docs/config/reference
 
-theme = dark:Gruvbox Dark Hark,light:Catppuccin Latte
+theme = dark:Gruvbox Dark Hard,light:Catppuccin Latte
 #theme = Gruvbox Dark Hark
 font-size = 15
-font-family = "Fira Code"
+font-family = "JetBrainsMono Nerd Font"
 #font-family = "Comic Mono"
 background-opacity = 0.85
 
