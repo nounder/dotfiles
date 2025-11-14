@@ -3,6 +3,7 @@ local is_cwd_deno = vim.loop.fs_stat(vim.loop.cwd() .. "/deno.json") ~= nil
 
 return {
   {
+    -- https://github.com/neovim/nvim-lspconfig
     "neovim/nvim-lspconfig",
 
     ---@class PluginLspOpts

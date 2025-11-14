@@ -1,5 +1,6 @@
 return {
   {
+    -- https://github.com/nvim-treesitter/nvim-treesitter
     "nvim-treesitter/nvim-treesitter",
     opts = {
       incremental_selection = {

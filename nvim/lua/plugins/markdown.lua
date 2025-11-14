@@ -1,11 +1,13 @@
 return {
   {
+    -- https://github.com/MeanderingProgrammer/render-markdown.nvim
     -- disable buffer decorations
     "MeanderingProgrammer/render-markdown.nvim",
     enabled = false,
   },
 
   {
+    -- https://github.com/nounder/markdown-snip.nvim
     "nounder/markdown-snip.nvim",
     dev = false,
     init = function()

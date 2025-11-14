@@ -1,5 +1,6 @@
 return {
   {
+    -- https://github.com/ellisonleao/gruvbox.nvim
     "ellisonleao/gruvbox.nvim",
     priority = 1000,
     opts = {
@@ -23,6 +24,7 @@ return {
   },
 
   {
+    -- https://github.com/folke/tokyonight.nvim
     "folke/tokyonight.nvim",
     opts = {
       transparent = true,
@@ -34,6 +36,7 @@ return {
   },
 
   {
+    -- https://github.com/LazyVim/LazyVim
     "LazyVim/LazyVim",
     priority = 1000,
     opts = {

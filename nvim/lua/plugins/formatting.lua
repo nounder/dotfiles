@@ -13,6 +13,7 @@ local dprint_supported = {
 
 return {
   {
+    -- https://github.com/stevearc/conform.nvim
     "stevearc/conform.nvim",
     opts = function(_, opts)
       opts.formatters_by_ft = opts.formatters_by_ft or {}
@@ -30,6 +31,7 @@ return {
     end,
   },
   {
+    -- https://github.com/stevearc/conform.nvim
     "stevearc/conform.nvim",
     opts = {
       formatters_by_ft = {
