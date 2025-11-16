@@ -54,7 +54,6 @@ return {
       "DiffviewRefresh",
     },
     opts = {
-      enhanced_diff_hl = true,
       keymaps = {
         view = {
           { "n", "q", "<cmd>DiffviewClose<cr>", { desc = "Close diffview" } },
@@ -120,6 +119,14 @@ return {
               end
             end
           end
+        end,
+      })
+
+      -- Make q keybinding work in diffview://null buffers
+      vim.api.nvim_create_autocmd("BufEnter", {
+        pattern = "diffview://*",
+        callback = function(ev)
+          vim.keymap.set("n", "q", "<cmd>DiffviewClose<cr>", { buffer = ev.buf, desc = "Close diffview" })
         end,
       })
     end,
