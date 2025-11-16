@@ -8,6 +8,9 @@ return {
     ---@module 'blink.cmp'
     ---@type blink.cmp.Config
     opts = {
+      cmdline = {
+        enabled = false,
+      },
       sources = {
         default = function()
           if vim.bo.filetype == "markdown" then
