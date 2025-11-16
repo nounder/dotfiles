@@ -1,4 +1,6 @@
 {
+  "showWelcomeMessage": true,
+  "editorMode": "vim",
   "permissions": {
     "allow": [
       "Bash(bun run lint)",
@@ -13,5 +15,6 @@
   "env": {
     "DISABLE_AUTOUPDATER": "0"
   },
-  "alwaysThinkingEnabled": false
+  "alwaysThinkingEnabled": false,
+  "defaultMode": "acceptEdits"
 }
