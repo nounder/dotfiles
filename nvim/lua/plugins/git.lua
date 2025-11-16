@@ -51,6 +51,9 @@ return {
       "DiffviewFocusFiles",
       "DiffviewRefresh",
     },
+    opts = {
+      enhanced_diff_hl = true,
+    },
   },
 
   {
