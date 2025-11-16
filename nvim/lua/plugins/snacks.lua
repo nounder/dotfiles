@@ -25,6 +25,13 @@ return {
             },
           },
         },
+        win = {
+          input = {
+            keys = {
+              ["<Esc>"] = { "close", mode = { "n", "i" } },
+            },
+          },
+        },
       },
       dashboard = {
         enabled = false,
@@ -37,13 +44,25 @@ return {
       { "ff", sim("<leader>ff"), expr = true },
       { "fr", sim("<leader>fr"), expr = true },
 
-      { "<leader>fo", "<cmd>FzfLua resume<cr>", desc = "Resume" },
+      {
+        "<leader>fo",
+        function()
+          Snacks.picker.resume({})
+        end,
+        desc = "Resume",
+      },
       { "fo", sim("<leader>fo"), expr = true },
 
-      { "<leader>fl", "<cmd>FzfLua grep_curbuf<cr>", desc = "Search in Current Buffer" },
+      {
+        "<leader>fl",
+        function()
+          Snacks.picker.lines({
+            layout = "ivy_split",
+          })
+        end,
+        desc = "Resume",
+      },
       { "fl", sim("<leader>fl"), expr = true },
-
-      { "gf", "<cmd>FzfLua lsp_finder<cr>" },
 
       {
         "<leader>fe",
