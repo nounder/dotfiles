@@ -1,20 +1,31 @@
 {
-  "showWelcomeMessage": true,
-  "editorMode": "vim",
+ "defaultMode": "acceptEdits",
+  "env": {
+    "DISABLE_AUTOUPDATER": "0"
+  },
   "permissions": {
     "allow": [
-      "Bash(bun run lint)",
+      "Bash(bun run:*)",
       "Bash(bun test:*)",
-      "Bash(find)",
+      "Bash(curl:*)",
+      "Bash(find:*)",
       "Bash(gh:*)",
       "Bash(grep:*)",
+      "Bash(lsof:*)",
+      "Bash(xargs kill:*)",
+      "Bash(dprint fmt:*)",
+      "Bash(git fetch)",
+      "Bash(git pull)",
+      "Bash(git commit)",
       "Read(~/.zshrc)"
     ],
     "deny": []
   },
-  "env": {
-    "DISABLE_AUTOUPDATER": "0"
+  "enabledPlugins": {
+    "commit-commands@claude-code-plugins": true,
+    "dprint-formatter@local-plugins": true
   },
-  "alwaysThinkingEnabled": false,
-  "defaultMode": "acceptEdits"
+  "alwaysThinkingEnabled": true,
+  "showWelcomeMessage": true,
+  "editorMode": "vim"
 }
