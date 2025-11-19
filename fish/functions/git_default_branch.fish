@@ -1,4 +1,4 @@
-function dvm --description "Open Diffview comparing to default branch (main/master)"
+function git_default_branch --description "Get the default branch (main/master)"
     # Try to get the default branch from remote HEAD
     set -l default_branch (git symbolic-ref refs/remotes/origin/HEAD 2>/dev/null | sed 's@^refs/remotes/origin/@@')
 
@@ -14,5 +14,5 @@ function dvm --description "Open Diffview comparing to default branch (main/mast
         end
     end
 
-    dv $default_branch
+    echo $default_branch
 end
