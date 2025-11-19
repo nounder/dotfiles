@@ -5,25 +5,34 @@ function git_tree_enter
         return 1
     end
 
-    # If we're inside a worktree, operate from the primary repo instead
+    # If we're inside a worktree, cd into the original repo first
     set -l git_dir (git rev-parse --git-dir)
     set -l git_common_dir (git rev-parse --git-common-dir)
+
+    # Make paths absolute
     if not string match -r '^/' -- $git_dir
         set git_dir "$PWD/$git_dir"
     end
     if not string match -r '^/' -- $git_common_dir
         set git_common_dir "$PWD/$git_common_dir"
     end
+
+    # Check if we're in a worktree by comparing git-dir with git-common-dir
     if test "$git_dir" != "$git_common_dir"
         set -l repo_root_from_common (dirname $git_common_dir)
         if not test -d "$repo_root_from_common"
             echo "Error: Could not locate original git repository" >&2
             return 1
         end
-        cd "$repo_root_from_common"
+        echo "Currently in a worktree, changing to original repository: $repo_root_from_common"
+        cd "$repo_root_from_common" >/dev/null
+        if not test $status -eq 0
+            echo "Error: Failed to change directory to original repository" >&2
+            return 1
+        end
     end
 
-    # Get the git repository root
+    # Get the git repository root (should now be the original repo if we were in a worktree)
     set repo_root (git rev-parse --show-toplevel)
 
     # Check if tree directory exists
@@ -64,7 +73,7 @@ function git_tree_enter
             end
         end
     end
-    cd "$worktree_path"
+    cd "$worktree_path" >/dev/null
 end
 
 # Get list of all git branches for autocomplete
