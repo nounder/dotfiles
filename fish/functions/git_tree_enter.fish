@@ -47,27 +47,21 @@ function git_tree_enter
 
     set branch_name $argv[1]
 
-    # Check if branch exists
-    if not git rev-parse --verify "$branch_name" >/dev/null 2>&1
-        echo "Branch '$branch_name' not found locally. Fetching from remote..."
-        git fetch
-
-        # Try again after fetch
-        if not git rev-parse --verify "$branch_name" >/dev/null 2>&1
-            echo "Error: Branch '$branch_name' does not exist" >&2
-            return 1
-        end
-    end
-
     # CD into the worktree directory
     set worktree_path "$tree_dir/$branch_name"
     if not test -d "$worktree_path"
         set -l worktree_parent (dirname $worktree_path)
         mkdir -p "$worktree_parent"
         echo "Creating worktree at $worktree_path"
-        if not git worktree add "$worktree_path" "$branch_name"
-            echo "Error: Failed to create worktree at $worktree_path" >&2
-            return 1
+
+        # Try to create worktree with existing branch
+        if not git worktree add "$worktree_path" "$branch_name" 2>/dev/null
+            # Branch doesn't exist, create it from current HEAD
+            echo "Branch '$branch_name' doesn't exist. Creating new branch..."
+            if not git worktree add -b "$branch_name" "$worktree_path"
+                echo "Error: Failed to create worktree at $worktree_path" >&2
+                return 1
+            end
         end
     end
     cd "$worktree_path"
