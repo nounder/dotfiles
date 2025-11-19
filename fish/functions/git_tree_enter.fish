@@ -5,6 +5,24 @@ function git_tree_enter
         return 1
     end
 
+    # If we're inside a worktree, operate from the primary repo instead
+    set -l git_dir (git rev-parse --git-dir)
+    set -l git_common_dir (git rev-parse --git-common-dir)
+    if not string match -r '^/' -- $git_dir
+        set git_dir "$PWD/$git_dir"
+    end
+    if not string match -r '^/' -- $git_common_dir
+        set git_common_dir "$PWD/$git_common_dir"
+    end
+    if test "$git_dir" != "$git_common_dir"
+        set -l repo_root_from_common (dirname $git_common_dir)
+        if not test -d "$repo_root_from_common"
+            echo "Error: Could not locate original git repository" >&2
+            return 1
+        end
+        cd "$repo_root_from_common"
+    end
+
     # Get the git repository root
     set repo_root (git rev-parse --show-toplevel)
 
@@ -43,6 +61,15 @@ function git_tree_enter
 
     # CD into the worktree directory
     set worktree_path "$tree_dir/$branch_name"
+    if not test -d "$worktree_path"
+        set -l worktree_parent (dirname $worktree_path)
+        mkdir -p "$worktree_parent"
+        echo "Creating worktree at $worktree_path"
+        if not git worktree add "$worktree_path" "$branch_name"
+            echo "Error: Failed to create worktree at $worktree_path" >&2
+            return 1
+        end
+    end
     cd "$worktree_path"
 end
 
