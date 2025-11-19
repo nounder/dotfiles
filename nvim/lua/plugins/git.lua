@@ -4,6 +4,7 @@ return {
   {
     -- https://github.com/NeogitOrg/neogit
     "NeogitOrg/neogit",
+    cmd = "Neogit",
     dependencies = {
       "nvim-lua/plenary.nvim",
     },
