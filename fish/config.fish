@@ -38,8 +38,6 @@ alias c="pbcopy"
 alias p="p"
 alias shc "vi ~/.config/fish/config.fish"
 alias shd "cd ~/.config/fish"
-alias nr "npm run"
-alias ns "npm start"
 alias vi nvim
 alias e "$EDITOR"
 alias e-js "nvim -c 'set filetype=typescript' -c 'set nomodified' -"
@@ -63,9 +61,6 @@ alias docd="doc down"
 alias doce="doc exec"
 alias docl="doc logs"
 
-alias dve="devcontainers exec --workspace-folder ."
-alias dvu="devcontainers up --workspace-folder ."
-
 alias tf="terraform"
 
 alias p="less -r"
@@ -79,18 +74,16 @@ alias tc="cd ~/.config/kitty/ && nvim kitty.conf"
 alias gc="git checkout"
 alias gd="git_cd_root"
 alias gf="git fetch"
+alias gg="nvim -c 'lua require(\"neogit\").open()'"
 alias gp="git pull"
 alias gs="git switch"
 alias gt="git_tree_enter"
 alias gta="git worktree add"
 alias gtr="git_tree_remove"
+alias gca="git commit --amend"
 
 alias gc1="git clone --depth=1"
 alias py="python"
-
-alias dt="deno task"
-alias dr="deno run --allow-read --allow-sys --allow-env --allow-net"
-alias dw="deno run --allow-read --allow-sys --allow-env --allow-net --watch"
 
 function fish_greeting
 end
