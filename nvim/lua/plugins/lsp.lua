@@ -32,9 +32,9 @@ return {
           -- enabled = is_cwd_deno,
           enabled = false,
         },
-        tsgo = {},
+        --tsgo = {},
         vtsls = {
-          enabled = false and not is_cwd_deno,
+          enabled = true and not is_cwd_deno,
           --cmd = { "deno", "--no-prompt", "-A", "npm:@vtsls/language-server", "--stdio" },
           --cmd = { "bunx", "--bun", "@vtsls/language-server", "--stdio" },
           -- INSTALL: bun i -g @vtsls/language-server
