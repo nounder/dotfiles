@@ -83,7 +83,7 @@ alias gp="git pull"
 alias gs="git switch"
 alias gt="git_tree_enter"
 alias gta="git worktree add"
-alias gtr="git worktree remove"
+alias gtr="git_tree_remove"
 
 alias gc1="git clone --depth=1"
 alias py="python"
