@@ -66,9 +66,6 @@ alias docl="doc logs"
 alias dve="devcontainers exec --workspace-folder ."
 alias dvu="devcontainers up --workspace-folder ."
 
-alias g="kitten hyperlinked_grep"
-alias hg="kitten hyperlinked_grep"
-
 alias tf="terraform"
 
 alias p="less -r"
@@ -80,6 +77,14 @@ alias ec="cd ~/.config/nvim/ && nvim"
 alias tc="cd ~/.config/kitty/ && nvim kitty.conf"
 
 alias gc="git checkout"
+alias gd="git_cd_root"
+alias gf="git fetch"
+alias gp="git pull"
+alias gs="git switch"
+alias gt="git_tree_enter"
+alias gta="git worktree add"
+alias gtr="git worktree remove"
+
 alias gc1="git clone --depth=1"
 alias py="python"
 
@@ -217,8 +222,6 @@ type -q direnv && direnv hook fish | source
 
 fzf_configure_bindings
 
-
 # Added by LM Studio CLI (lms)
 set -gx PATH $PATH /Users/rg/.lmstudio/bin
 # End of LM Studio CLI section
-
