@@ -60,22 +60,31 @@ function git_tree_enter
 
     set branch_name $argv[1]
 
+    # Check if branch exists
+    if not git show-ref --verify --quiet "refs/heads/$branch_name"
+        echo "Error: Branch '$branch_name' does not exist" >&2
+        return 1
+    end
+
     # CD into the worktree directory
     set worktree_path "$tree_dir/$branch_name"
+
+    # Check if we're already in the target worktree
+    set -l current_path (pwd)
+    if string match -q "$worktree_path*" "$current_path"
+        echo "Already in worktree '$branch_name'"
+        return 0
+    end
     if not test -d "$worktree_path"
         set -l worktree_parent (dirname $worktree_path)
         mkdir -p "$worktree_parent"
         set -l relative_wt (string replace -r "^$repo_root/" "" "$worktree_path")
         echo "Creating worktree at '$relative_wt'"
 
-        # Try to create worktree with existing branch
-        if not git worktree add "$worktree_path" "$branch_name" 2>/dev/null
-            # Branch doesn't exist, create it from current HEAD
-            echo "Branch '$branch_name' doesn't exist. Creating new branch..."
-            if not git worktree add -b "$branch_name" "$worktree_path"
-                echo "Error: Failed to create worktree" >&2
-                return 1
-            end
+        # Create worktree with existing branch
+        if not git worktree add "$worktree_path" "$branch_name"
+            echo "Error: Failed to create worktree" >&2
+            return 1
         end
     end
     set -l relative_wt (string replace -r "^$repo_root/" "" "$worktree_path")

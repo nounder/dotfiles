@@ -22,10 +22,10 @@ function git_tree_remove
     set -l git_common_dir (git rev-parse --git-common-dir)
 
     # Make paths absolute
-    if not string match -r '^/' -- $git_dir
+    if not string match -qr '^/' -- $git_dir
         set git_dir "$PWD/$git_dir"
     end
-    if not string match -r '^/' -- $git_common_dir
+    if not string match -qr '^/' -- $git_common_dir
         set git_common_dir "$PWD/$git_common_dir"
     end
 
@@ -56,13 +56,26 @@ function git_tree_remove
     if test -n "$worktree_info"
         set worktree_path (echo $worktree_info | string match -r "^worktree (.+)" | string split ' ')[2]
     else
-        echo "Error: No worktree found for branch '$branch_name'" >&2
-        return 1
+        # No worktree found for this branch - might have been created incorrectly
+        # Try to find a worktree directory by name in tree/
+        set -l tree_dir "$repo_root/tree"
+        set -l potential_path "$tree_dir/$branch_name"
+        set -l dir_exists (test -d "$potential_path"; echo $status)
+
+        if test $dir_exists -eq 0
+            echo "Warning: No git worktree found for branch '$branch_name', but directory exists at '$potential_path'" >&2
+            set worktree_path "$potential_path"
+        else
+            echo "Error: No worktree found for branch '$branch_name'" >&2
+            return 1
+        end
     end
 
     # Check if working tree is clean (unless -f is passed)
     if test $force_flag -eq 0
-        if test -n "$(git -C "$worktree_path" status --porcelain 2>/dev/null)"
+        set -l status_output (git -C "$worktree_path" status --porcelain 2>/dev/null)
+
+        if test -n "$status_output"
             echo "Error: Working tree for '$branch_name' has uncommitted changes" >&2
             echo "Use -f to force removal" >&2
             return 1
@@ -86,12 +99,57 @@ function git_tree_remove
 
     # Remove the worktree
     echo "Removing worktree for branch '$branch_name'..."
-    if not git worktree remove "$worktree_path"
-        echo "Error: Failed to remove worktree at $worktree_path" >&2
-        return 1
+
+    # Try git worktree remove first
+    git worktree remove "$worktree_path" 2>/dev/null
+    set -l worktree_remove_status $status
+
+    if test $worktree_remove_status -ne 0
+        # If git worktree remove fails (e.g., worktree was created with incorrect branch),
+        # manually remove the directory and ensure we're back at the root
+        echo "Warning: git worktree remove failed, manually removing directory..." >&2
+
+        # Ensure we're not in the directory we're trying to remove
+        cd "$repo_root" 2>/dev/null
+        set -l dir_exists (test -d "$worktree_path"; echo $status)
+
+        # Remove the directory
+        if test $dir_exists -eq 0
+            rm -rf "$worktree_path"
+            set -l rm_status $status
+
+            if test $rm_status -eq 0
+                echo "Directory removed successfully."
+                # Try to prune the worktree from git's records
+                git worktree prune 2>/dev/null
+            else
+                echo "Error: Failed to remove directory at $worktree_path" >&2
+                return 1
+            end
+        else
+            echo "Warning: Directory already removed or doesn't exist" >&2
+        end
+    else
+        echo "Worktree removed successfully."
     end
 
-    echo "Worktree removed successfully."
+    # Delete the branch if it exists
+    git show-ref --verify --quiet "refs/heads/$branch_name"
+    set -l branch_exists $status
+
+    if test $branch_exists -eq 0
+        echo "Deleting branch '$branch_name'..."
+        git branch -D "$branch_name" 2>/dev/null
+        set -l branch_delete_status $status
+
+        if test $branch_delete_status -ne 0
+            echo "Warning: Failed to delete branch '$branch_name'" >&2
+        else
+            echo "Branch deleted successfully."
+        end
+    else
+        echo "Note: Branch '$branch_name' doesn't exist or was already deleted" >&2
+    end
 end
 
 # Get list of worktree branches for autocomplete
