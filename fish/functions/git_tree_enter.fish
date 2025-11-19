@@ -10,10 +10,10 @@ function git_tree_enter
     set -l git_common_dir (git rev-parse --git-common-dir)
 
     # Make paths absolute
-    if not string match -r '^/' -- $git_dir
+    if not string match -qr '^/' -- $git_dir
         set git_dir "$PWD/$git_dir"
     end
-    if not string match -r '^/' -- $git_common_dir
+    if not string match -qr '^/' -- $git_common_dir
         set git_common_dir "$PWD/$git_common_dir"
     end
 
@@ -24,10 +24,14 @@ function git_tree_enter
             echo "Error: Could not locate original git repository" >&2
             return 1
         end
-        echo "Currently in a worktree, changing to original repository: $repo_root_from_common"
+        # Calculate relative path using string manipulation
+        set -l current_path (pwd)
+        set -l relative_wt (string replace -r "^$repo_root_from_common/" "" "$current_path")
+        echo "Currently in worktree '$relative_wt'"
+        echo "cd into main repo '$repo_root_from_common'"
         cd "$repo_root_from_common" >/dev/null
         if not test $status -eq 0
-            echo "Error: Failed to change directory to original repository" >&2
+            echo "Error: Failed to cd into main repo" >&2
             return 1
         end
     end
@@ -50,8 +54,8 @@ function git_tree_enter
 
     # Check if branch name argument is provided
     if test (count $argv) -eq 0
-        echo "Error: Branch name required as first argument" >&2
-        return 1
+        # No branch name provided, just stay in main repo
+        return 0
     end
 
     set branch_name $argv[1]
@@ -61,18 +65,21 @@ function git_tree_enter
     if not test -d "$worktree_path"
         set -l worktree_parent (dirname $worktree_path)
         mkdir -p "$worktree_parent"
-        echo "Creating worktree at $worktree_path"
+        set -l relative_wt (string replace -r "^$repo_root/" "" "$worktree_path")
+        echo "Creating worktree at '$relative_wt'"
 
         # Try to create worktree with existing branch
         if not git worktree add "$worktree_path" "$branch_name" 2>/dev/null
             # Branch doesn't exist, create it from current HEAD
             echo "Branch '$branch_name' doesn't exist. Creating new branch..."
             if not git worktree add -b "$branch_name" "$worktree_path"
-                echo "Error: Failed to create worktree at $worktree_path" >&2
+                echo "Error: Failed to create worktree" >&2
                 return 1
             end
         end
     end
+    set -l relative_wt (string replace -r "^$repo_root/" "" "$worktree_path")
+    echo "cd into worktree '$relative_wt'"
     cd "$worktree_path" >/dev/null
 end
 
