@@ -7,10 +7,34 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 DOTFILES_DIR="$(dirname "$SCRIPT_DIR")"
 NERDFONTS_TSV="$DOTFILES_DIR/NerdFonts.tsv"
 
+# Download or load TSV file
+load_tsv_file() {
+    local source="$1"
+
+    # Check if source is a URL
+    if [[ "$source" =~ ^https?:// ]]; then
+        # Download to temporary file
+        local temp_file=$(mktemp)
+        if ! curl -fsSL "$source" -o "$temp_file"; then
+            echo "Error: Failed to download TSV from $source" >&2
+            rm -f "$temp_file"
+            exit 1
+        fi
+        NERDFONTS_TSV="$temp_file"
+    else
+        # Use local file
+        if [[ ! -f "$source" ]]; then
+            echo "Error: TSV file not found at $source" >&2
+            exit 1
+        fi
+        NERDFONTS_TSV="$source"
+    fi
+}
+
 # Check if NerdFonts.tsv exists
 check_tsv_file() {
     if [[ ! -f "$NERDFONTS_TSV" ]]; then
-        echo "Error: NerdFonts.tsv not found at $NERDFONTS_TSV"
+        echo "Error: NerdFonts.tsv not found at $NERDFONTS_TSV" >&2
         exit 1
     fi
 }
@@ -21,12 +45,10 @@ print_icons() {
 
     if [[ -n "$filter" ]]; then
         # Filter by the class column (column 2) using awk
-        tail -n +2 "$NERDFONTS_TSV" | \
-            awk -F'\t' -v pattern="$filter" '$2 ~ pattern {printf "%-5s %-50s %s\n", $1, $2, $3}'
+        awk -F'\t' -v pattern="$filter" '$2 ~ pattern {printf "%-5s %-50s %s\n", $1, $2, $3}' "$NERDFONTS_TSV"
     else
         # Print all icons
-        tail -n +2 "$NERDFONTS_TSV" | \
-            awk -F'\t' '{printf "%-5s %-50s %s\n", $1, $2, $3}'
+        awk -F'\t' '{printf "%-5s %-50s %s\n", $1, $2, $3}' "$NERDFONTS_TSV"
     fi
 }
 
@@ -54,9 +76,9 @@ search_with_fzf() {
 
     if [[ -n "$filter" ]]; then
         # Apply filter to class column before piping to fzf
-        source_data=$(tail -n +2 "$NERDFONTS_TSV" | awk -F'\t' -v pattern="$filter" '$2 ~ pattern')
+        source_data=$(awk -F'\t' -v pattern="$filter" '$2 ~ pattern' "$NERDFONTS_TSV")
     else
-        source_data=$(tail -n +2 "$NERDFONTS_TSV")
+        source_data=$(cat "$NERDFONTS_TSV")
     fi
 
     local selected
@@ -94,7 +116,32 @@ search_with_fzf() {
 
 # Main function
 main() {
-    local filter="$1"
+    local filter=""
+    local custom_source=""
+
+    # Parse arguments
+    while [[ $# -gt 0 ]]; do
+        case "$1" in
+            --from)
+                custom_source="$2"
+                shift 2
+                ;;
+            -*)
+                echo "Error: Unknown option $1" >&2
+                echo "Usage: nerdfonts [FILTER] [--from FILE_OR_URL]" >&2
+                exit 1
+                ;;
+            *)
+                filter="$1"
+                shift
+                ;;
+        esac
+    done
+
+    # Load custom TSV file if specified
+    if [[ -n "$custom_source" ]]; then
+        load_tsv_file "$custom_source"
+    fi
 
     check_tsv_file
 
