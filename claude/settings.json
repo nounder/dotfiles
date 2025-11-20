@@ -16,15 +16,15 @@
       "Bash(lsof:*)",
       "Bash(xargs kill:*)",
       "Bash(dprint fmt:*)",
-      "Bash(git fetch)",
-      "Bash(git pull)",
-      "Bash(git commit)",
-      "Bash(git status)",
-      "Bash(git log)",
-      "Bash(git diff)",
-      "Bash(git branch)",
-      "Bash(git checkout)",
-      "Bash(git push)",
+      "Bash(git fetch:*)",
+      "Bash(git pull:*)",
+      "Bash(git commit:*)",
+      "Bash(git status:*)",
+      "Bash(git log:*)",
+      "Bash(git diff:*)",
+      "Bash(git branch:*)",
+      "Bash(git checkout:*)",
+      "Bash(git push:*)",
       "Bash(npm:*)",
       "Bash(yarn:*)",
       "Bash(pnpm:*)",
@@ -80,9 +80,8 @@
       "Bash(nvim:*)",
       "Bash(find:*)",
       "Bash(mkdir:*)",
-
       "WebFetch(domain:*)",
-      "WebSearch(domain:*)"
+      "WebSearch"
     ],
     "deny": [
       "Read(.env)",
@@ -93,7 +92,10 @@
       "Edit(*.env)",
       "Write(.env)",
       "Write(.env.*)",
-      "Write(*.env)"
+      "Write(*.env)",
+      "Update(.env)",
+      "Update(.env.*)",
+      "Update(*.env)"
     ]
   }
 }
