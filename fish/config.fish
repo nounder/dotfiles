@@ -145,14 +145,12 @@ function fish_prompt
     end
 
     if test $in_worktree -eq 1
-        # We're in a worktree - show custom path
+        # We're in a worktree - show repo name only
         set -l repo_root (dirname $git_common_dir)
         set -l repo_name (basename $repo_root)
-        set -l current_path (pwd)
-        set -l relative_path (string replace -r "^$repo_root/" "" "$current_path")
 
-        # Show repo_name/relative_path
-        echo -n "$repo_name/$relative_path "
+        # Show repo_name
+        echo -n "$repo_name "
 
         # Get branch name and prepend asterisk
         set -l branch (git branch --show-current 2>/dev/null)
