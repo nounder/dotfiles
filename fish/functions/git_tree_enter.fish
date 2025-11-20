@@ -70,6 +70,8 @@ function git_tree_enter
             return 1
         end
         echo "Successfully fetched branch '$branch_name'"
+        # Set up tracking for the fetched branch
+        git branch --set-upstream-to=origin/$branch_name $branch_name 2>/dev/null
     end
 
     # CD into the worktree directory
@@ -92,6 +94,8 @@ function git_tree_enter
             echo "Error: Failed to create worktree" >&2
             return 1
         end
+        # Set up tracking if remote branch exists (safety net for existing local branches)
+        git branch --set-upstream-to=origin/$branch_name $branch_name 2>/dev/null
     end
     set -l relative_wt (string replace -r "^$repo_root/" "" "$worktree_path")
     echo "cd into worktree '$relative_wt'"
