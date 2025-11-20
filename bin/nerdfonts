@@ -43,12 +43,21 @@ check_tsv_file() {
 print_icons() {
     local filter="$1"
 
-    if [[ -n "$filter" ]]; then
-        # Filter by the class column (column 2) using awk
-        awk -F'\t' -v pattern="$filter" '$2 ~ pattern {printf "%-5s %-50s %s\n", $1, $2, $3}' "$NERDFONTS_TSV"
+    # Check if stdout is a terminal (interactive mode)
+    if [[ -t 1 ]] && command -v less &> /dev/null; then
+        # Interactive mode - pipe through less
+        if [[ -n "$filter" ]]; then
+            awk -F'\t' -v pattern="$filter" '$2 ~ pattern {printf "%-5s %-50s %s\n", $1, $2, $3}' "$NERDFONTS_TSV" | less -R
+        else
+            awk -F'\t' '{printf "%-5s %-50s %s\n", $1, $2, $3}' "$NERDFONTS_TSV" | less -R
+        fi
     else
-        # Print all icons
-        awk -F'\t' '{printf "%-5s %-50s %s\n", $1, $2, $3}' "$NERDFONTS_TSV"
+        # Non-interactive mode - print directly
+        if [[ -n "$filter" ]]; then
+            awk -F'\t' -v pattern="$filter" '$2 ~ pattern {printf "%-5s %-50s %s\n", $1, $2, $3}' "$NERDFONTS_TSV"
+        else
+            awk -F'\t' '{printf "%-5s %-50s %s\n", $1, $2, $3}' "$NERDFONTS_TSV"
+        fi
     fi
 }
 
@@ -122,13 +131,13 @@ main() {
     # Parse arguments
     while [[ $# -gt 0 ]]; do
         case "$1" in
-            --from)
+            --source)
                 custom_source="$2"
                 shift 2
                 ;;
             -*)
                 echo "Error: Unknown option $1" >&2
-                echo "Usage: nerdfonts [FILTER] [--from FILE_OR_URL]" >&2
+                echo "Usage: nerdfonts [FILTER] [--source FILE_OR_URL]" >&2
                 exit 1
                 ;;
             *)
