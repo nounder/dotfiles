@@ -75,9 +75,14 @@
       "Bash(vim:*)",
       "Bash(nvim:*)",
       "Bash(nano:*)",
+      "Bash(nvim:*)",
+      "Bash(find:*)",
       "Read(~/.zshrc)",
       "Read(*.md)",
-      "Read(**/*.md)"
+      "Read(**/*.md)",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:*)",
+      "Bash(mkdir:*)"
     ],
     "deny": [
       "Read(.env)",
