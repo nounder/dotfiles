@@ -8,50 +8,103 @@ DOTFILES_DIR="$(dirname "$SCRIPT_DIR")"
 NERDFONTS_TSV="$DOTFILES_DIR/NerdFonts.tsv"
 
 # Check if NerdFonts.tsv exists
-if [[ ! -f "$NERDFONTS_TSV" ]]; then
-    echo "Error: NerdFonts.tsv not found at $NERDFONTS_TSV"
-    exit 1
-fi
-
-# Check if fzf is installed
-if ! command -v fzf &> /dev/null; then
-    echo "Error: fzf is not installed. Please install fzf first."
-    exit 1
-fi
-
-# Use fzf to search through the nerd fonts
-# Skip the header line, display with preview, and copy selection to clipboard
-selected=$(tail -n +2 "$NERDFONTS_TSV" | \
-    fzf --ansi \
-        --header="Search Nerd Fonts - Press ENTER to copy, ESC to quit" \
-        --preview='echo -e "Icon: {1}\nClass: {2}\nCodepoint: {3}"' \
-        --preview-window=up:3:wrap \
-        --delimiter=$'\t' \
-        --with-nth=1,2 \
-        --bind='ctrl-y:execute-silent(echo -n {1} | xclip -selection clipboard)+abort' \
-        --bind='ctrl-c:execute-silent(echo -n {2} | xclip -selection clipboard)+abort' \
-        --bind='ctrl-u:execute-silent(echo -n {3} | xclip -selection clipboard)+abort')
-
-# If something was selected, output it
-if [[ -n "$selected" ]]; then
-    # Extract the icon (first column)
-    icon=$(echo "$selected" | cut -f1)
-    class=$(echo "$selected" | cut -f2)
-    codepoint=$(echo "$selected" | cut -f3)
-
-    echo "Selected:"
-    echo "  Icon: $icon"
-    echo "  Class: $class"
-    echo "  Codepoint: $codepoint"
-    echo ""
-    echo "The icon has been copied to your clipboard (if xclip is installed)"
-
-    # Try to copy to clipboard if xclip is available
-    if command -v xclip &> /dev/null; then
-        echo -n "$icon" | xclip -selection clipboard
-    elif command -v pbcopy &> /dev/null; then
-        echo -n "$icon" | pbcopy
-    elif command -v wl-copy &> /dev/null; then
-        echo -n "$icon" | wl-copy
+check_tsv_file() {
+    if [[ ! -f "$NERDFONTS_TSV" ]]; then
+        echo "Error: NerdFonts.tsv not found at $NERDFONTS_TSV"
+        exit 1
     fi
-fi
+}
+
+# Print all icons or filtered icons
+print_icons() {
+    local filter="$1"
+
+    if [[ -n "$filter" ]]; then
+        # Filter by the class column (column 2) using awk
+        tail -n +2 "$NERDFONTS_TSV" | \
+            awk -F'\t' -v pattern="$filter" '$2 ~ pattern {printf "%-5s %-50s %s\n", $1, $2, $3}'
+    else
+        # Print all icons
+        tail -n +2 "$NERDFONTS_TSV" | \
+            awk -F'\t' '{printf "%-5s %-50s %s\n", $1, $2, $3}'
+    fi
+}
+
+# Copy text to clipboard
+copy_to_clipboard() {
+    local text="$1"
+
+    if command -v xclip &> /dev/null; then
+        echo -n "$text" | xclip -selection clipboard
+        return 0
+    elif command -v pbcopy &> /dev/null; then
+        echo -n "$text" | pbcopy
+        return 0
+    elif command -v wl-copy &> /dev/null; then
+        echo -n "$text" | wl-copy
+        return 0
+    fi
+    return 1
+}
+
+# Interactive fzf search
+search_with_fzf() {
+    local filter="$1"
+    local source_data
+
+    if [[ -n "$filter" ]]; then
+        # Apply filter to class column before piping to fzf
+        source_data=$(tail -n +2 "$NERDFONTS_TSV" | awk -F'\t' -v pattern="$filter" '$2 ~ pattern')
+    else
+        source_data=$(tail -n +2 "$NERDFONTS_TSV")
+    fi
+
+    local selected
+    selected=$(echo "$source_data" | \
+        fzf --ansi \
+            --header="Search Nerd Fonts - Press ENTER to copy, ESC to quit" \
+            --preview='echo -e "Icon: {1}\nClass: {2}\nCodepoint: {3}"' \
+            --preview-window=up:3:wrap \
+            --delimiter=$'\t' \
+            --with-nth=1,2 \
+            --bind='ctrl-y:execute-silent(echo -n {1} | xclip -selection clipboard)+abort' \
+            --bind='ctrl-c:execute-silent(echo -n {2} | xclip -selection clipboard)+abort' \
+            --bind='ctrl-u:execute-silent(echo -n {3} | xclip -selection clipboard)+abort')
+
+    # If something was selected, output it
+    if [[ -n "$selected" ]]; then
+        local icon class codepoint
+        icon=$(echo "$selected" | cut -f1)
+        class=$(echo "$selected" | cut -f2)
+        codepoint=$(echo "$selected" | cut -f3)
+
+        echo "Selected:"
+        echo "  Icon: $icon"
+        echo "  Class: $class"
+        echo "  Codepoint: $codepoint"
+        echo ""
+
+        if copy_to_clipboard "$icon"; then
+            echo "The icon has been copied to your clipboard"
+        else
+            echo "Clipboard copy not available (install xclip, pbcopy, or wl-copy)"
+        fi
+    fi
+}
+
+# Main function
+main() {
+    local filter="$1"
+
+    check_tsv_file
+
+    if command -v fzf &> /dev/null; then
+        # Use interactive fzf search
+        search_with_fzf "$filter"
+    else
+        # Print all icons (or filtered) to stdout
+        print_icons "$filter"
+    fi
+}
+
+main "$@"
