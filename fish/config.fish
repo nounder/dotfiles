@@ -93,6 +93,115 @@ end
 function fish_mode_prompt
 end
 
+function shorten_path_in_repo
+    set -l git_root (git rev-parse --show-toplevel 2>/dev/null)
+
+    if test -z "$git_root"
+        # Not in a git repo, use default prompt_pwd
+        prompt_pwd
+        return
+    end
+
+    # Ensure git_root is an absolute path
+    if not string match -qr '^/' -- $git_root
+        set git_root "$PWD/$git_root"
+    end
+
+    # Check if we're in a worktree
+    if is_in_worktree
+        # In worktree: show original repo path + relative path in worktree
+        set -l git_common_dir (git rev-parse --git-common-dir 2>/dev/null)
+
+        # IMPORTANT: git-common-dir can return relative path like ".git"
+        # Must make it absolute before using dirname, otherwise dirname(".git") = "."
+        # which breaks path display (shows "./../src/client" instead of proper path)
+        if not string match -qr '^/' -- $git_common_dir
+            set git_common_dir "$PWD/$git_common_dir"
+        end
+
+        set -l original_repo (dirname $git_common_dir)
+
+        # Replace home directory with ~
+        set -l repo_path (string replace -r "^$HOME" "~" $original_repo)
+
+        # Split repo path into components
+        set -l repo_components (string split / $repo_path)
+        set -l shortened_repo
+        set -l repo_basename
+
+        # Shorten all components except the last one (repo basename)
+        for i in (seq (count $repo_components))
+            if test $i -eq (count $repo_components)
+                set repo_basename $repo_components[$i]
+            else if test "$repo_components[$i]" = "~"
+                set -a shortened_repo "~"
+            else if test -n "$repo_components[$i]"
+                set -a shortened_repo (string sub -l 1 $repo_components[$i])
+            end
+        end
+
+        # Print shortened path to repo parent
+        if test (count $shortened_repo) -gt 0
+            echo -n (string join / $shortened_repo)
+            echo -n /
+        end
+
+        # Print repo basename in bold
+        set_color --bold
+        echo -n $repo_basename
+        set_color normal
+        set_color brblack
+
+        # Get relative path from worktree root to current directory
+        set -l rel_path (string replace "$git_root/" "" "$PWD/")
+        set -l rel_path (string trim -r -c / "$rel_path")
+
+        if test -n "$rel_path" -a "$rel_path" != "$PWD/"
+            echo -n "/$rel_path"
+        end
+    else
+        # Not in worktree: use regular logic
+        # Replace home directory with ~
+        set -l repo_path (string replace -r "^$HOME" "~" $git_root)
+
+        # Split repo path into components
+        set -l repo_components (string split / $repo_path)
+        set -l shortened_repo
+        set -l repo_basename
+
+        # Shorten all components except the last one (repo basename)
+        for i in (seq (count $repo_components))
+            if test $i -eq (count $repo_components)
+                set repo_basename $repo_components[$i]
+            else if test "$repo_components[$i]" = "~"
+                set -a shortened_repo "~"
+            else if test -n "$repo_components[$i]"
+                set -a shortened_repo (string sub -l 1 $repo_components[$i])
+            end
+        end
+
+        # Print shortened path to repo parent
+        if test (count $shortened_repo) -gt 0
+            echo -n (string join / $shortened_repo)
+            echo -n /
+        end
+
+        # Print repo basename in bold
+        set_color --bold
+        echo -n $repo_basename
+        set_color normal
+        set_color brblack
+
+        # Get relative path from repo root to current directory
+        set -l rel_path (string replace "$git_root/" "" "$PWD/")
+        set -l rel_path (string trim -r -c / "$rel_path")
+
+        if test -n "$rel_path" -a "$rel_path" != "$PWD/"
+            echo -n "/$rel_path"
+        end
+    end
+end
+
 function fish_mode_indicator
     switch $fish_bind_mode
         case default
@@ -114,16 +223,82 @@ function fish_mode_indicator
     set_color normal
 end
 
-function fish_prompt
-    if string match --quiet --regex '.*(\.local|Mac)' $hostname
-        set_color blue
-    else
-        set_color green
-    end
-    echo -n "[$USER@"(prompt_hostname)"] "
+function is_in_worktree
+    # Returns 0 if in a git worktree, 1 otherwise
+    set -l git_dir (git rev-parse --git-dir 2>/dev/null)
+    set -l git_common_dir (git rev-parse --git-common-dir 2>/dev/null)
 
+    if test -n "$git_dir" -a -n "$git_common_dir"
+        # Make paths absolute
+        if not string match -qr '^/' -- $git_dir
+            set git_dir "$PWD/$git_dir"
+        end
+        if not string match -qr '^/' -- $git_common_dir
+            set git_common_dir "$PWD/$git_common_dir"
+        end
+
+        # Check if we're in a worktree
+        if test "$git_dir" != "$git_common_dir"
+            return 0 # true
+        end
+    end
+    return 1 # false
+end
+
+function directory_icon
+    # Shows icon based on repo type (worktree vs regular)
+    if is_in_worktree
+        printf ' '
+    else
+        printf ' '
+    end
+end
+
+function branch_icon
+    # Shows branch icon (always the same)
+    printf '\uf418 '
+end
+
+function prompt_git_icon
+    # Prints git repo icon if in a git repository
+    set -l git_dir (git rev-parse --git-dir 2>/dev/null)
+    if test -n "$git_dir"
+        set_color yellow
+        directory_icon
+        set_color brblack
+    end
+end
+
+function prompt_git_branch
+    # Prints git branch with icon
+    set -l git_dir (git rev-parse --git-dir 2>/dev/null)
+
+    if test -n "$git_dir"
+        set -l branch (git branch --show-current 2>/dev/null)
+        if test -n "$branch"
+            echo -n " "
+            set_color yellow
+            branch_icon
+            echo -n "$branch"
+            set_color brblack
+        end
+    end
+end
+
+function fish_prompt
+    echo
     set_color brblack
-    echo -n (prompt_pwd) (fish_git_prompt)
+
+    # Show git icon
+    prompt_git_icon
+
+    # Show path
+    echo -n (shorten_path_in_repo)
+
+    # Show branch
+    prompt_git_branch
+
+    # Show prompt symbol
     set_color $fish_color_status
     set_color normal
     echo
