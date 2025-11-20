@@ -123,7 +123,47 @@ function fish_prompt
     echo -n "[$USER@"(prompt_hostname)"] "
 
     set_color brblack
-    echo -n (prompt_pwd) (fish_git_prompt)
+
+    # Check if we're in a git worktree
+    set -l in_worktree 0
+    set -l git_dir (git rev-parse --git-dir 2>/dev/null)
+    set -l git_common_dir (git rev-parse --git-common-dir 2>/dev/null)
+
+    if test -n "$git_dir" -a -n "$git_common_dir"
+        # Make paths absolute
+        if not string match -qr '^/' -- $git_dir
+            set git_dir "$PWD/$git_dir"
+        end
+        if not string match -qr '^/' -- $git_common_dir
+            set git_common_dir "$PWD/$git_common_dir"
+        end
+
+        # Check if we're in a worktree
+        if test "$git_dir" != "$git_common_dir"
+            set in_worktree 1
+        end
+    end
+
+    if test $in_worktree -eq 1
+        # We're in a worktree - show custom path
+        set -l repo_root (dirname $git_common_dir)
+        set -l repo_name (basename $repo_root)
+        set -l current_path (pwd)
+        set -l relative_path (string replace -r "^$repo_root/" "" "$current_path")
+
+        # Show repo_name/relative_path
+        echo -n "$repo_name/$relative_path "
+
+        # Get branch name and prepend asterisk
+        set -l branch (git branch --show-current 2>/dev/null)
+        if test -n "$branch"
+            echo -n "(*$branch)"
+        end
+    else
+        # Normal prompt
+        echo -n (prompt_pwd) (fish_git_prompt)
+    end
+
     set_color $fish_color_status
     set_color normal
     echo
