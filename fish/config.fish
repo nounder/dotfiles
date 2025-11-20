@@ -270,12 +270,21 @@ function prompt_git_icon
 end
 
 function prompt_git_branch
-    # Prints git branch with icon
+    # Prints git branch with icon, truncated if terminal is too narrow
     set -l git_dir (git rev-parse --git-dir 2>/dev/null)
 
     if test -n "$git_dir"
         set -l branch (git branch --show-current 2>/dev/null)
         if test -n "$branch"
+            # Calculate max branch length based on terminal width
+            # Reserve space for: icon (2) + space (1) + some buffer (10)
+            set -l max_branch_len (math "$COLUMNS - 13")
+
+            # Truncate branch if it's too long
+            if test (string length "$branch") -gt $max_branch_len
+                set branch (string sub -l (math "$max_branch_len - 3") "$branch")"..."
+            end
+
             echo -n " "
             set_color yellow
             branch_icon
