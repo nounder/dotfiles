@@ -60,10 +60,16 @@ function git_tree_enter
 
     set branch_name $argv[1]
 
-    # Check if branch exists
+    # Check if branch exists locally
     if not git show-ref --verify --quiet "refs/heads/$branch_name"
-        echo "Error: Branch '$branch_name' does not exist" >&2
-        return 1
+        # Branch doesn't exist locally, try to fetch it from remote
+        echo "Branch '$branch_name' not found locally, fetching from remote..."
+        git fetch origin "$branch_name:$branch_name" 2>/dev/null
+        if not test $status -eq 0
+            echo "Error: Branch '$branch_name' does not exist locally or remotely" >&2
+            return 1
+        end
+        echo "Successfully fetched branch '$branch_name'"
     end
 
     # CD into the worktree directory
