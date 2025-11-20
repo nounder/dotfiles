@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
 # Search and select Nerd Font icons using fzf
 
+# Get program name
+PROGRAM="$(basename "$0")"
+
 # Get the directory where this script is located
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # Get the dotfiles root directory (parent of bin)
@@ -137,7 +140,7 @@ main() {
                 ;;
             -*)
                 echo "Error: Unknown option $1" >&2
-                echo "Usage: nerdfonts [FILTER] [--source FILE_OR_URL]" >&2
+                echo "Usage: $PROGRAM [FILTER] [--source FILE_OR_URL]" >&2
                 exit 1
                 ;;
             *)
