@@ -1,5 +1,4 @@
 {
- "defaultMode": "acceptEdits",
   "env": {
     "DISABLE_AUTOUPDATER": "0"
   },
@@ -26,6 +25,7 @@
     "dprint-formatter@local-plugins": true
   },
   "alwaysThinkingEnabled": true,
+  "defaultMode": "acceptEdits",
   "showWelcomeMessage": true,
   "editorMode": "vim"
 }
