@@ -5,13 +5,16 @@ function git_tree_remove
         return 1
     end
 
-    # Parse -f flag
+    # Parse flags
     set -l force_flag 0
+    set -l delete_branch 0
     set -l branch_name ""
 
     for arg in $argv
         if test "$arg" = "-f"
             set force_flag 1
+        else if test "$arg" = "-d"
+            set delete_branch 1
         else
             set branch_name "$arg"
         end
@@ -86,9 +89,9 @@ function git_tree_remove
     if test "$current_worktree_path" = "$worktree_path"
         cd "$repo_root"
 
-        # Prompt user for confirmation unless -f is passed
-        if test $force_flag -eq 0
-            read -P "Remove current worktree '$branch_name'? (y/n) " -n 1 response
+        # Prompt user for confirmation when deleting branch unless -f is passed
+        if test $delete_branch -eq 1 -a $force_flag -eq 0
+            read -P "Remove current worktree '$branch_name' and delete branch? (y/n) " -n 1 response
             echo
             if not string match -qi "y" $response
                 echo "Cancelled worktree removal."
@@ -133,22 +136,20 @@ function git_tree_remove
         echo "Worktree removed successfully."
     end
 
-    # Delete the branch if it exists
-    git show-ref --verify --quiet "refs/heads/$branch_name"
-    set -l branch_exists $status
-
-    if test $branch_exists -eq 0
-        echo "Deleting branch '$branch_name'..."
-        git branch -D "$branch_name" 2>/dev/null
-        set -l branch_delete_status $status
-
-        if test $branch_delete_status -ne 0
-            echo "Warning: Failed to delete branch '$branch_name'" >&2
+    # Delete the branch if -d flag was passed
+    if test $delete_branch -eq 1
+        git show-ref --verify --quiet "refs/heads/$branch_name"
+        if test $status -eq 0
+            echo "Deleting branch '$branch_name'..."
+            git branch -D "$branch_name" 2>/dev/null
+            if test $status -eq 0
+                echo "Branch deleted successfully."
+            else
+                echo "Warning: Failed to delete branch '$branch_name'" >&2
+            end
         else
-            echo "Branch deleted successfully."
+            echo "Note: Branch '$branch_name' doesn't exist or was already deleted" >&2
         end
-    else
-        echo "Note: Branch '$branch_name' doesn't exist or was already deleted" >&2
     end
 end
 
@@ -159,6 +160,7 @@ function __git_tree_remove_branches
         | string replace "branch refs/heads/" ""
 end
 
-# Autocomplete for git_tree_remove - suggests worktree branches and -f flag
+# Autocomplete for git_tree_remove - suggests worktree branches and flags
 complete -c git_tree_remove -f -a '(__git_tree_remove_branches)'
 complete -c git_tree_remove -s f -d 'Force removal without prompts'
+complete -c git_tree_remove -s d -d 'Delete branch in addition to removing worktree'
