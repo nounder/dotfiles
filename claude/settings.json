@@ -10,6 +10,7 @@
       "Bash(bun test:*)",
       "Bash(curl:*)",
       "Bash(find:*)",
+      "Bash(fd:*)",
       "Bash(gh:*)",
       "Bash(grep:*)",
       "Bash(lsof:*)",
@@ -56,6 +57,7 @@
       "Bash(ps:*)",
       "Bash(top)",
       "Bash(kill:*)",
+      "Bash(killall:*)",
       "Bash(which:*)",
       "Bash(whereis:*)",
       "Bash(env)",
@@ -77,17 +79,21 @@
       "Bash(nano:*)",
       "Bash(nvim:*)",
       "Bash(find:*)",
-      "Read(~/.zshrc)",
-      "Read(*.md)",
-      "Read(**/*.md)",
-      "WebFetch(domain:github.com)",
+      "Bash(mkdir:*)",
+
       "WebFetch(domain:*)",
-      "Bash(mkdir:*)"
+      "WebSearch(domain:*)"
     ],
     "deny": [
       "Read(.env)",
       "Read(.env.*)",
-      "Read(*.env)"
+      "Read(*.env)",
+      "Edit(.env)",
+      "Edit(.env.*)",
+      "Edit(*.env)",
+      "Write(.env)",
+      "Write(.env.*)",
+      "Write(*.env)"
     ]
   }
 }
