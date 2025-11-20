@@ -1,0 +1,55 @@
+#!/usr/bin/env bash
+# Generate NerdFonts.tsv from the official Nerd Fonts CSS
+
+set -euo pipefail
+
+PROGRAM="$(basename "$0")"
+NERD_FONTS_CSS_URL="https://raw.githubusercontent.com/ryanoasis/nerd-fonts/master/css/nerd-fonts-generated.css"
+
+# Get the directory where this script is located
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+DOTFILES_DIR="$(dirname "$SCRIPT_DIR")"
+OUTPUT_FILE="${1:-$DOTFILES_DIR/NerdFonts.tsv}"
+
+show_usage() {
+    echo "Usage: $PROGRAM [OUTPUT_FILE]"
+    echo ""
+    echo "Fetches Nerd Fonts CSS and generates a TSV file with icon data."
+    echo ""
+    echo "Arguments:"
+    echo "  OUTPUT_FILE    Output TSV file (default: \$DOTFILES_DIR/NerdFonts.tsv)"
+    echo ""
+    echo "Examples:"
+    echo "  $PROGRAM                    # Generate to default location"
+    echo "  $PROGRAM /tmp/icons.tsv     # Generate to custom location"
+}
+
+# Parse arguments
+if [[ "${1:-}" == "-h" ]] || [[ "${1:-}" == "--help" ]]; then
+    show_usage
+    exit 0
+fi
+
+echo "Downloading Nerd Fonts CSS from: $NERD_FONTS_CSS_URL"
+
+# Download and parse CSS using perl
+curl -fsSL "$NERD_FONTS_CSS_URL" | \
+perl -ne '
+    if (/^\.(?<class>nf-[^:]+):before\s*{/) {
+        $class = $+{class};
+        $_ = <>;  # Read next line
+        if (/content:\s*"\\(?<code>[0-9a-fA-F]+)"/) {
+            $codepoint = $+{code};
+            # Convert hex to character
+            $char = chr(hex($codepoint));
+            print "$char\t$class\t\\$codepoint\n";
+        }
+    }
+' > "$OUTPUT_FILE"
+
+ICON_COUNT=$(wc -l < "$OUTPUT_FILE")
+
+echo "✓ Generated $OUTPUT_FILE with $ICON_COUNT icons"
+echo ""
+echo "Sample entries:"
+head -5 "$OUTPUT_FILE" | awk -F'\t' '{printf "  %-5s %-50s %s\n", $1, $2, $3}'

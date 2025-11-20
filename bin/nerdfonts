@@ -8,7 +8,9 @@ PROGRAM="$(basename "$0")"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # Get the dotfiles root directory (parent of bin)
 DOTFILES_DIR="$(dirname "$SCRIPT_DIR")"
-NERDFONTS_TSV="$DOTFILES_DIR/NerdFonts.tsv"
+# Default to remote TSV file
+DEFAULT_NERDFONTS_URL="https://media.githubusercontent.com/media/nounder/nerd-icons/refs/heads/main/data/icons.tsv"
+NERDFONTS_TSV=""
 
 # Download or load TSV file
 load_tsv_file() {
@@ -34,10 +36,13 @@ load_tsv_file() {
     fi
 }
 
-# Check if NerdFonts.tsv exists
-check_tsv_file() {
-    if [[ ! -f "$NERDFONTS_TSV" ]]; then
-        echo "Error: NerdFonts.tsv not found at $NERDFONTS_TSV" >&2
+# Ensure TSV file is loaded (download default if not specified)
+ensure_tsv_file() {
+    if [[ -z "$NERDFONTS_TSV" ]]; then
+        # No source specified, download default
+        load_tsv_file "$DEFAULT_NERDFONTS_URL"
+    elif [[ ! -f "$NERDFONTS_TSV" ]]; then
+        echo "Error: TSV file not found at $NERDFONTS_TSV" >&2
         exit 1
     fi
 }
@@ -96,33 +101,17 @@ search_with_fzf() {
     local selected
     selected=$(echo "$source_data" | \
         fzf --ansi \
-            --header="Search Nerd Fonts - Press ENTER to copy, ESC to quit" \
+            --header="Search Nerd Fonts - Press ENTER to select, ESC to quit" \
             --preview='echo -e "Icon: {1}\nClass: {2}\nCodepoint: {3}"' \
             --preview-window=up:3:wrap \
             --delimiter=$'\t' \
-            --with-nth=1,2 \
-            --bind='ctrl-y:execute-silent(echo -n {1} | xclip -selection clipboard)+abort' \
-            --bind='ctrl-c:execute-silent(echo -n {2} | xclip -selection clipboard)+abort' \
-            --bind='ctrl-u:execute-silent(echo -n {3} | xclip -selection clipboard)+abort')
+            --with-nth=1,2)
 
-    # If something was selected, output it
+    # If something was selected, print just the icon
     if [[ -n "$selected" ]]; then
-        local icon class codepoint
+        local icon
         icon=$(echo "$selected" | cut -f1)
-        class=$(echo "$selected" | cut -f2)
-        codepoint=$(echo "$selected" | cut -f3)
-
-        echo "Selected:"
-        echo "  Icon: $icon"
-        echo "  Class: $class"
-        echo "  Codepoint: $codepoint"
-        echo ""
-
-        if copy_to_clipboard "$icon"; then
-            echo "The icon has been copied to your clipboard"
-        else
-            echo "Clipboard copy not available (install xclip, pbcopy, or wl-copy)"
-        fi
+        echo "$icon"
     fi
 }
 
@@ -150,12 +139,12 @@ main() {
         esac
     done
 
-    # Load custom TSV file if specified
+    # Load custom TSV file if specified, otherwise use default
     if [[ -n "$custom_source" ]]; then
         load_tsv_file "$custom_source"
     fi
 
-    check_tsv_file
+    ensure_tsv_file
 
     if command -v fzf &> /dev/null; then
         # Use interactive fzf search
