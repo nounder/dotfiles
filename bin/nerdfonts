@@ -1,0 +1,57 @@
+#!/usr/bin/env bash
+# Search and select Nerd Font icons using fzf
+
+# Get the directory where this script is located
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# Get the dotfiles root directory (parent of bin)
+DOTFILES_DIR="$(dirname "$SCRIPT_DIR")"
+NERDFONTS_TSV="$DOTFILES_DIR/NerdFonts.tsv"
+
+# Check if NerdFonts.tsv exists
+if [[ ! -f "$NERDFONTS_TSV" ]]; then
+    echo "Error: NerdFonts.tsv not found at $NERDFONTS_TSV"
+    exit 1
+fi
+
+# Check if fzf is installed
+if ! command -v fzf &> /dev/null; then
+    echo "Error: fzf is not installed. Please install fzf first."
+    exit 1
+fi
+
+# Use fzf to search through the nerd fonts
+# Skip the header line, display with preview, and copy selection to clipboard
+selected=$(tail -n +2 "$NERDFONTS_TSV" | \
+    fzf --ansi \
+        --header="Search Nerd Fonts - Press ENTER to copy, ESC to quit" \
+        --preview='echo -e "Icon: {1}\nClass: {2}\nCodepoint: {3}"' \
+        --preview-window=up:3:wrap \
+        --delimiter=$'\t' \
+        --with-nth=1,2 \
+        --bind='ctrl-y:execute-silent(echo -n {1} | xclip -selection clipboard)+abort' \
+        --bind='ctrl-c:execute-silent(echo -n {2} | xclip -selection clipboard)+abort' \
+        --bind='ctrl-u:execute-silent(echo -n {3} | xclip -selection clipboard)+abort')
+
+# If something was selected, output it
+if [[ -n "$selected" ]]; then
+    # Extract the icon (first column)
+    icon=$(echo "$selected" | cut -f1)
+    class=$(echo "$selected" | cut -f2)
+    codepoint=$(echo "$selected" | cut -f3)
+
+    echo "Selected:"
+    echo "  Icon: $icon"
+    echo "  Class: $class"
+    echo "  Codepoint: $codepoint"
+    echo ""
+    echo "The icon has been copied to your clipboard (if xclip is installed)"
+
+    # Try to copy to clipboard if xclip is available
+    if command -v xclip &> /dev/null; then
+        echo -n "$icon" | xclip -selection clipboard
+    elif command -v pbcopy &> /dev/null; then
+        echo -n "$icon" | pbcopy
+    elif command -v wl-copy &> /dev/null; then
+        echo -n "$icon" | wl-copy
+    fi
+fi
