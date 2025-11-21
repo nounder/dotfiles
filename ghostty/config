@@ -6,7 +6,7 @@ theme = dark:Gruvbox Dark Hard,light:Catppuccin Latte
 font-size = 15
 font-family = "JetBrainsMono Nerd Font"
 #font-family = "Comic Mono"
-background-opacity = 0.85
+background-opacity = 0.7
 
 background-blur-radius = 24
 command = /opt/homebrew/bin/fish
