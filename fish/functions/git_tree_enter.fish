@@ -55,17 +55,38 @@ function git_tree_enter
     set branch_name $argv[1]
 
     # Check if branch exists locally
+    set -l found_remote ""
     if not git show-ref --verify --quiet "refs/heads/$branch_name"
-        # Branch doesn't exist locally, try to fetch it from remote
+        # Branch doesn't exist locally, try to find it on any remote
         echo "Branch '$branch_name' not found locally, fetching from remote..."
-        git fetch origin "$branch_name:$branch_name" 2>/dev/null
-        if not test $status -eq 0
-            echo "Error: Branch '$branch_name' does not exist locally or remotely" >&2
+
+        # Get list of all remotes
+        set -l remotes (git remote)
+
+        # Check each remote for the branch
+        for remote in $remotes
+            set -l remote_check (git ls-remote --heads $remote $branch_name 2>/dev/null)
+            if test -n "$remote_check"
+                set found_remote $remote
+                break
+            end
+        end
+
+        if test -z "$found_remote"
+            echo "Error: Branch '$branch_name' does not exist locally or on any remote" >&2
+            return 1
+        end
+
+        echo "Found branch on remote '$found_remote', fetching..."
+        git fetch $found_remote "$branch_name:$branch_name" 2>/dev/null
+        set -l fetch_status $status
+        if test $fetch_status -ne 0
+            echo "Error: Failed to fetch branch '$branch_name' from '$found_remote'" >&2
             return 1
         end
         echo "Successfully fetched branch '$branch_name'"
         # Set up tracking for the fetched branch
-        git branch --set-upstream-to=origin/$branch_name $branch_name 2>/dev/null
+        git branch --set-upstream-to=$found_remote/$branch_name $branch_name 2>/dev/null
     end
 
     # CD into the worktree directory
@@ -84,12 +105,25 @@ function git_tree_enter
         echo "Creating worktree at '$relative_wt'"
 
         # Create worktree with existing branch
-        if not git worktree add "$worktree_path" "$branch_name"
+        git worktree add "$worktree_path" "$branch_name" 2>/dev/null
+        set -l worktree_status $status
+        if test $worktree_status -ne 0
             echo "Error: Failed to create worktree" >&2
             return 1
         end
-        # Set up tracking if remote branch exists (safety net for existing local branches)
-        git branch --set-upstream-to=origin/$branch_name $branch_name 2>/dev/null
+        # Set up tracking for existing local branches if not already configured
+        if test -z "$found_remote"
+            # Branch existed locally; check if tracking is set up, if not try origin
+            set -l current_tracking (git rev-parse --abbrev-ref $branch_name@{u} 2>/dev/null)
+            if test -z "$current_tracking"
+                # No tracking configured, try to set up from origin if branch exists there
+                git show-ref --verify --quiet "refs/remotes/origin/$branch_name" 2>/dev/null
+                set -l remote_exists $status
+                if test $remote_exists -eq 0
+                    git branch --set-upstream-to=origin/$branch_name $branch_name 2>/dev/null
+                end
+            end
+        end
     end
     set -l relative_wt (string replace -r "^$repo_root/" "" "$worktree_path")
     echo "cd into worktree '$relative_wt'"
