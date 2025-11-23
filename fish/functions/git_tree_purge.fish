@@ -1,4 +1,4 @@
-function git_worktree_purge
+function git_tree_purge
     # Check if we're in a git repository
     if not git rev-parse --git-dir >/dev/null 2>&1
         echo "Error: Not in a git repository" >&2
@@ -71,5 +71,5 @@ function git_worktree_purge
     end
 end
 
-# Autocomplete for git_worktree_purge - show available flags
-complete -c git_worktree_purge -l dry-run -s n -d 'Show what would be removed without actually removing'
+# Autocomplete for git_tree_purge - show available flags
+complete -c git_tree_purge -l dry-run -s n -d 'Show what would be removed without actually removing'
