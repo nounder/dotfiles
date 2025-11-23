@@ -73,20 +73,27 @@ function git_tree_enter
         end
 
         if test -z "$found_remote"
-            echo "Error: Branch '$branch_name' does not exist locally or on any remote" >&2
-            return 1
+            echo "Branch '$branch_name' does not exist locally or on any remote"
+            echo "Creating new branch '$branch_name'..."
+            git branch "$branch_name" 2>/dev/null
+            set -l branch_status $status
+            if test $branch_status -ne 0
+                echo "Error: Failed to create branch '$branch_name'" >&2
+                return 1
+            end
+            echo "Successfully created branch '$branch_name'"
+        else
+            echo "Found branch on remote '$found_remote', fetching..."
+            git fetch $found_remote "$branch_name:$branch_name" 2>/dev/null
+            set -l fetch_status $status
+            if test $fetch_status -ne 0
+                echo "Error: Failed to fetch branch '$branch_name' from '$found_remote'" >&2
+                return 1
+            end
+            echo "Successfully fetched branch '$branch_name'"
+            # Set up tracking for the fetched branch
+            git branch --set-upstream-to=$found_remote/$branch_name $branch_name 2>/dev/null
         end
-
-        echo "Found branch on remote '$found_remote', fetching..."
-        git fetch $found_remote "$branch_name:$branch_name" 2>/dev/null
-        set -l fetch_status $status
-        if test $fetch_status -ne 0
-            echo "Error: Failed to fetch branch '$branch_name' from '$found_remote'" >&2
-            return 1
-        end
-        echo "Successfully fetched branch '$branch_name'"
-        # Set up tracking for the fetched branch
-        git branch --set-upstream-to=$found_remote/$branch_name $branch_name 2>/dev/null
     end
 
     # CD into the worktree directory
