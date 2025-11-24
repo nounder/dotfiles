@@ -8,6 +8,8 @@ font-family = "JetBrainsMono Nerd Font"
 #font-family = "Comic Mono"
 background-opacity = 0.7
 
+clipboard-paste-protection = false
+
 background-blur-radius = 24
 command = /opt/homebrew/bin/fish
 # window-decoration = false
