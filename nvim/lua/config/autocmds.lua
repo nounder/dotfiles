@@ -20,3 +20,15 @@ vim.api.nvim_create_autocmd("BufWritePost", {
   pattern = vim.fn.expand("~/dotfiles/kitty/kitty.conf"),
   command = "silent !killall -SIGUSR1 kitty",
 })
+
+-- Detect filetype from shebang when no extension is present
+local shebang_ft = require("custom.shebang_ft")
+
+vim.api.nvim_create_autocmd({ "BufRead", "BufNewFile" }, {
+  callback = shebang_ft.detect_from_shebang,
+})
+
+-- Update filetype on save if not set
+vim.api.nvim_create_autocmd("BufWritePost", {
+  callback = shebang_ft.detect_from_shebang,
+})
