@@ -87,6 +87,8 @@ alias gca="git commit --amend"
 alias gc1="git clone --depth=1"
 alias py="python"
 
+alias claude="claude --dangerously-skip-permissions"
+
 function fish_greeting
 end
 
