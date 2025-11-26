@@ -99,8 +99,8 @@ function shorten_path_in_repo
     set -l git_root (git rev-parse --show-toplevel 2>/dev/null)
 
     if test -z "$git_root"
-        # Not in a git repo, use default prompt_pwd
-        prompt_pwd
+        # Not in a git repo, show full path with ~ for home
+        string replace -r "^$HOME" "~" "$PWD"
         return
     end
 
@@ -114,38 +114,21 @@ function shorten_path_in_repo
         # In worktree: show original repo path + relative path in worktree
         set -l git_common_dir (git rev-parse --git-common-dir 2>/dev/null)
 
-        # IMPORTANT: git-common-dir can return relative path like ".git"
-        # Must make it absolute before using dirname, otherwise dirname(".git") = "."
-        # which breaks path display (shows "./../src/client" instead of proper path)
-        if not string match -qr '^/' -- $git_common_dir
-            set git_common_dir "$PWD/$git_common_dir"
-        end
+        # Use realpath to resolve relative paths like "../../.git" to absolute
+        set git_common_dir (realpath "$git_common_dir")
 
         set -l original_repo (dirname $git_common_dir)
 
         # Replace home directory with ~
         set -l repo_path (string replace -r "^$HOME" "~" $original_repo)
 
-        # Split repo path into components
-        set -l repo_components (string split / $repo_path)
-        set -l shortened_repo
-        set -l repo_basename
+        # Get parent path and basename
+        set -l repo_parent (dirname $repo_path)
+        set -l repo_basename (basename $repo_path)
 
-        # Shorten all components except the last one (repo basename)
-        for i in (seq (count $repo_components))
-            if test $i -eq (count $repo_components)
-                set repo_basename $repo_components[$i]
-            else if test "$repo_components[$i]" = "~"
-                set -a shortened_repo "~"
-            else if test -n "$repo_components[$i]"
-                set -a shortened_repo (string sub -l 1 $repo_components[$i])
-            end
-        end
-
-        # Print shortened path to repo parent
-        if test (count $shortened_repo) -gt 0
-            echo -n (string join / $shortened_repo)
-            echo -n /
+        # Print parent path (full, not shortened)
+        if test "$repo_parent" != "."
+            echo -n "$repo_parent/"
         end
 
         # Print repo basename in bold
@@ -166,26 +149,13 @@ function shorten_path_in_repo
         # Replace home directory with ~
         set -l repo_path (string replace -r "^$HOME" "~" $git_root)
 
-        # Split repo path into components
-        set -l repo_components (string split / $repo_path)
-        set -l shortened_repo
-        set -l repo_basename
+        # Get parent path and basename
+        set -l repo_parent (dirname $repo_path)
+        set -l repo_basename (basename $repo_path)
 
-        # Shorten all components except the last one (repo basename)
-        for i in (seq (count $repo_components))
-            if test $i -eq (count $repo_components)
-                set repo_basename $repo_components[$i]
-            else if test "$repo_components[$i]" = "~"
-                set -a shortened_repo "~"
-            else if test -n "$repo_components[$i]"
-                set -a shortened_repo (string sub -l 1 $repo_components[$i])
-            end
-        end
-
-        # Print shortened path to repo parent
-        if test (count $shortened_repo) -gt 0
-            echo -n (string join / $shortened_repo)
-            echo -n /
+        # Print parent path (full, not shortened)
+        if test "$repo_parent" != "."
+            echo -n "$repo_parent/"
         end
 
         # Print repo basename in bold
@@ -231,13 +201,9 @@ function is_in_worktree
     set -l git_common_dir (git rev-parse --git-common-dir 2>/dev/null)
 
     if test -n "$git_dir" -a -n "$git_common_dir"
-        # Make paths absolute
-        if not string match -qr '^/' -- $git_dir
-            set git_dir "$PWD/$git_dir"
-        end
-        if not string match -qr '^/' -- $git_common_dir
-            set git_common_dir "$PWD/$git_common_dir"
-        end
+        # Use realpath to resolve relative paths and normalize
+        set git_dir (realpath "$git_dir")
+        set git_common_dir (realpath "$git_common_dir")
 
         # Check if we're in a worktree
         if test "$git_dir" != "$git_common_dir"
