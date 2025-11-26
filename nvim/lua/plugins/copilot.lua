@@ -1,7 +1,7 @@
 return {
   {
     "zbirenbaum/copilot.lua",
-    enabled = false and not vim.env.NVIM_LIGHTWEIGHT,
+    enabled = not vim.env.NVIM_LIGHTWEIGHT,
     opts = {
       filetypes = {
         text = false,
@@ -15,16 +15,6 @@ return {
         go = true,
         zig = true,
         rust = true,
-      },
-
-      suggestion = {
-        keymap = {
-          -- handled by blink
-          accept = false,
-          next = "<C-]>",
-          prev = "<C-[>",
-          dismiss = "<C-\\>",
-        },
       },
     },
   },

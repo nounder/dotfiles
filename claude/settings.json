@@ -2,9 +2,7 @@
   "env": {
     "DISABLE_AUTOUPDATER": "0"
   },
-  "alwaysThinkingEnabled": true,
   "permissions": {
-    "defaultMode": "acceptEdits",
     "allow": [
       "Bash(bun run:*)",
       "Bash(bun test:*)",
@@ -96,6 +94,8 @@
       "Update(.env)",
       "Update(.env.*)",
       "Update(*.env)"
-    ]
-  }
+    ],
+    "defaultMode": "acceptEdits"
+  },
+  "alwaysThinkingEnabled": false
 }
