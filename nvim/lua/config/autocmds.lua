@@ -32,3 +32,12 @@ vim.api.nvim_create_autocmd({ "BufRead", "BufNewFile" }, {
 vim.api.nvim_create_autocmd("BufWritePost", {
   callback = shebang_ft.detect_from_shebang,
 })
+
+-- Auto-reload files when changed externally (for agent edits)
+vim.api.nvim_create_autocmd({ "FocusGained", "BufEnter", "CursorHold" }, {
+  callback = function()
+    if vim.fn.mode() ~= "c" then
+      vim.cmd("checktime") -- Triggers autoread to actually work
+    end
+  end,
+})
