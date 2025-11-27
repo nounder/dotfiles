@@ -26,6 +26,11 @@ vim.opt.list = false -- Hide some invisible characters (tabs...
 -- Source: https://github.com/oven-sh/bun/issues/8520#issuecomment-2002325950
 vim.opt.backupcopy = "yes"
 
+vim.opt.swapfile = false -- No swap file warnings
+vim.opt.writebackup = false -- No temporary backup files during save
+vim.opt.autoread = true -- Auto-reload externally changed files
+vim.opt.updatetime = 300 -- Check for changes every 300ms of idle time
+
 -- Disable horizontal scroll with mouse
 vim.opt.mousescroll = "ver:1,hor:0"
 
