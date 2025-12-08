@@ -22,6 +22,8 @@ vim.g.ai_cmp = false
 
 vim.opt.list = false -- Hide some invisible characters (tabs...
 
+vim.opt.spellcapcheck = "" -- Disable capitalization check in spell
+
 -- some watches cannot handle vim write behaviorr. this fixes it.
 -- Source: https://github.com/oven-sh/bun/issues/8520#issuecomment-2002325950
 vim.opt.backupcopy = "yes"
