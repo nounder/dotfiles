@@ -40,7 +40,7 @@ function git_tree_enter
     set repo_root (git rev-parse --show-toplevel)
 
     # Check if tree directory exists, create if needed
-    set tree_dir "$repo_root/tree"
+    set tree_dir "$repo_root/.tree"
     if not test -d "$tree_dir"
         mkdir -p "$tree_dir"
         echo "Created tree directory at $tree_dir"
