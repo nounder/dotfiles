@@ -61,7 +61,7 @@ function git_tree_remove
     else
         # No worktree found for this branch - might have been created incorrectly
         # Try to find a worktree directory by name in tree/
-        set -l tree_dir "$repo_root/tree"
+        set -l tree_dir "$repo_root/.tree"
         set -l potential_path "$tree_dir/$branch_name"
         set -l dir_exists (test -d "$potential_path"; echo $status)
 
