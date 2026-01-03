@@ -1,6 +1,3 @@
-local is_cwd_deno = vim.loop.fs_stat(vim.loop.cwd() .. "/deno.json") ~= nil
-  and vim.loop.fs_stat(vim.loop.cwd() .. "/bun.lock") == nil
-
 return {
   {
     -- https://github.com/neovim/nvim-lspconfig
@@ -27,26 +24,6 @@ return {
         sourcekit = {},
         taplo = {
           enabled = false,
-        },
-        denols = {
-          -- enabled = is_cwd_deno,
-          enabled = false,
-        },
-        --tsgo = {},
-        vtsls = {
-          enabled = true and not is_cwd_deno,
-          --cmd = { "deno", "--no-prompt", "-A", "npm:@vtsls/language-server", "--stdio" },
-          --cmd = { "bunx", "--bun", "@vtsls/language-server", "--stdio" },
-          -- INSTALL: bun i -g @vtsls/language-server
-          cmd = { "vtsls", "--stdio" },
-          -- cmd = { "/Users/soji/bin/tsgo-build/tsgo", "lsp", "--stdio" },
-          settings = {
-            typescript = {
-              preferences = {
-                importModuleSpecifierEnding = "js",
-              },
-            },
-          },
         },
         emmet_ls = {
           enabled = false,

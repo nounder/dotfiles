@@ -40,33 +40,11 @@ typeCheckingMode = "basic"
 [language-server.ruff]
 command = "ruff-lsp"
 
-[[language]]
-name = "javascript"
-shebangs = ["deno"]
-roots = ["deno.json", "deno.jsonc"]
-auto-format = true
-language-servers = ["deno-lsp"]
-indent = { tab-width = 4, unit = " " }
+[language-server.typescript-language-server]
+command = "vtsls"
+args = ["--stdio"]
+config.hostInfo = "helix"
 
-[[language]]
-name = "typescript"
-shebangs = ["deno"]
-roots = ["deno.json", "deno.jsonc"]
-auto-format = true
-language-servers = ["deno-lsp", "lsp-ai"]
-indent = { tab-width = 4, unit = " " }
-
-[language-server.deno-lsp]
-command = "deno"
-args = ["lsp"]
-
-[language-server.deno-lsp.config.deno]
-enable = true
-unstable = true
-suggest.imports.hosts = { "https://deno.land" = true }
-inlayHints.parameterNames.enabled = "all"
-inlayHints.parameterTypes.enabled = true
-inlayHints.variableTypes.enabled = true
-inlayHints.propertyDeclarationTypes.enabled = true
-inlayHints.functionLikeReturnTypes.enabled = true
-inlayHints.enumMemberValues.enabled = true
+[language-server.typescript-language-server.config.typescript]
+updateImportsOnFileMove = { enabled = "always" }
+suggest = { completeFunctionCalls = true }
