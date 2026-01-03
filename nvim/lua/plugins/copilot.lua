@@ -5,7 +5,7 @@ return {
     opts = {
       filetypes = {
         text = false,
-        markdown = true,
+        markdown = false,
         javascript = true,
         typescript = true,
         sh = true,
