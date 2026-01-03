@@ -21,7 +21,7 @@ vim.keymap.set("n", ";q", "<Space>bd", { silent = true })
 
 vim.keymap.set("i", "<M-BS>", "<C-w>", { noremap = true, silent = true })
 
-vim.keymap.set("t", "<Esc>", "<C-\\><C-n>", { noremap = true })
+-- vim.keymap.set("t", "<Esc>", "<C-\\><C-n>", { noremap = true })
 
 vim.keymap.set("n", "<c-'>", function()
   Snacks.terminal(vim.o.shell, {

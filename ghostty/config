@@ -1,25 +1,35 @@
 # See: 
+# $ ghostty +show-config --default --docs
 # https://ghostty.org/docs/config/reference
+
 
 theme = dark:Gruvbox Dark Hard,light:Catppuccin Latte
 #theme = Gruvbox Dark Hark
+#theme = 3024 Night
 font-size = 15
 font-family = "JetBrainsMono Nerd Font"
 #font-family = "Comic Mono"
-background-opacity = 0.7
 
 clipboard-paste-protection = false
 
-background-blur-radius = 24
+#auto-update-channel = tip
+
+# background-blur = macos-glass-clear
+background-blur = macos-glass-regular
+#background-blur = true
+background-opacity = 0.5
+background-opacity-cells = true
+
 command = /opt/homebrew/bin/fish
 # window-decoration = false
 # macos-titlebar-style = hidden
 macos-non-native-fullscreen = true
 macos-titlebar-style = tabs
 macos-option-as-alt = left
+macos-window-buttons = hidden
 window-padding-x = 6
 window-padding-y = 6
-window-colorspace = display-p3
+# window-colorspace = display-p3
 
 # custom-shader = "shaders/bettercrt.glsl"
 keybind = shift+enter=text:\n
@@ -31,7 +41,3 @@ keybind = super+right=goto_split:right
 keybind = super+down=goto_split:down
 keybind = super+l=goto_split:next
 keybind = super+shift+equal=equalize_splits
-
-
-
-

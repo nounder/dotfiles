@@ -75,11 +75,11 @@
       "Bash(vim:*)",
       "Bash(nvim:*)",
       "Bash(nano:*)",
-      "Bash(nvim:*)",
-      "Bash(find:*)",
-      "Bash(mkdir:*)",
       "WebFetch(domain:*)",
-      "WebSearch"
+      "WebSearch",
+      "Bash(bun tsc:*)",
+      "Bash(timeout 15 bun tsc:*)",
+      "Bash(tsc:*)"
     ],
     "deny": [
       "Read(.env)",
@@ -95,7 +95,12 @@
       "Update(.env.*)",
       "Update(*.env)"
     ],
+    "ask": [],
     "defaultMode": "acceptEdits"
+  },
+  "enabledPlugins": {
+    "lua-lsp@claude-plugins-official": true,
+    "swift-lsp@claude-plugins-official": true
   },
   "alwaysThinkingEnabled": false
 }

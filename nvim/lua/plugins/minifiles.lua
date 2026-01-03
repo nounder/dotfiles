@@ -6,6 +6,11 @@ return {
     options = {
       use_as_default_explorer = true,
     },
+    content = {
+      filter = function(fs_entry)
+        return fs_entry.name ~= ".DS_Store"
+      end,
+    },
   },
   keys = {
     {

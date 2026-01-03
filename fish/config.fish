@@ -34,6 +34,8 @@ set HOMEBREW_PREFIX /opt/homebrew
 set HOMEBREW_CELLAR /opt/homebrew/Cellar
 set HOMEBREW_REPOSITORY /opt/homebrew
 
+alias tscheck="tsgo --skipLibCheck --noEmit"
+
 alias c="pbcopy"
 alias p="p"
 alias shc "vi ~/.config/fish/config.fish"
@@ -87,7 +89,10 @@ alias gca="git commit --amend"
 alias gc1="git clone --depth=1"
 alias py="python"
 
-alias claude="claude --dangerously-skip-permissions"
+alias claude="claude" # --dangerously-skip-permissions"
+alias sonnet="claude --model sonnet"
+alias opus="claude --model opus"
+alias haiku="claude --model haiku"
 
 function fish_greeting
 end

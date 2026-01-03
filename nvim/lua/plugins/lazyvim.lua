@@ -24,7 +24,12 @@ return {
   {
     -- https://github.com/rcarriga/nvim-notify
     "rcarriga/nvim-notify",
-    enabled = false,
+    enabled = true,
+    opts = {
+      render = "minimal",
+      stages = "fade",
+      background_colour = "#000000",
+    },
   },
   {
     -- https://github.com/nvim-treesitter/nvim-treesitter-context
