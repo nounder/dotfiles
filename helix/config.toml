@@ -2,16 +2,21 @@
 theme = "base16_transparent"
 
 [editor]
+default-yank-register = "+"
+popup-border = "all"
 gutters = []
+inline-completion-timeout = 150
+end-of-line-diagnostics = "disable"
+
+[editor.lsp]
+display-inlay-hints = false
+# inline-completion-auto-trigger = false
 # Minimum severity to show a diagnostic after the end of a line:
 # end-of-line-diagnostics = "hint"
 
 [editor.inline-diagnostics]
-# Minimum severity to show a diagnostic on the primary cursor's line.
-# Note that `cursor-line` diagnostics are hidden in insert mode.
-# cursor-line = "error"
-# Minimum severity to show a diagnostic on other lines:
-# other-lines = "error"
+cursor-line = "disable"
+other-lines = "disable"
 
 [keys.normal]
 ret = ":write"
@@ -28,9 +33,21 @@ D = ["ensure_selections_forward", "extend_to_line_end", "delete_selection"]
 0 = "goto_line_start"
 "$" = "goto_line_end"
 G = "goto_file_end"
+K = "hover"
+q = ":quit"
+Q = ":quit!"
+S-ret = ":write!"
 
 # vim muslce memory
 [keys.select]
 s = "goto_word"
 0 = "goto_line_start"
 "$" = "goto_line_end"
+
+[keys.insert]
+tab = "inline_completion_accept"
+# C-e = "inline_completion_dismiss"
+# C-j = "inline_completion_next"
+# C-k = "inline_completion_prev"
+C-space = "inline_completion_trigger"
+C-l = "completion"

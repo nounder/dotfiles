@@ -24,7 +24,8 @@ set -x SHELL (which fish)
 set -x EDITOR (which hx)
 
 set fzf_preview_file_cmd "bat --style=plain --color=always"
-set FZF_DEFAULT_OPTS '--cycle --layout=reverse --height=90% --preview-window=wrap --marker="*" --border --no-scrollbar --preview-window=border-left'
+# must be exported (-x) otherwise _fzf_wrapper uses its own defaults with --border
+set -x FZF_DEFAULT_OPTS '--cycle --layout=default --height=90% --preview-window=wrap --marker="*" --no-scrollbar --preview-window=border-left'
 
 set -x XDG_CONFIG_HOME "$HOME/.config"
 
@@ -42,13 +43,14 @@ alias vi nvim
 alias e "$EDITOR"
 alias f yazi
 alias g lazygit
+alias t zellij
 alias e-js "nvim -c 'set filetype=typescript' -c 'set nomodified' -"
 alias p-js "dprint fmt --stdin main.ts"
 alias s sudo
 alias s3="aws s3"
 alias ip=ipython
 
-alias l="ls -a"
+alias l="lsd --group-dirs first"
 
 alias br="bun run"
 alias brw="bun run --watch"
@@ -373,6 +375,17 @@ end
 type -q direnv && direnv hook fish | source
 
 fzf_configure_bindings
+
+# Open file picker with Tab when prompt is empty
+function _tab_or_complete
+    if test -z (commandline)
+        _fzf_search_directory
+    else
+        commandline -f complete
+    end
+end
+
+bind \t _tab_or_complete
 
 # Added by LM Studio CLI (lms)
 set -gx PATH $PATH /Users/rg/.lmstudio/bin

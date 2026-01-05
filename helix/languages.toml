@@ -26,7 +26,7 @@ command = "sourcekit-lsp"
 
 [[language]]
 name = "python"
-language-servers = ["pyright", "ruff"]
+language-servers = ["pyright", "ruff", { name = "copilot", only-features = ["inline-completion"] }]
 formatter = { command = "ruff", args = ["format", "-"] }
 auto-format = true
 
@@ -48,3 +48,84 @@ config.hostInfo = "helix"
 [language-server.typescript-language-server.config.typescript]
 updateImportsOnFileMove = { enabled = "always" }
 suggest = { completeFunctionCalls = true }
+
+[language-server.fs_watcher_lsp]
+command = "fs_watcher_lsp"
+args = []
+
+[language-server.copilot]
+command = "copilot-language-server"
+args = ["--stdio"]
+
+[language-server.copilot.config]
+editorInfo = { name = "Helix", version = "25.01" }
+editorPluginInfo = { name = "helix-copilot", version = "0.1.0" }
+
+[[language]]
+name = "typescript"
+language-servers = ["typescript-language-server", "fs_watcher_lsp", { name = "copilot", only-features = ["inline-completion"] }]
+formatter = { command = "dprint", args = ["fmt", "--stdin", "ts"] }
+auto-format = true
+
+[[language]]
+name = "javascript"
+language-servers = ["typescript-language-server", "fs_watcher_lsp", { name = "copilot", only-features = ["inline-completion"] }]
+formatter = { command = "dprint", args = ["fmt", "--stdin", "js"] }
+auto-format = true
+
+[[language]]
+name = "tsx"
+language-servers = ["typescript-language-server", "fs_watcher_lsp", { name = "copilot", only-features = ["inline-completion"] }]
+formatter = { command = "dprint", args = ["fmt", "--stdin", "tsx"] }
+auto-format = true
+
+[[language]]
+name = "jsx"
+language-servers = ["typescript-language-server", "fs_watcher_lsp", { name = "copilot", only-features = ["inline-completion"] }]
+formatter = { command = "dprint", args = ["fmt", "--stdin", "jsx"] }
+auto-format = true
+
+[[language]]
+name = "json"
+formatter = { command = "dprint", args = ["fmt", "--stdin", "json"] }
+auto-format = true
+
+[[language]]
+name = "markdown"
+formatter = { command = "dprint", args = ["fmt", "--stdin", "md"] }
+auto-format = true
+
+[[language]]
+name = "toml"
+formatter = { command = "dprint", args = ["fmt", "--stdin", "toml"] }
+auto-format = true
+
+[[language]]
+name = "html"
+formatter = { command = "dprint", args = ["fmt", "--stdin", "html"] }
+auto-format = true
+
+[[language]]
+name = "css"
+formatter = { command = "dprint", args = ["fmt", "--stdin", "css"] }
+auto-format = true
+
+[[language]]
+name = "scss"
+formatter = { command = "dprint", args = ["fmt", "--stdin", "scss"] }
+auto-format = true
+
+[[language]]
+name = "rust"
+language-servers = ["rust-analyzer", { name = "copilot", only-features = ["inline-completion"] }]
+
+[[language]]
+name = "go"
+language-servers = ["gopls", { name = "copilot", only-features = ["inline-completion"] }]
+
+[[language]]
+name = "txt"
+scope = "source.txt"
+injection-regex = "txt"
+file-types = ["txt"]
+language-servers = ["fs_watcher_lsp"]
