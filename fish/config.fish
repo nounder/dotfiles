@@ -21,9 +21,7 @@ set CLAUDE_CODE_AGENT_RULE_DISABLED 1
 
 set -x SHELL (which fish)
 
-if not set -q EDITOR
-    set -x EDITOR (which nvim)
-end
+set -x EDITOR (which hx)
 
 set fzf_preview_file_cmd "bat --style=plain --color=always"
 set FZF_DEFAULT_OPTS '--cycle --layout=reverse --height=90% --preview-window=wrap --marker="*" --border --no-scrollbar --preview-window=border-left'
@@ -42,6 +40,8 @@ alias shc "vi ~/.config/fish/config.fish"
 alias shd "cd ~/.config/fish"
 alias vi nvim
 alias e "$EDITOR"
+alias f yazi
+alias g lazygit
 alias e-js "nvim -c 'set filetype=typescript' -c 'set nomodified' -"
 alias p-js "dprint fmt --stdin main.ts"
 alias s sudo
@@ -89,7 +89,7 @@ alias gca="git commit --amend"
 alias gc1="git clone --depth=1"
 alias py="python"
 
-alias claude="claude" # --dangerously-skip-permissions"
+alias claude="claude --dangerously-skip-permissions"
 alias sonnet="claude --model sonnet"
 alias opus="claude --model opus"
 alias haiku="claude --model haiku"
