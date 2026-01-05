@@ -2,3 +2,4 @@
 local/
 .envrc
 tree/
+nushell/history.txt

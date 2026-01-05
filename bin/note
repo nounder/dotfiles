@@ -1,0 +1,27 @@
+#!/bin/bash
+
+NOTES_DIR="$HOME/Documents/Notes"
+mkdir -p "$NOTES_DIR"
+
+date_part=$(date +%Y-%m-%d)
+time_part=$(date +%H%M)
+
+base_name="${date_part}_${time_part}"
+file_path="$NOTES_DIR/${base_name}.txt"
+
+if [[ -f "$file_path" ]]; then
+  # Try with seconds
+  time_with_secs=$(date +%H%M%S)
+  base_name="${date_part}_${time_with_secs}"
+  file_path="$NOTES_DIR/${base_name}.txt"
+
+  if [[ -f "$file_path" ]]; then
+    # Try with milliseconds
+    time_with_ms=$(date +%H%M%S%3N)
+    base_name="${date_part}_${time_with_ms}"
+    file_path="$NOTES_DIR/${base_name}.txt"
+  fi
+fi
+
+touch "$file_path"
+echo "$file_path"
