@@ -1,0 +1,183 @@
+#!/usr/bin/env bash
+
+# Benchmark how long it takes to print "hello world" in various shells
+# Usage: shell-bench [iterations]
+
+set -euo pipefail
+
+ITERATIONS="${1:-100}"
+
+declare -A SHELL_TIMES
+SHELLS=(sh bash zsh fish nu oil)
+
+# Function to measure execution time in milliseconds
+measure_time() {
+    local shell="$1"
+    local start end duration
+
+    start=$(gdate +%s%N 2>/dev/null || date +%s%N)
+
+    case "$shell" in
+        sh|bash|zsh)
+            "$shell" -c 'echo "hello world"' > /dev/null
+            ;;
+        fish)
+            fish -c 'echo "hello world"' > /dev/null
+            ;;
+        nu)
+            nu -c 'print "hello world"' > /dev/null
+            ;;
+        oil)
+            oil -c 'echo "hello world"' > /dev/null
+            ;;
+    esac
+
+    end=$(gdate +%s%N 2>/dev/null || date +%s%N)
+    duration=$(( (end - start) / 1000000 ))  # Convert to milliseconds
+    echo "$duration"
+}
+
+# Check for required shells
+for shell in "${SHELLS[@]}"; do
+    if ! command -v "$shell" &> /dev/null; then
+        echo "Warning: $shell not found, skipping"
+        SHELLS=("${SHELLS[@]/$shell}")
+    fi
+done
+
+echo "Benchmarking 'hello world' print time"
+echo "Shells: ${SHELLS[*]}"
+echo "Iterations: $ITERATIONS"
+echo ""
+
+# Warmup
+echo "Warming up..."
+for _ in {1..5}; do
+    for shell in "${SHELLS[@]}"; do
+        measure_time "$shell" > /dev/null
+    done
+done
+
+# Collect times for each shell
+for shell in "${SHELLS[@]}"; do
+    echo "Running $shell benchmark..."
+    SHELL_TIMES[$shell]=""
+    for i in $(seq 1 "$ITERATIONS"); do
+        time_ms=$(measure_time "$shell")
+        SHELL_TIMES[$shell]+="$time_ms "
+        printf "\r  Progress: %d/%d" "$i" "$ITERATIONS"
+    done
+    echo ""
+done
+echo ""
+
+# Function to calculate statistics
+calc_stats() {
+    local name="$1"
+    shift
+    local times=("$@")
+    local sum=0
+    local min=${times[0]}
+    local max=${times[0]}
+    local count=${#times[@]}
+
+    # Calculate sum, min, max
+    for t in "${times[@]}"; do
+        sum=$((sum + t))
+        ((t < min)) && min=$t
+        ((t > max)) && max=$t
+    done
+
+    # Calculate average
+    local avg=$((sum / count))
+
+    # Sort for median
+    IFS=$'\n' sorted=($(sort -n <<<"${times[*]}")); unset IFS
+    local mid=$((count / 2))
+    local median
+    if ((count % 2 == 0)); then
+        median=$(( (sorted[mid-1] + sorted[mid]) / 2 ))
+    else
+        median=${sorted[mid]}
+    fi
+
+    # Calculate standard deviation
+    local sq_diff_sum=0
+    for t in "${times[@]}"; do
+        local diff=$((t - avg))
+        sq_diff_sum=$((sq_diff_sum + diff * diff))
+    done
+    local variance=$((sq_diff_sum / count))
+    local stddev=$(echo "scale=2; sqrt($variance)" | bc)
+
+    echo "=== $name ==="
+    echo "  Min:    ${min}ms"
+    echo "  Max:    ${max}ms"
+    echo "  Avg:    ${avg}ms"
+    echo "  Median: ${median}ms"
+    echo "  StdDev: ${stddev}ms"
+    echo ""
+
+    # Create histogram
+    echo "  Histogram (ms):"
+
+    # Determine bucket size
+    local range=$((max - min))
+    local bucket_size
+    if ((range < 10)); then
+        bucket_size=1
+    elif ((range < 50)); then
+        bucket_size=5
+    elif ((range < 100)); then
+        bucket_size=10
+    else
+        bucket_size=$((range / 10))
+    fi
+
+    # Count buckets
+    declare -A buckets
+    for t in "${times[@]}"; do
+        local bucket=$(( (t / bucket_size) * bucket_size ))
+        buckets[$bucket]=$((${buckets[$bucket]:-0} + 1))
+    done
+
+    # Find max count for scaling
+    local max_count=0
+    for b in "${!buckets[@]}"; do
+        ((buckets[$b] > max_count)) && max_count=${buckets[$b]}
+    done
+
+    # Print histogram
+    local bar_width=40
+    for b in $(echo "${!buckets[@]}" | tr ' ' '\n' | sort -n); do
+        local bar_len=$((buckets[$b] * bar_width / max_count))
+        local bar=""
+        for _ in $(seq 1 "$bar_len"); do bar+="█"; done
+        printf "  %4d-%4d │ %-${bar_width}s %d\n" "$b" "$((b + bucket_size - 1))" "$bar" "${buckets[$b]}"
+    done
+    echo ""
+}
+
+# Print statistics for each shell
+declare -A SHELL_AVGS
+for shell in "${SHELLS[@]}"; do
+    read -ra times <<< "${SHELL_TIMES[$shell]}"
+    calc_stats "$shell" "${times[@]}"
+
+    # Store average for summary
+    sum=0
+    for t in "${times[@]}"; do sum=$((sum + t)); done
+    SHELL_AVGS[$shell]=$((sum / ${#times[@]}))
+done
+
+# Summary comparison
+echo "=== Summary (sorted by avg) ==="
+printf "%-10s %8s\n" "Shell" "Avg (ms)"
+printf "%-10s %8s\n" "-----" "--------"
+
+# Sort shells by average time
+for shell in "${SHELLS[@]}"; do
+    echo "$shell ${SHELL_AVGS[$shell]}"
+done | sort -k2 -n | while read -r shell avg; do
+    printf "%-10s %8s\n" "$shell" "$avg"
+done

@@ -92,6 +92,7 @@ auto-format = true
 
 [[language]]
 name = "markdown"
+file-types = ["md", "markdown", "txt"]
 formatter = { command = "dprint", args = ["fmt", "--stdin", "md"] }
 auto-format = true
 
@@ -123,9 +124,3 @@ language-servers = ["rust-analyzer", { name = "copilot", only-features = ["inlin
 name = "go"
 language-servers = ["gopls", { name = "copilot", only-features = ["inline-completion"] }]
 
-[[language]]
-name = "txt"
-scope = "source.txt"
-injection-regex = "txt"
-file-types = ["txt"]
-language-servers = ["fs_watcher_lsp"]

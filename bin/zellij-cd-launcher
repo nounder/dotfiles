@@ -1,0 +1,79 @@
+#!/usr/bin/env nu
+
+# Detect if the focused tab's main pane is running helix
+
+def is_helix_focused [] {
+    let layout = (zellij action dump-layout)
+
+    # Find the focused tab section (tab ... focus=true { ... })
+    let tabs = ($layout | split row "tab name=")
+
+    for tab in $tabs {
+        if ($tab | str contains "focus=true") {
+            # This is the focused tab - get section before floating_panes
+            let before_floating = ($tab | split row "floating_panes" | first)
+
+            # Look for pane lines with focus=true AND hx/helix
+            # If no pane has explicit focus=true, check if there's only one command pane
+            let pane_lines = ($before_floating | lines | where {|l| $l | str starts-with "        pane command="})
+
+            # Check if any pane has focus=true and is helix
+            for line in $pane_lines {
+                if ($line | str contains "focus=true") {
+                    if ($line | str contains "/hx") or ($line | str contains "helix") {
+                        return true
+                    } else {
+                        return false
+                    }
+                }
+            }
+
+            # No explicit focus - if there's only one command pane, check if it's helix
+            let command_panes = ($pane_lines | length)
+            if $command_panes == 1 {
+                let pane = ($pane_lines | first)
+                return (($pane | str contains "/hx") or ($pane | str contains "helix"))
+            }
+        }
+    }
+    false
+}
+
+def main [] {
+    let layout = (zellij action dump-layout)
+    let tabs = ($layout | split row "tab name=")
+
+    for tab in $tabs {
+        if ($tab | str contains "focus=true") {
+            let before_floating = ($tab | split row "floating_panes" | first)
+            let pane_lines = ($before_floating | lines | where {|l| $l | str starts-with "        pane command="})
+            print $"DEBUG: pane_lines = ($pane_lines)"
+            print $"DEBUG: count = ($pane_lines | length)"
+        }
+    }
+    print $"DEBUG: is_helix_focused = (is_helix_focused)"
+    sleep 3sec
+
+    let mode = if (is_helix_focused) { "helix" } else { "shell" }
+
+    let path = (fzf --height=100% --preview-window=noborder --no-separator --preview "bat --color=always --wrap=never --style=plain {}" | str trim)
+
+    zellij action toggle-floating-panes
+
+    if ($path | is-not-empty) {
+        if ($mode == "helix") {
+            let dir = ($path | path dirname)
+            let file = ($path | path basename)
+
+            # Helix: escape, cd to dir, open file
+            zellij action write 27
+            zellij action write-chars $":cd ($dir)"
+            zellij action write 13
+            zellij action write-chars $":open ($file)"
+            zellij action write 13
+        } else {
+            # Shell: just insert the path
+            zellij action write-chars $path
+        }
+    }
+}

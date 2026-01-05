@@ -1,0 +1,28 @@
+#!/usr/bin/env nu
+
+def main [] {
+    # Read mode from temp file (written by zellij-cd-detect)
+    let mode = try { open /tmp/zellij-cd-mode | str trim } catch { "shell" }
+    let is_helix = ($mode == "helix")
+
+    let path = (fzf --height=100% --preview-window=noborder --no-separator --preview "bat --color=always --wrap=never --style=plain {}" | str trim)
+
+    zellij action toggle-floating-panes
+
+    if ($path | is-not-empty) {
+        if $is_helix {
+            let dir = ($path | path dirname)
+            let file = ($path | path basename)
+
+            # Helix: escape, cd to dir, open file
+            zellij action write 27
+            zellij action write-chars $":cd ($dir)"
+            zellij action write 13
+            zellij action write-chars $":open ($file)"
+            zellij action write 13
+        } else {
+            # Shell: just insert the path
+            zellij action write-chars $path
+        }
+    }
+}

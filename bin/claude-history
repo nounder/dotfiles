@@ -1,0 +1,141 @@
+#!/usr/bin/env nu
+
+# Claude Code History Browser
+# Browse and resume Claude Code conversations quickly
+
+# Get project path and first message from a session file
+def get-session-info [session_file: path] {
+    let lines = (open $session_file | lines | where ($it | str length) > 0)
+    mut project = ""
+    mut first_msg = ""
+    for line in $lines {
+        let entry = ($line | from json)
+        if ($project | is-empty) and ($entry.cwd? | is-not-empty) {
+            $project = $entry.cwd
+        }
+        if ($first_msg | is-empty) and ($entry.type? == "user") and ($entry.message?.content? | describe | str starts-with "string") {
+            $first_msg = ($entry.message.content | str substring 0..150 | str replace -a "\n" " ")
+        }
+        if ($project | is-not-empty) and ($first_msg | is-not-empty) {
+            break
+        }
+    }
+    { project: $project, display: $first_msg }
+}
+
+# Parse sessions from session files (richer metadata)
+def sessions-from-files [] {
+    let projects_dir = $"($env.HOME)/.claude/projects"
+
+    glob $"($projects_dir)/**/*.jsonl"
+    | each { |file|
+        let session_id = ($file | path basename | str replace ".jsonl" "")
+        let modified = (ls $file | get 0.modified)
+        let info = (get-session-info $file)
+        {
+            sessionId: $session_id
+            project: $info.project
+            display: $info.display
+            modified: $modified
+            file: $file
+        }
+    }
+    | where { |s| $s.project | is-not-empty }
+    | sort-by modified -r
+    | first 100
+}
+
+# Parse sessions from history.jsonl (faster, less metadata)
+def sessions-from-history [] {
+    let history_file = $"($env.HOME)/.claude/history.jsonl"
+
+    open $history_file
+    | lines
+    | where ($it | str length) > 0
+    | each { |line| $line | from json }
+    | where { |row| ($row.sessionId? | is-not-empty) and ($row.display? | is-not-empty) }
+    | group-by sessionId
+    | items { |session_id, entries|
+        let latest = $entries | last
+        let project = ($latest.project? | default "")
+        let display = ($latest.display? | default "" | str trim | str substring 0..100)
+        let timestamp = ($latest.timestamp? | default 0)
+        {
+            sessionId: $session_id
+            project: $project
+            display: $display
+            timestamp: $timestamp
+        }
+    }
+    | sort-by timestamp -r
+    | first 50
+}
+
+def main [
+    --files (-f)  # Use session files for richer metadata (slower)
+    --print (-p)  # Print session ID only, don't resume
+] {
+    let claude_dir = $"($env.HOME)/.claude"
+    let history_file = $"($claude_dir)/history.jsonl"
+
+    if not ($history_file | path exists) {
+        print "No Claude Code history found"
+        exit 1
+    }
+
+    let sessions = if $files {
+        sessions-from-files
+    } else {
+        sessions-from-history
+    }
+
+    if ($sessions | is-empty) {
+        print "No sessions found"
+        exit 1
+    }
+
+    # Format for fzf display
+    let lines = (
+        $sessions
+        | each { |s|
+            let project_name = ($s.project | path basename)
+            let time_str = if $files {
+                $s.modified | format date "%Y-%m-%d %H:%M"
+            } else {
+                $s.timestamp | into int | $in * 1000000 | into datetime | format date "%Y-%m-%d %H:%M"
+            }
+            let display = ($s.display | str replace -a "\n" " " | str trim)
+            $"($s.sessionId)\t($time_str)\t($project_name)\t($s.project)\t($display)"
+        }
+        | str join "\n"
+    )
+
+    # Use fzf to pick a session
+    let selected = (
+        $lines
+        | fzf --delimiter="\t" --with-nth=2,3,5 --preview='echo "Session: {1}\nProject: {4}\nPrompt: {5}"' --preview-window=up:3:wrap
+        | str trim
+    )
+
+    if ($selected | is-empty) {
+        exit 0
+    }
+
+    let parts = ($selected | split column "\t")
+    let session_id = ($parts | get column1.0)
+    let project = ($parts | get column4.0)
+
+    if $print {
+        print $session_id
+    } else {
+        # Resume in project directory
+        if ($project | path exists) {
+            cd $project
+            ^claude --resume $session_id
+        } else {
+            print $"Project directory not found: ($project)"
+            print $"Resuming in current directory..."
+            ^claude --resume $session_id
+        }
+    }
+}

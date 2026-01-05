@@ -1,0 +1,16 @@
+#!/usr/bin/env nu
+
+# Opens fzf in a floating pane, returns selected path via temp file
+
+def main [] {
+    let path = (fzf --height=100% --preview-window=noborder --no-separator --preview "bat --color=always --wrap=never --style=plain {}" | str trim)
+
+    zellij action toggle-floating-panes
+
+    # Only write to file if a selection was made
+    # Delete file first so helix can detect empty selection
+    rm -f /tmp/zellij-find-file-result
+    if ($path | is-not-empty) {
+        $path | save -f /tmp/zellij-find-file-result
+    }
+}

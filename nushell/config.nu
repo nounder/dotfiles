@@ -18,7 +18,7 @@
 # You can remove these comments if you want or leave
 # them for future reference.
 
-$env.config.buffer_editor = "nvim"
+$env.config.buffer_editor = "hx"
 $env.config.show_banner = false
 
 # Git prompt helpers
@@ -44,13 +44,38 @@ def branch_icon [] {
     "\u{f418} "
 }
 
-def get_git_root [] {
+# Get the root of the current git worktree
+def git-root [] {
     let result = (do { git rev-parse --show-toplevel } | complete)
     if $result.exit_code == 0 {
         $result.stdout | str trim
     } else {
         null
     }
+}
+
+# Get the root of the main project (works with worktrees)
+def project-root [] {
+    let result = (do { git rev-parse --git-common-dir } | complete)
+    if $result.exit_code == 0 {
+        $result.stdout | str trim | path expand | path dirname
+    } else {
+        null
+    }
+}
+
+# cd to project root (main repo, not worktree)
+def git-cd-root [] {
+    let root = (project-root)
+    if $root == null {
+        error make {msg: "Not in a git repository"}
+    }
+    cd $root
+}
+
+# Alias for backward compatibility
+def get_git_root [] {
+    git-root
 }
 
 def get_git_branch [] {
@@ -63,7 +88,7 @@ def get_git_branch [] {
 }
 
 def shorten_path_in_repo [] {
-    let git_root = (get_git_root)
+    let git_root = (git-root)
 
     if $git_root == null {
         # Not in a git repo, show full path with ~ for home
@@ -97,7 +122,7 @@ def shorten_path_in_repo [] {
 }
 
 def prompt_git_icon [] {
-    let git_root = (get_git_root)
+    let git_root = (git-root)
     if $git_root != null {
         $"(ansi yellow)(directory_icon)(ansi dark_gray)"
     } else {
@@ -132,25 +157,115 @@ $env.PROMPT_COMMAND = {||
 $env.PROMPT_COMMAND_RIGHT = ""
 $env.PROMPT_INDICATOR = {|| $"(ansi red_bold)$ (ansi reset)" }
 
+# History picker - select from command history
+def history-picker [] {
+    let commands = (
+        history
+        | get command
+        | uniq
+        | reverse
+        | where {|cmd|
+            not ($cmd | str starts-with ' ') and not ($cmd | str starts-with '#') and not ($cmd | str contains (char nl))
+        }
+    )
+
+    let has_fzf = (which fzf | is-not-empty)
+    let selected = if $has_fzf {
+        let result = ($commands | str join "\n" | fzf --no-height --prompt "History> " --tiebreak=index)
+        if ($env.LAST_EXIT_CODE != 0) { "" } else { $result | str trim }
+    } else {
+        try { $commands | input list --fuzzy "History: " } catch { "" }
+    }
+
+    if ($selected | is-not-empty) {
+        commandline edit --replace $selected
+    }
+}
+
+# File picker with frecency - opens in editor if command line is empty
+def file-picker [] {
+    let cmdline = (commandline)
+
+    # Combine frecency history with fd results, deduplicated
+    let files = (
+        (recentf-get-cwd | wrap path)
+        | append (fd --type f | lines | wrap path)
+        | uniq-by path
+        | get path
+    )
+
+    # Use fzf if available, fallback to input list
+    let has_fzf = (which fzf | is-not-empty)
+    let selected = if $has_fzf {
+        let result = ($files | str join "\n" | fzf --no-height --multi --ansi --prompt "File> " --preview "bat --style=plain --color=always {}" --tiebreak=index)
+        if ($env.LAST_EXIT_CODE != 0) { "" } else { $result | str trim }
+    } else {
+        try { $files | input list --fuzzy "File: " } catch { "" }
+    }
+
+    if ($selected | is-empty) {
+        return
+    }
+
+    # Handle multi-select from fzf (newline separated)
+    let selected_files = if $has_fzf {
+        $selected | lines
+    } else {
+        [$selected]
+    }
+
+    # Add to history
+    recentf-add ...$selected_files
+
+    # If command line was empty, open in editor
+    if ($cmdline | is-empty) {
+        run-external $env.EDITOR ...$selected_files
+    } else {
+        commandline edit --insert ($selected_files | str join " ")
+    }
+}
+
+# Zellij file finder - opens fzf in floating pane, inserts result
+def zellij-find-file [] {
+    zellij-picker insert
+}
+
 $env.config.keybindings = ($env.config.keybindings | append [
     {
-        name: file_picker
-        modifier: control
-        keycode: char_t
+        name: file-picker
+        modifier: none
+        keycode: tab
         mode: [emacs, vi_insert, vi_normal]
         event: {
             send: executehostcommand
-            cmd: "commandline edit --insert (fd --type f | lines | input list --fuzzy 'File: ')"
+            cmd: "if (commandline | is-empty) { file-picker }"
         }
     }
     {
-        name: history_picker
+        name: completion
+        modifier: control
+        keycode: char_l
+        mode: [emacs, vi_insert, vi_normal]
+        event: { send: Menu, name: completion_menu }
+    }
+    {
+        name: history-picker
         modifier: control
         keycode: char_r
         mode: [emacs, vi_insert, vi_normal]
         event: {
             send: executehostcommand
-            cmd: "commandline edit --replace (history | get command | uniq | reverse | where {|cmd| not ($cmd | str starts-with ' ') and not ($cmd | str starts-with '#') and not ($cmd | str contains (char nl))} | input list --fuzzy 'History: ')"
+            cmd: "history-picker"
+        }
+    }
+    {
+        name: zellij-find-file
+        modifier: control
+        keycode: char_o
+        mode: [emacs, vi_insert, vi_normal]
+        event: {
+            send: executehostcommand
+            cmd: "zellij-find-file"
         }
     }
 ])
@@ -219,11 +334,14 @@ $env.config.hooks.env_change = ($env.config.hooks.env_change | default {} | merg
 alias tscheck = tsgo --skipLibCheck --noEmit
 alias c = pbcopy
 alias vi = nvim
-alias e = nvim
+alias e = hx
+alias f = yazi
+alias g = lazygit
+alias t = zellij
 alias s = sudo
 alias s3 = aws s3
 alias ip = ipython
-alias l = ls -a
+alias l = lsd --group-dirs first
 alias p = less -r
 
 # Bun
@@ -246,11 +364,11 @@ def doka [] { docker ps -q | lines | each { |id| docker kill $id } }
 alias tf = terraform
 
 # Shell config
-alias sc = nvim ~/.config/nushell/config.nu
+alias sc = hx ~/.config/nushell/config.nu
 
 # Editor config
-def ec [] { cd ~/.config/nvim; nvim }
-def tc [] { cd ~/.config/kitty; nvim kitty.conf }
+def ec [] { cd ~/.config/helix; hx config.toml }
+def tc [] { cd ~/.config/kitty; hx kitty.conf }
 
 # Git
 alias gc = git checkout
@@ -261,7 +379,7 @@ alias gs = git switch
 alias gta = git worktree add
 alias gca = git commit --amend
 alias gc1 = git clone --depth=1
-def gd [] { cd (git rev-parse --show-toplevel) }
+def gd [] { git-cd-root }
 def gg [] { nvim -c 'lua require("neogit").open()' }
 
 # Python
@@ -272,6 +390,150 @@ alias claude = claude --dangerously-skip-permissions
 alias sonnet = claude --model sonnet
 alias opus = claude --model opus
 alias haiku = claude --model haiku
+
+# =============================================================================
+# Recent files (frecency-based file history)
+# =============================================================================
+
+const RECENTF_FILE = "~/.local/share/fzf_file_history"
+const RECENTF_HOURLY_HALF = 3600
+const RECENTF_DAILY_HALF = 86400
+const RECENTF_MONTHLY_HALF = 2592000
+const RECENTF_HOURLY_WEIGHT = 720
+const RECENTF_DAILY_WEIGHT = 30
+const RECENTF_MONTHLY_WEIGHT = 1
+
+# Add files to recent files history
+def recentf-add [
+    ...files: string  # Files to add to history
+] {
+    let history_file = ($RECENTF_FILE | path expand)
+    let now = (date now | into int) // 1_000_000_000
+
+    mkdir ($history_file | path dirname)
+    touch $history_file
+
+    # Load existing entries
+    mut entries = (
+        open $history_file
+        | lines
+        | where { $in | str length | $in > 0 }
+        | each { |line|
+            let parts = ($line | split column ":" path hourly daily monthly ts)
+            if ($parts | length) > 0 {
+                {
+                    path: $parts.path.0,
+                    hourly: ($parts.hourly.0 | into float),
+                    daily: ($parts.daily.0 | into float),
+                    monthly: ($parts.monthly.0 | into float),
+                    ts: ($parts.ts.0 | into int)
+                }
+            } else {
+                null
+            }
+        }
+        | where { $in != null }
+    )
+
+    # Process each file
+    for f in $files {
+        let abs_path = try {
+            let resolved = ($f | path expand)
+            if ($resolved | path type) == "dir" {
+                $"($resolved)/"
+            } else {
+                $resolved
+            }
+        } catch {
+            continue
+        }
+
+        # Find existing entry
+        let idx = ($entries | enumerate | where { $in.item.path == $abs_path } | get index? | first | default (-1))
+
+        if $idx >= 0 {
+            # Update existing entry with decay
+            let entry = ($entries | get $idx)
+            let elapsed = $now - $entry.ts
+            let new_hourly = (($entry.hourly * (2 ** (-1 * $elapsed / $RECENTF_HOURLY_HALF))) + 1)
+            let new_daily = (($entry.daily * (2 ** (-1 * $elapsed / $RECENTF_DAILY_HALF))) + 1)
+            let new_monthly = (($entry.monthly * (2 ** (-1 * $elapsed / $RECENTF_MONTHLY_HALF))) + 1)
+            $entries = ($entries | update $idx {
+                path: $abs_path,
+                hourly: $new_hourly,
+                daily: $new_daily,
+                monthly: $new_monthly,
+                ts: $now
+            })
+        } else {
+            # New entry
+            $entries = ($entries | append {
+                path: $abs_path,
+                hourly: 1.0,
+                daily: 1.0,
+                monthly: 1.0,
+                ts: $now
+            })
+        }
+    }
+
+    # Write back
+    $entries
+    | each { |e| $"($e.path):($e.hourly):($e.daily):($e.monthly):($e.ts)" }
+    | str join "\n"
+    | save -f $history_file
+}
+
+# Get recent files sorted by score
+def recentf-get [] {
+    let history_file = ($RECENTF_FILE | path expand)
+    let now = (date now | into int) // 1_000_000_000
+
+    if not ($history_file | path exists) {
+        return []
+    }
+
+    open $history_file
+    | lines
+    | where { $in | str length | $in > 0 }
+    | each { |line|
+        let parts = ($line | split column ":" path hourly daily monthly ts)
+        if ($parts | length) > 0 {
+            let elapsed = $now - ($parts.ts.0 | into int)
+            let h = ($parts.hourly.0 | into float) * (2 ** (-1 * $elapsed / $RECENTF_HOURLY_HALF))
+            let d = ($parts.daily.0 | into float) * (2 ** (-1 * $elapsed / $RECENTF_DAILY_HALF))
+            let m = ($parts.monthly.0 | into float) * (2 ** (-1 * $elapsed / $RECENTF_MONTHLY_HALF))
+            let score = ($h * $RECENTF_HOURLY_WEIGHT) + ($d * $RECENTF_DAILY_WEIGHT) + ($m * $RECENTF_MONTHLY_WEIGHT)
+            {path: $parts.path.0, score: $score}
+        } else {
+            null
+        }
+    }
+    | where { $in != null }
+    | sort-by score -r
+    | get path
+}
+
+# Get recent files for current directory
+def recentf-get-cwd [] {
+    let cwd = $"($env.PWD)/"
+    recentf-get
+    | where { $in | str starts-with $cwd }
+    | each { |p|
+        let rel = ($p | str replace $cwd "")
+        # Strip trailing slash for consistency
+        $rel | str trim -r -c "/"
+    }
+    | where { $in | path exists }
+}
+
+# Clear recent files history
+def recentf-purge [] {
+    let history_file = ($RECENTF_FILE | path expand)
+    rm -f $history_file
+}
+
+# =============================================================================
 
 # AI command using Anthropic API
 def ai [

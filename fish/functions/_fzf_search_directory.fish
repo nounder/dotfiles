@@ -23,22 +23,28 @@ function _fzf_search_directory --description "Search the current directory. Repl
         set --prepend fzf_arguments --prompt="Directory $unescaped_exp_token> " --preview="_fzf_preview_file $expanded_token{}"
         set -f file_paths_selected $unescaped_exp_token($fd_cmd 2>/dev/null | _fzf_wrapper $fzf_arguments)
     else
-        # --tiebreak=index preserves frecency order when fzf scores are equal
-        set --prepend fzf_arguments --prompt="Directory> " --query="$unescaped_exp_token" --preview='_fzf_preview_file {}' --tiebreak=index
-        # Prepend history entries (sorted by frecency) to fd output
-        set -f cwd (pwd)/
-        set -f file_paths_selected (begin
-            # Get frecency-sorted history, filter to current dir
-            for f in (_fzf_history_get)
-                if string match -q "$cwd*" "$f"
-                    set -l rel (string replace "$cwd" "" "$f")
-                    # Strip trailing slash for consistency with fd output
-                    set rel (string trim -r -c / "$rel")
-                    test -e "$rel" && echo "$rel"
+        set --prepend fzf_arguments --prompt="Directory> " --query="$unescaped_exp_token" --preview='_fzf_preview_file {}'
+        # Only use frecency prioritization in git repos
+        if project_root >/dev/null 2>&1
+            # --tiebreak=index preserves frecency order when fzf scores are equal
+            set --append fzf_arguments --tiebreak=index
+            # Prepend history entries (sorted by frecency) to fd output
+            set -f cwd (pwd)/
+            set -f file_paths_selected (begin
+                # Get frecency-sorted history, filter to current dir
+                for f in (_fzf_history_get)
+                    if string match -q "$cwd*" "$f"
+                        set -l rel (string replace "$cwd" "" "$f")
+                        # Strip trailing slash for consistency with fd output
+                        set rel (string trim -r -c / "$rel")
+                        test -e "$rel" && echo "$rel"
+                    end
                 end
-            end
-            $fd_cmd 2>/dev/null
-        end | awk '!seen[$0]++' | _fzf_wrapper $fzf_arguments)
+                $fd_cmd 2>/dev/null
+            end | awk '!seen[$0]++' | _fzf_wrapper $fzf_arguments)
+        else
+            set -f file_paths_selected ($fd_cmd 2>/dev/null | _fzf_wrapper $fzf_arguments)
+        end
     end
 
     if test $status -eq 0

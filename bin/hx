@@ -1,0 +1,2 @@
+#!/bin/sh
+exec ~/Repos/helix-inline-completion/target/release/hx "$@"
