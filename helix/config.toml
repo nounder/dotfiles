@@ -2,6 +2,7 @@
 theme = "base16_transparent"
 
 [editor]
+bufferline = "multiple"
 default-yank-register = "+"
 popup-border = "all"
 gutters = []
@@ -19,12 +20,19 @@ cursor-line = "disable"
 other-lines = "disable"
 
 [keys.normal]
+tab = ":sh zellij-picker open"
+C-y = [
+  ':sh rm -f /tmp/unique-file',
+  ':insert-output yazi "%{buffer_name}" --chooser-file=/tmp/unique-file',
+  ':sh printf "\x1b[?1049h\x1b[?2004h" > /dev/tty',
+  ':open %sh{cat /tmp/unique-file}',
+  ':redraw',
+]
 ret = ":write"
 C-h = "select_prev_sibling"
 C-j = "shrink_selection"
 C-k = "expand_selection"
 C-l = "select_next_sibling"
-
 s = "goto_word"
 # vim stuff
 D = ["ensure_selections_forward", "extend_to_line_end", "delete_selection"]

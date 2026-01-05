@@ -7,11 +7,9 @@ $env.CLAUDE_CODE_AGENT_RULE_DISABLED = "1"
 
 $env.SHELL = "/opt/homebrew/bin/nu"
 
-if 'EDITOR' not-in $env {
-    $env.EDITOR = "nvim"
-}
+$env.EDITOR = "hx"
 
-$env.FZF_DEFAULT_OPTS = '--cycle --layout=reverse --height=90% --preview-window=wrap --marker="*" --border --no-scrollbar --preview-window=border-left'
+$env.FZF_DEFAULT_OPTS = '--cycle --layout=default --height=90% --preview-window=wrap --marker="*" --no-scrollbar --preview-window=border-left'
 
 $env.XDG_CONFIG_HOME = $"($env.HOME)/.config"
 

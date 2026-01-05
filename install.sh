@@ -60,3 +60,5 @@ fi
 if [ -f "$HOME/.ssh/config" ] && ! grep -q "Include.*dotfiles/ssh/config" "$HOME/.ssh/config" 2>/dev/null; then
   echo "Include ~/dotfiles/ssh/config" >> "$HOME/.ssh/config"
 fi
+
+safe_link "$DOTFILES_DIR/home-fdignore" "$HOME/.fdignore"

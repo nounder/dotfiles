@@ -386,6 +386,7 @@ function _tab_or_complete
 end
 
 bind \t _tab_or_complete
+bind \co zellij_find_file
 
 # Added by LM Studio CLI (lms)
 set -gx PATH $PATH /Users/rg/.lmstudio/bin

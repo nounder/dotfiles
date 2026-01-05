@@ -13,6 +13,7 @@ font-family = "JetBrainsMono Nerd Font"
 clipboard-paste-protection = false
 
 #auto-update-channel = tip
+mouse-shift-capture = false
 
 # background-blur = macos-glass-clear
 background-blur = macos-glass-regular
