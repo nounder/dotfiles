@@ -1,0 +1,45 @@
+#!/bin/sh
+# Add files to fzf file history with frecency
+
+history_file="$HOME/.local/share/fzf_file_history"
+now=$(date +%s)
+
+# Half-lives in seconds
+hourly_half=3600
+daily_half=86400
+monthly_half=2592000
+
+mkdir -p "$(dirname "$history_file")"
+touch "$history_file"
+
+for f in "$@"; do
+    abs_path=$(realpath "$f" 2>/dev/null) || continue
+    [ -z "$abs_path" ] && continue
+
+    # Add trailing slash for directories
+    [ -d "$abs_path" ] && abs_path="$abs_path/"
+
+    # Check if path exists in history
+    if grep -q "^$abs_path:" "$history_file" 2>/dev/null; then
+        # Update existing entry
+        tmp=$(mktemp)
+        while IFS=: read -r path hourly daily monthly ts rest; do
+            if [ "$path" = "$abs_path" ]; then
+                elapsed=$((now - ts))
+                # Decay and add 1
+                new_vals=$(awk -v h="$hourly" -v d="$daily" -v m="$monthly" \
+                              -v e="$elapsed" -v hh="$hourly_half" -v dh="$daily_half" -v mh="$monthly_half" \
+                    'BEGIN {
+                        printf "%.6f:%.6f:%.6f", h * 2^(-e/hh) + 1, d * 2^(-e/dh) + 1, m * 2^(-e/mh) + 1
+                    }')
+                echo "$path:$new_vals:$now"
+            else
+                echo "$path:$hourly:$daily:$monthly:$ts"
+            fi
+        done < "$history_file" > "$tmp"
+        mv "$tmp" "$history_file"
+    else
+        # New entry
+        echo "$abs_path:1:1:1:$now" >> "$history_file"
+    fi
+done

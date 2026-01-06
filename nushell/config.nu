@@ -232,16 +232,6 @@ def zellij-find-file [] {
 
 $env.config.keybindings = ($env.config.keybindings | append [
     {
-        name: file-picker
-        modifier: none
-        keycode: tab
-        mode: [emacs, vi_insert, vi_normal]
-        event: {
-            send: executehostcommand
-            cmd: "if (commandline | is-empty) { file-picker }"
-        }
-    }
-    {
         name: completion
         modifier: control
         keycode: char_l
@@ -337,7 +327,7 @@ alias vi = nvim
 alias e = hx
 alias f = yazi
 alias g = lazygit
-alias t = zellij
+alias t = tmux
 alias s = sudo
 alias s3 = aws s3
 alias ip = ipython

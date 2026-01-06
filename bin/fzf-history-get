@@ -1,0 +1,37 @@
+#!/bin/sh
+# Get fzf file history sorted by frecency score
+
+history_file="$HOME/.local/share/fzf_file_history"
+now=$(date +%s)
+
+# Half-lives in seconds
+hourly_half=3600
+daily_half=86400
+monthly_half=2592000
+
+# Weights
+hourly_weight=720
+daily_weight=30
+monthly_weight=1
+
+test -f "$history_file" || exit 0
+
+# Calculate scores and output path:score pairs
+while IFS=: read -r path hourly daily monthly ts rest; do
+    [ -z "$ts" ] && continue
+
+    elapsed=$((now - ts))
+
+    # Decay values and calculate score using awk
+    score=$(awk -v h="$hourly" -v d="$daily" -v m="$monthly" \
+                -v e="$elapsed" -v hh="$hourly_half" -v dh="$daily_half" -v mh="$monthly_half" \
+                -v hw="$hourly_weight" -v dw="$daily_weight" -v mw="$monthly_weight" \
+        'BEGIN {
+            hd = h * 2^(-e/hh)
+            dd = d * 2^(-e/dh)
+            md = m * 2^(-e/mh)
+            print hd * hw + dd * dw + md * mw
+        }')
+
+    echo "$score:$path"
+done < "$history_file" | sort -t: -k1 -rn | cut -d: -f2-
