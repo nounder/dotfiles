@@ -95,6 +95,7 @@ name = "markdown"
 file-types = ["md", "markdown", "txt"]
 formatter = { command = "dprint", args = ["fmt", "--stdin", "md"] }
 auto-format = true
+soft-wrap.enable = true
 
 [[language]]
 name = "toml"

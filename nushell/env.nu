@@ -9,7 +9,7 @@ $env.SHELL = (
     try {
         which nu | get 0.path
     } catch {
-        $"/proc/($nu.pid)/exe" | path expand
+        $nu.current-exe
     }
 )
 

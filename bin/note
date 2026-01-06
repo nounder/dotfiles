@@ -3,25 +3,23 @@
 NOTES_DIR="$HOME/Documents/Notes"
 mkdir -p "$NOTES_DIR"
 
-date_part=$(date +%Y%m%d)
-time_part=$(date +%H%M)
-
-base_name="${date_part}T${time_part}"
+base_name=$(date +%Y%m%dT%H%M%S)
 file_path="$NOTES_DIR/${base_name}.txt"
 
 if [[ -f "$file_path" ]]; then
-  # Try with seconds
-  time_with_secs=$(date +%H%M%S)
-  base_name="${date_part}T${time_with_secs}"
+  # Try with microseconds
+  base_name=$(date +%Y%m%dT%H%M%S%6N)
   file_path="$NOTES_DIR/${base_name}.txt"
-
-  if [[ -f "$file_path" ]]; then
-    # Try with milliseconds
-    time_with_ms=$(date +%H%M%S%3N)
-    base_name="${date_part}T${time_with_ms}"
-    file_path="$NOTES_DIR/${base_name}.txt"
-  fi
 fi
 
-touch "$file_path"
-"${EDITOR:-vim}" "$file_path"
+cat > "$file_path" << EOF
+---
+time: $(date '+%Y-%m-%d %H:%M:%S %z')
+---
+
+EOF
+if [[ "${EDITOR:-vi}" == *hx* ]]; then
+  "$EDITOR" +999999 "$file_path"
+else
+  "${EDITOR:-vi}" "$file_path"
+fi
