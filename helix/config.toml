@@ -5,7 +5,7 @@ theme = "base16_transparent"
 bufferline = "multiple"
 default-yank-register = "+"
 popup-border = "all"
-gutters = []
+gutters = ["diff"]
 inline-completion-timeout = 150
 end-of-line-diagnostics = "disable"
 
@@ -41,6 +41,7 @@ D = ["ensure_selections_forward", "extend_to_line_end", "delete_selection"]
 0 = "goto_line_start"
 "$" = "goto_line_end"
 G = "goto_file_end"
+Y = ["save_selection", "select_all", "yank", "jump_backward"]
 K = "hover"
 q = ":quit"
 Q = ":quit!"

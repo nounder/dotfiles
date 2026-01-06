@@ -62,3 +62,5 @@ if [ -f "$HOME/.ssh/config" ] && ! grep -q "Include.*dotfiles/ssh/config" "$HOME
 fi
 
 safe_link "$DOTFILES_DIR/home-fdignore" "$HOME/.fdignore"
+
+if [ -z "$LN_OPTS" ] && [ -n "$(git config --global core.attributesfile)" ]; then

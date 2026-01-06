@@ -1,0 +1,21 @@
+#!/bin/sh
+
+# tmux popup with persistent session (per parent session)
+
+parent_session=$(tmux display-message -p '#{session_name}')
+popup_session="${parent_session}-claude"
+
+# If we're already in a claude popup session, detach to close popup
+case "$parent_session" in
+    *-claude)
+        tmux detach-client
+        exit 0
+        ;;
+esac
+
+# Check if the claude session exists
+if tmux has-session -t "$popup_session" 2>/dev/null; then
+    tmux popup -w 90% -h 90% -E "tmux attach -t '$popup_session'"
+else
+    tmux popup -w 90% -h 90% -E "tmux new-session -s '$popup_session' 'claude'"
+fi

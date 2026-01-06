@@ -1,0 +1,24 @@
+#!/bin/sh
+
+# Check if we're in tmux by trying to get the pane id
+if ! tmux display-message -p '#{pane_id}' > /dev/null 2>&1; then
+    echo "not in tmux. doing nothing"
+    exit 0
+fi
+
+pane_id=$(tmux display-message -p '#{pane_id}')
+pane_cmd=$(tmux display-message -p '#{pane_current_command}')
+
+tmux popup -w 80% -h 80% -E sh -c '
+path=$(fzf --height=100% --preview "bat --color=always --wrap=never --style=plain {}")
+
+if [ -n "$path" ]; then
+    pane_id="'"$pane_id"'"
+    pane_cmd="'"$pane_cmd"'"
+    if [ "$pane_cmd" = "hx" ] || [ "$pane_cmd" = "helix" ]; then
+        tmux send-keys -t "$pane_id" ":open $path" Enter ":redraw" Enter
+    else
+        tmux send-keys -t "$pane_id" "$path"
+    fi
+fi
+'

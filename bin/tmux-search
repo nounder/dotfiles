@@ -1,0 +1,31 @@
+#!/bin/sh
+
+pane_id=$(tmux display-message -p '#{pane_id}')
+
+# Check if already in copy mode with selection
+in_copy_mode=$(tmux display-message -p '#{pane_in_mode}')
+
+# Capture scrollback, filter empty lines, search with fzf, jump to line
+result=$(tmux capture-pane -t "$pane_id" -p -S -9999 | \
+    nl -ba | \
+    grep -v '^\s*[0-9]*\t\s*$' | \
+    fzf --height=100% --reverse --no-sort --with-nth=2..)
+
+line=$(echo "$result" | awk '{print $1}')
+
+if [ -n "$line" ]; then
+    total=$(tmux capture-pane -t "$pane_id" -p -S -9999 | wc -l)
+    offset=$((total - line))
+
+    if [ "$in_copy_mode" = "1" ]; then
+        # Already in copy mode, just jump (keeps selection)
+        tmux send-keys -t "$pane_id" -X goto-line "$offset"
+        tmux send-keys -t "$pane_id" -X middle-line
+    else
+        # Enter copy mode and start selection
+        tmux copy-mode -t "$pane_id"
+        tmux send-keys -t "$pane_id" -X goto-line "$offset"
+        tmux send-keys -t "$pane_id" -X middle-line
+        tmux send-keys -t "$pane_id" -X begin-selection
+    fi
+fi
