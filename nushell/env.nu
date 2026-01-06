@@ -5,7 +5,7 @@ $env.TERM = "xterm-256color"
 $env.BUN_AGENT_RULE_DISABLED = "1"
 $env.CLAUDE_CODE_AGENT_RULE_DISABLED = "1"
 
-$env.SHELL = "/opt/homebrew/bin/nu"
+$env.SHELL = (which nu | get 0.path)
 
 $env.EDITOR = "hx"
 
