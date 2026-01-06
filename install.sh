@@ -18,6 +18,13 @@ safe_link() {
   local source="$1"
   local target="$2"
 
+  # With -f, force overwrite even if target is a regular file
+  if [ -n "$LN_OPTS" ]; then
+    rm -rf "$target" 2>/dev/null
+    ln -s "$source" "$target"
+    return
+  fi
+
   # Skip if target exists and is not a symlink
   if [ -e "$target" ] && [ ! -L "$target" ]; then
     echo "⚠ $(basename "$target") exists - skipping"
