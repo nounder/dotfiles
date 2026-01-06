@@ -12,8 +12,8 @@ description: Create a git commit
 
 ## Your task
 
-Based on staged changes, create a single git commit. If there are no staged
-changes, warn the user and do nothing.
+Stage all changed files (modified and new), then create a single git commit.
+If there are no changes to stage or commit, warn the user and do nothing.
 
 ## Misc
 
