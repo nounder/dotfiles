@@ -1,0 +1,22 @@
+#!/bin/sh
+
+# Capture full scrollback with line numbers
+# Find prompts, show in fzf, jump to selected line
+
+pane_id=$(tmux display-message -p '#{pane_id}')
+
+# Capture scrollback, number lines, find prompts
+line=$(tmux capture-pane -t "$pane_id" -p -S -9999 | \
+    nl -ba | \
+    grep -E '^\s*[0-9]+\t\$' | \
+    fzf --height=100% --reverse --no-sort --tac | \
+    awk '{print $1}')
+
+if [ -n "$line" ]; then
+    # Enter copy mode and jump to line
+    total=$(tmux capture-pane -t "$pane_id" -p -S -9999 | wc -l)
+    offset=$((total - line))
+    tmux copy-mode -t "$pane_id"
+    tmux send-keys -t "$pane_id" -X goto-line "$offset"
+    tmux send-keys -t "$pane_id" -X middle-line
+fi
