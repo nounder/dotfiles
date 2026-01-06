@@ -23,11 +23,11 @@ background-blur = macos-glass-regular
 background-opacity = 0.5
 background-opacity-cells = true
 
-command = /opt/homebrew/bin/nu
+command = /opt/homebrew/bin/fish
 # window-decoration = false
 # macos-titlebar-style = hidden
 macos-non-native-fullscreen = true
-macos-titlebar-style = hidden
+macos-titlebar-style = tabs
 macos-option-as-alt = left
 macos-window-buttons = hidden
 window-padding-x = 6
@@ -47,3 +47,4 @@ keybind = super+shift+equal=equalize_splits
 
 keybind = super+left_bracket=previous_tab
 keybind = super+right_bracket=next_tab
+keybind = super+shift+s=write_scrollback_file:paste

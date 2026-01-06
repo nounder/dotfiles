@@ -1,0 +1,13 @@
+#!/usr/bin/env sh
+
+# : pipes empty input so fzf starts with no candidates
+result=$(: | fzf --disabled --ansi \
+    --bind 'change:reload:rg --column --color=always --smart-case {q} || :' \
+    --delimiter : \
+    --preview 'bat --style=plain --color=always --highlight-line {2} {1}' \
+    --preview-window '+{2}/2')
+
+[ -n "$result" ] || exit 0
+file=$(echo "$result" | cut -d: -f1)
+line=$(echo "$result" | cut -d: -f2)
+exec ${EDITOR:-vim} "+$line" "$file"
