@@ -11,6 +11,8 @@ font-family = "JetBrainsMono Nerd Font"
 #font-family = "Comic Mono"
 
 clipboard-paste-protection = false
+copy-on-select = false
+selection-invert-fg-bg = true
 
 #auto-update-channel = tip
 mouse-shift-capture = false
@@ -21,11 +23,11 @@ background-blur = macos-glass-regular
 background-opacity = 0.5
 background-opacity-cells = true
 
-command = /opt/homebrew/bin/fish
+command = /opt/homebrew/bin/nu
 # window-decoration = false
 # macos-titlebar-style = hidden
 macos-non-native-fullscreen = true
-macos-titlebar-style = tabs
+macos-titlebar-style = hidden
 macos-option-as-alt = left
 macos-window-buttons = hidden
 window-padding-x = 6

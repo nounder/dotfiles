@@ -43,7 +43,7 @@ alias vi nvim
 alias e "$EDITOR"
 alias f yazi
 alias g lazygit
-alias t zellij
+alias t tmux
 alias e-js "nvim -c 'set filetype=typescript' -c 'set nomodified' -"
 alias p-js "dprint fmt --stdin main.ts"
 alias s sudo

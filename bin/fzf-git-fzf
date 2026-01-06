@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+# FZF wrapper with tmux popup styling (junegunn/fzf-git.sh style)
+exec fzf --height 50% --tmux 90%,70% \
+    --layout reverse --multi --min-height 20+ --border \
+    --no-separator --header-border horizontal \
+    --border-label-pos 2 \
+    --color 'label:blue' \
+    --preview-window 'right,50%' --preview-border line \
+    --bind 'ctrl-/:change-preview-window(down,50%|hidden|)' \
+    "$@"

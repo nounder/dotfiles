@@ -1,0 +1,86 @@
+#!/usr/bin/env bash
+# Interactive git status with fzf
+# ctrl-s: stage, ctrl-u: unstage
+
+set -e
+
+if ! git rev-parse --git-dir >/dev/null 2>&1; then
+    echo "Not in a git repository." >&2
+    exit 1
+fi
+
+delta_opts="--no-gitconfig --file-style=omit --hunk-header-style=omit"
+
+preview_script='
+raw="$1"
+delta_opts="--no-gitconfig --file-style=omit --hunk-header-style=omit"
+# Strip ANSI codes
+path_status=$(echo "$raw" | sed "s/\x1b\[[0-9;]*m//g")
+path="${path_status:3}"
+path="${path%\"}"
+path="${path#\"}"
+
+index_status="${path_status:0:1}"
+working_tree_status="${path_status:1:1}"
+
+print_header() {
+    local label="$1"
+    local len=$((${#label} + 2))
+    local line=$(printf "─%.0s" $(seq 1 $len))
+    printf "\033[33m╭%s╮\n│ %s │\n╰%s╯\033[0m\n" "$line" "$label" "$line"
+}
+
+if [ "$index_status" = "?" ]; then
+    print_header "Untracked"
+    if [ -f "$path" ]; then
+        bat --style=plain --color=always "$path" 2>/dev/null || cat "$path"
+    elif [ -d "$path" ]; then
+        ls -AF "$path"
+    fi
+elif [[ "$index_status$working_tree_status" =~ ^(DD|AU|UD|UA|DU|AA|UU)$ ]]; then
+    print_header "Unmerged"
+    git diff -- "$path" | delta $delta_opts
+else
+    if [ "$index_status" != " " ]; then
+        print_header "Staged"
+        if [ "$index_status" = "R" ]; then
+            orig="${path%% -> *}"
+            new="${path##* -> }"
+            git diff --staged -- "$orig" "$new" | delta $delta_opts
+            path="$new"
+        else
+            git diff --staged -- "$path" | delta $delta_opts
+        fi
+    fi
+    if [ "$working_tree_status" != " " ]; then
+        print_header "Unstaged"
+        git diff -- "$path" | delta $delta_opts
+    fi
+fi
+'
+
+# Function to get sorted, colorized status
+get_status() {
+    git status --short | awk '{path=substr($0,4); print path "\t" $0}' | sort | cut -f2- | \
+    while IFS= read -r line; do
+        printf "\033[32m%s\033[31m%s\033[0m%s\n" "${line:0:1}" "${line:1:1}" "${line:2}"
+    done
+}
+
+# Export for fzf reload - call this script with --list
+if [ "$1" = "--list" ]; then
+    get_status
+    exit 0
+fi
+
+
+get_status | \
+    fzf-git-fzf --ansi \
+        --prompt "Git Status> " \
+        --preview "bash -c '$preview_script' -- {}" \
+        --nth "2.." \
+        --header "tab: edit | enter: commit | ctrl-s: stage | ctrl-u: unstage" \
+        --bind "tab:execute(${EDITOR:-vim} {2..})+reload(git-fzf-status --list)+refresh-preview" \
+        --bind "enter:execute(git commit)" \
+        --bind "ctrl-s:execute-silent(git add -- {2..})+reload(git-fzf-status --list)+refresh-preview" \
+        --bind "ctrl-u:execute-silent(git restore --staged -- {2..})+reload(git-fzf-status --list)+refresh-preview"

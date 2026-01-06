@@ -64,3 +64,7 @@ fi
 safe_link "$DOTFILES_DIR/home-fdignore" "$HOME/.fdignore"
 
 if [ -z "$LN_OPTS" ] && [ -n "$(git config --global core.attributesfile)" ]; then
+  echo "⚠ core.attributesfile exists - skipping"
+else
+  git config --global core.attributesfile "$DOTFILES_DIR/gitattributes"
+fi
