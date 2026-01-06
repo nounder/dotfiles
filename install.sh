@@ -47,7 +47,7 @@ safe_link "$DOTFILES_DIR/opencode" "$CONFIG/opencode"
 safe_link "$DOTFILES_DIR/nushell" "$CONFIG/nushell"
 safe_link "$DOTFILES_DIR/lazygit" "$CONFIG/lazygit"
 
-safe_link "$DOTFILES_DIR/tmux.conf" "$CONFIG/.tmux.conf"
+safe_link "$DOTFILES_DIR/tmux.conf" "$HOME/.tmux.conf"
 
 mkdir -p "$CONFIG/direnv"
 safe_link "$DOTFILES_DIR/direnv.toml" "$CONFIG/direnv/direnv.toml"
