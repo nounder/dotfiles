@@ -1,0 +1,10 @@
+#!/bin/sh
+# Get the root directory of the current git repository (works with worktrees)
+
+git_common_dir=$(git rev-parse --git-common-dir 2>/dev/null)
+if [ $? -ne 0 ]; then
+    exit 1
+fi
+
+# Resolve to absolute path and get parent directory
+dirname "$(realpath "$git_common_dir")"

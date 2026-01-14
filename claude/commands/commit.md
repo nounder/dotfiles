@@ -1,6 +1,7 @@
 ---
 allowed-tools: Bash(git add:*), Bash(git status:*), Bash(git commit:*)
 description: Create a git commit
+model: haiku
 ---
 
 ## Context
@@ -12,7 +13,13 @@ description: Create a git commit
 
 ## Your task
 
-Stage all changed files (modified and new), then create a single git commit.
+Stage all chanages made in this session and create a single git commit.
+
+If user asks to push, also push the changes.
+
+If user asks to describe, write a succint description about the changes based on
+session history.
+
 If there are no changes to stage or commit, warn the user and do nothing.
 
 ## Misc

@@ -1,0 +1,33 @@
+#!/bin/sh
+# Join or create a tmux session named after the current project
+
+# Get project root (works with git worktrees)
+project_root=$(project-root 2>/dev/null)
+if [ $? -ne 0 ]; then
+    echo "Not in a git repository" >&2
+    exit 1
+fi
+
+# Get project name from directory
+project_name=$(basename "$project_root")
+
+# Sanitize project name for tmux (replace dots/colons with underscores)
+session_name=$(echo "$project_name" | tr './:' '___')
+
+# Check if session exists
+if tmux has-session -t "=$session_name" 2>/dev/null; then
+    # Session exists - attach or switch to it
+    if [ -n "$TMUX" ]; then
+        tmux switch-client -t "=$session_name"
+    else
+        tmux attach-session -t "=$session_name"
+    fi
+else
+    # Create new session
+    if [ -n "$TMUX" ]; then
+        tmux new-session -d -s "$session_name" -c "$project_root"
+        tmux switch-client -t "=$session_name"
+    else
+        tmux new-session -s "$session_name" -c "$project_root"
+    fi
+fi

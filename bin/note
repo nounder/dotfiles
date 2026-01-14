@@ -3,21 +3,32 @@
 NOTES_DIR="$HOME/Documents/Notes"
 mkdir -p "$NOTES_DIR"
 
-base_name=$(date +%Y%m%dT%H%M%S)
-file_path="$NOTES_DIR/${base_name}.txt"
-
-if [[ -f "$file_path" ]]; then
-  # Try with microseconds
-  base_name=$(date +%Y%m%dT%H%M%S%6N)
+# If first argument is '-', open the last note
+if [[ "$1" == "-" ]]; then
+  file_path=$(ls -t "$NOTES_DIR"/*.txt 2>/dev/null | head -n1)
+  if [[ -z "$file_path" ]]; then
+    echo "No notes found" >&2
+    exit 1
+  fi
+else
+  base_name=$(date +%Y%m%dT%H%M%S)
   file_path="$NOTES_DIR/${base_name}.txt"
-fi
 
-cat > "$file_path" << EOF
+  if [[ -f "$file_path" ]]; then
+    # Try with microseconds
+    base_name=$(date +%Y%m%dT%H%M%S%6N)
+    file_path="$NOTES_DIR/${base_name}.txt"
+  fi
+
+  cat > "$file_path" << EOF
 ---
 time: $(date '+%Y-%m-%d %H:%M:%S %z')
 ---
 
+
 EOF
+fi
+
 if [[ "${EDITOR:-vi}" == *hx* ]]; then
   "$EDITOR" +999999 "$file_path"
 else
