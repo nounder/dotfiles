@@ -226,6 +226,7 @@ alias shc="vi ~/.bashrc"
 alias vi=nvim
 alias e='$EDITOR'
 alias f=yazi
+alias y=yazi
 alias g=lazygit
 alias t=tmux-project
 alias s=sudo
