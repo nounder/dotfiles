@@ -395,6 +395,7 @@ _fzf_tab_complete() {
     local cmd="${words[0]}"
     local completions=""
     local prompt="Complete"
+    local prefix_dir=""
 
     if [[ ${#words[@]} -le 1 && "$line" != *" " ]]; then
         # Completing command name
@@ -439,28 +440,58 @@ _fzf_tab_complete() {
                 fi
             fi
 
-            # Add file completions
+            # Add file completions - check for directory prefix
             prompt="${prompt:-File}"
-            local file_completions=$(compgen -f -- "$word" 2>/dev/null)
-            if [[ -n "$file_completions" ]]; then
-                completions="${completions}${completions:+$'\n'}${file_completions}"
+            if [[ "$word" == */* ]]; then
+                local dir_part="${word%/*}"
+                local file_part="${word##*/}"
+                if [[ -d "$dir_part" ]]; then
+                    prefix_dir="$dir_part"
+                    completions=$(cd "$dir_part" && compgen -f -- "$file_part" 2>/dev/null)
+                else
+                    local file_completions=$(compgen -f -- "$word" 2>/dev/null)
+                    [[ -n "$file_completions" ]] && completions="${completions}${completions:+$'\n'}${file_completions}"
+                fi
+            else
+                local file_completions=$(compgen -f -- "$word" 2>/dev/null)
+                [[ -n "$file_completions" ]] && completions="${completions}${completions:+$'\n'}${file_completions}"
             fi
         fi
     fi
 
     if [[ -n "$completions" ]]; then
-        local selected
-        selected=$(echo "$completions" | awk '!seen[$0]++' | fzf --height=40% --reverse --prompt="${prompt}> " --query="${word##*/}")
+        local selected fzf_key unique_completions
+        unique_completions=$(echo "$completions" | awk '!seen[$0]++')
+        # Auto-select if only one candidate
+        if [[ $(echo "$unique_completions" | wc -l) -eq 1 ]]; then
+            selected="$unique_completions"
+            fzf_key="tab"
+        else
+            selected=$(echo "$unique_completions" | fzf --height=40% --reverse --prompt="${prompt}> " --query="${word##*/}" --expect=tab)
+            fzf_key=${selected%%$'\n'*}
+            selected=${selected#*$'\n'}
+        fi
         if [[ -n "$selected" ]]; then
             local prefix="${READLINE_LINE:0:$((READLINE_POINT - ${#word}))}"
             local suffix="${READLINE_LINE:$READLINE_POINT}"
-            if [[ "$word" == */* && "$selected" != /* ]]; then
+            if [[ -n "$prefix_dir" ]]; then
+                # We have a directory prefix, reconstruct the full path
+                READLINE_LINE="${prefix}${prefix_dir}/${selected}${suffix}"
+                READLINE_POINT=$((${#prefix} + ${#prefix_dir} + 1 + ${#selected}))
+            elif [[ "$word" == */* && "$selected" != /* ]]; then
                 local word_dir="${word%/*}"
                 READLINE_LINE="${prefix}${word_dir}/${selected}${suffix}"
                 READLINE_POINT=$((${#prefix} + ${#word_dir} + 1 + ${#selected}))
             else
                 READLINE_LINE="${prefix}${selected}${suffix}"
                 READLINE_POINT=$((${#prefix} + ${#selected}))
+            fi
+            # If Enter was pressed (not tab), execute the command
+            if [[ "$fzf_key" != "tab" ]]; then
+                printf '%s\n' "$READLINE_LINE"
+                eval "$READLINE_LINE"
+                READLINE_LINE=""
+                READLINE_POINT=0
             fi
         fi
     fi
@@ -566,10 +597,11 @@ if [[ "$CURRENT_SHELL" == "zsh" ]]; then
     zle -N _fzf_search_git_status_widget
 
     _fzf_complete_widget() {
-        local word cmd completions prompt
+        local word cmd completions prompt prefix_dir
         word="${LBUFFER##* }"
         cmd="${LBUFFER%% *}"
         prompt="Complete"
+        prefix_dir=""
 
         if [[ "$LBUFFER" != *" "* ]]; then
             # Completing command name
@@ -586,22 +618,51 @@ if [[ "$CURRENT_SHELL" == "zsh" ]]; then
 
             # Add file completions
             prompt="${prompt:-File}"
-            local file_completions=$(compgen -f -- "$word" 2>/dev/null)
-            if [[ -n "$file_completions" ]]; then
-                completions="${completions}${completions:+$'\n'}${file_completions}"
+            # Check if word has a directory prefix that exists
+            if [[ "$word" == */* ]]; then
+                local dir_part="${word%/*}"
+                local file_part="${word##*/}"
+                if [[ -d "$dir_part" ]]; then
+                    prefix_dir="$dir_part"
+                    # Get completions relative to the directory
+                    completions=$(cd "$dir_part" && compgen -f -- "$file_part" 2>/dev/null)
+                else
+                    local file_completions=$(compgen -f -- "$word" 2>/dev/null)
+                    [[ -n "$file_completions" ]] && completions="${completions}${completions:+$'\n'}${file_completions}"
+                fi
+            else
+                local file_completions=$(compgen -f -- "$word" 2>/dev/null)
+                [[ -n "$file_completions" ]] && completions="${completions}${completions:+$'\n'}${file_completions}"
             fi
         fi
 
         if [[ -n "$completions" ]]; then
-            local selected
-            selected=$(echo "$completions" | awk '!seen[$0]++' | fzf --height=40% --reverse --prompt="${prompt}> " --query="${word##*/}")
+            local selected fzf_key unique_completions
+            unique_completions=$(echo "$completions" | awk '!seen[$0]++')
+            # Auto-select if only one candidate
+            if [[ $(echo "$unique_completions" | wc -l) -eq 1 ]]; then
+                selected="$unique_completions"
+                fzf_key="tab"
+            else
+                selected=$(echo "$unique_completions" | fzf --height=40% --reverse --prompt="${prompt}> " --query="${word##*/}" --expect=tab)
+                fzf_key=${selected%%$'\n'*}
+                selected=${selected#*$'\n'}
+            fi
             if [[ -n "$selected" ]]; then
-                if [[ "$word" == */* && "$selected" != /* ]]; then
+                if [[ -n "$prefix_dir" ]]; then
+                    # We have a directory prefix, reconstruct the full path
+                    LBUFFER="${LBUFFER%$word}${prefix_dir}/${selected}"
+                elif [[ "$word" == */* && "$selected" != /* ]]; then
                     LBUFFER="${LBUFFER%/*}/$selected"
                 elif [[ -n "$word" ]]; then
                     LBUFFER="${LBUFFER%$word}$selected"
                 else
                     LBUFFER="${LBUFFER}$selected"
+                fi
+                # If Enter was pressed (not tab), execute the command
+                if [[ "$fzf_key" != "tab" ]]; then
+                    zle accept-line
+                    return
                 fi
             fi
         fi
