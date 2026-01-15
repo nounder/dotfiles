@@ -23,7 +23,7 @@ background-blur = macos-glass-regular
 background-opacity = 0.5
 background-opacity-cells = true
 
-command = /opt/homebrew/bin/fish
+command = /opt/homebrew/bin/bash
 # window-decoration = false
 # macos-titlebar-style = hidden
 macos-non-native-fullscreen = true

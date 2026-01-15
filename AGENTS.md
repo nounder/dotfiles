@@ -1,3 +1,8 @@
+# Shell config
+
+- Bash is the default shell (config in `shell.sh`, also works with zsh)
+- Fish shell config is in `fish/config.fish` (legacy)
+
 # Fish shell
 
 Do NOT execute long commands in if statement, like this:

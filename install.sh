@@ -3,12 +3,15 @@
 # Get the absolute path to the dotfiles directory
 DOTFILES_DIR="$(cd "$(dirname "$0")" && pwd)"
 
-# if -f option is passed, force symlink
-if [ "$1" = "-f" ]; then
-  LN_OPTS="-f"
-else
-  LN_OPTS=""
-fi
+# Parse options
+LN_OPTS=""
+BUILD_ZIG=""
+for arg in "$@"; do
+  case "$arg" in
+    -f) LN_OPTS="-f" ;;
+    --zig) BUILD_ZIG="1" ;;
+  esac
+done
 
 CONFIG="$HOME/.config"
 
@@ -74,8 +77,25 @@ fi
 
 safe_link "$DOTFILES_DIR/home-fdignore" "$HOME/.fdignore"
 
+safe_link "$DOTFILES_DIR/shell.sh" "$HOME/.bashrc"
+safe_link "$DOTFILES_DIR/shell.sh" "$HOME/.bash_profile"
+safe_link "$DOTFILES_DIR/shell.sh" "$HOME/.zshrc"
+
 if [ -z "$LN_OPTS" ] && [ -n "$(git config --global core.attributesfile)" ]; then
   echo "⚠ core.attributesfile exists - skipping"
 else
   git config --global core.attributesfile "$DOTFILES_DIR/gitattributes"
+fi
+
+# Build zig binaries if --zig flag is passed
+if [ -n "$BUILD_ZIG" ]; then
+  if command -v zig >/dev/null 2>&1; then
+    echo "Building noprompt..."
+    zig build-exe "$DOTFILES_DIR/bin/noprompt.zig" -O ReleaseFast -fstrip --name noprompt 2>/dev/null
+    mv noprompt "$DOTFILES_DIR/bin/noprompt" 2>/dev/null
+    rm -f noprompt.o 2>/dev/null
+    echo "✓ noprompt built"
+  else
+    echo "⚠ zig not found - skipping zig builds"
+  fi
 fi
