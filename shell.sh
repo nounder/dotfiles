@@ -9,6 +9,8 @@ if [[ -n "$BASH_VERSION" ]]; then
     bind 'set bell-style none'
     bind 'set completion-ignore-case on'
     bind 'set completion-map-case on'
+    # Don't save cd commands in history
+    HISTIGNORE="cd:cd *:cd -:..:--"
 fi
 
 # Detect shell and arch
@@ -256,17 +258,26 @@ alias gs="git switch"
 alias gca="git commit --amend"
 alias gc1="git clone --depth=1"
 alias py="python"
+alias ..="cd .."
+alias -- -="cd -"
 alias claude="claude --dangerously-skip-permissions"
 alias sonnet="claude --model sonnet"
 alias opus="claude --model opus"
 alias haiku="claude --model haiku"
 
-# direnv hook
-if command -v direnv &> /dev/null; then
+# noenv hook (lightweight direnv alternative)
+_NOENV_BIN="$HOME/dotfiles/bin/noenv-$_ARCH"
+if [[ -x "$_NOENV_BIN" ]]; then
+    noenv() {
+        "$_NOENV_BIN" "$@"
+    }
+    _noenv_hook() {
+        eval "$("$_NOENV_BIN" hook)"
+    }
     if [[ "$CURRENT_SHELL" == "zsh" ]]; then
-        eval "$(direnv hook zsh)"
+        precmd_functions+=(_noenv_hook)
     else
-        eval "$(direnv hook bash)"
+        PROMPT_COMMAND="_noenv_hook${PROMPT_COMMAND:+;$PROMPT_COMMAND}"
     fi
 fi
 

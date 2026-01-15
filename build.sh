@@ -9,7 +9,8 @@ if ! command -v zig >/dev/null 2>&1; then
   exit 1
 fi
 
-for prog in noprompt nozo; do
+for zigfile in "$DIR"/bin/*.zig; do
+  prog="$(basename "$zigfile" .zig)"
   echo "Building $prog..."
   for target in $TARGETS; do
     zig_target="${target%:*}"
