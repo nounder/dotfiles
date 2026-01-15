@@ -1,5 +1,8 @@
 # Shell configuration with fish-like prompt (bash/zsh compatible)
 
+# Exit early for non-interactive shells
+[[ $- != *i* ]] && return
+
 # Readline settings (bash)
 if [[ -n "$BASH_VERSION" ]]; then
     bind 'set show-all-if-ambiguous on'
@@ -8,12 +11,18 @@ if [[ -n "$BASH_VERSION" ]]; then
     bind 'set completion-map-case on'
 fi
 
-# Detect shell
+# Detect shell and arch
 if [ -n "$ZSH_VERSION" ]; then
     CURRENT_SHELL="zsh"
 elif [ -n "$BASH_VERSION" ]; then
     CURRENT_SHELL="bash"
 fi
+
+case "$(uname -sm)" in
+    "Darwin arm64") _ARCH="darwin-arm64" ;;
+    "Linux aarch64") _ARCH="linux-arm64" ;;
+    "Linux x86_64") _ARCH="linux-amd64" ;;
+esac
 
 # Icons (nerd font)
 ICON_FOLDER=$'\uF401 '
@@ -164,7 +173,7 @@ build_prompt() {
 }
 
 # Set up prompt based on shell
-NOUNDER_PROMPT="$HOME/dotfiles/bin/noprompt"
+NOUNDER_PROMPT="$HOME/dotfiles/bin/noprompt-$_ARCH"
 
 if [[ "$CURRENT_SHELL" == "zsh" ]]; then
     # Zsh prompt setup
@@ -259,6 +268,16 @@ if command -v direnv &> /dev/null; then
     else
         eval "$(direnv hook bash)"
     fi
+fi
+
+# z - jump around (using nozo)
+NOZO="$HOME/dotfiles/bin/nozo-$_ARCH"
+if [[ -x "$NOZO" ]]; then
+    z() {
+        local result=$("$NOZO" "$@")
+        [[ -d "$result" ]] && cd "$result" || [[ -n "$result" ]] && echo "$result"
+    }
+    PROMPT_COMMAND="${PROMPT_COMMAND:+$PROMPT_COMMAND;}($NOZO --add \"\$PWD\" &)"
 fi
 
 # FZF Functions
@@ -424,8 +443,9 @@ _fzf_tab_complete() {
             local prefix="${READLINE_LINE:0:$((READLINE_POINT - ${#word}))}"
             local suffix="${READLINE_LINE:$READLINE_POINT}"
             if [[ "$word" == */* && "$selected" != /* ]]; then
-                READLINE_LINE="${prefix}${word%/*}/${selected}${suffix}"
-                READLINE_POINT=$((${#prefix} + ${#word%/*} + 1 + ${#selected}))
+                local word_dir="${word%/*}"
+                READLINE_LINE="${prefix}${word_dir}/${selected}${suffix}"
+                READLINE_POINT=$((${#prefix} + ${#word_dir} + 1 + ${#selected}))
             else
                 READLINE_LINE="${prefix}${selected}${suffix}"
                 READLINE_POINT=$((${#prefix} + ${#selected}))

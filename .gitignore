@@ -3,4 +3,3 @@ local/
 .envrc
 tree/
 nushell/history.txt
-bin/noprompt

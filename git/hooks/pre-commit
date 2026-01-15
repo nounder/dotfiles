@@ -1,0 +1,16 @@
+#!/bin/sh
+# Warn if zig sources changed but binaries weren't rebuilt
+
+for zig in bin/*.zig; do
+  [ -f "$zig" ] || continue
+  name="${zig%.zig}"
+  name="${name#bin/}"
+
+  if git diff --cached --name-only | grep -q "^bin/$name.zig$"; then
+    # Check if any binary for this program is also staged
+    if ! git diff --cached --name-only | grep -q "^bin/$name-"; then
+      echo "⚠ bin/$name.zig changed but binaries not updated. Run ./build.sh"
+      exit 1
+    fi
+  fi
+done
