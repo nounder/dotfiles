@@ -6,7 +6,9 @@ for zig in bin/*.zig; do
   name="${zig%.zig}"
   name="${name#bin/}"
 
-  if git diff --cached --name-only | grep -q "^bin/$name.zig$"; then
+  # Skip if only chmod changed (no actual content diff lines starting with +/-)
+  if git diff --cached --name-only --diff-filter=M | grep -q "^bin/$name.zig$" && \
+     git diff --cached "bin/$name.zig" | grep -q '^[+-]'; then
     # Check if any binary for this program is also staged
     if ! git diff --cached --name-only | grep -q "^bin/$name-"; then
       echo "⚠ bin/$name.zig changed but binaries not updated. Run ./build.sh"
