@@ -21,6 +21,14 @@ vim.api.nvim_create_autocmd("BufWritePost", {
   command = "silent !killall -SIGUSR1 kitty",
 })
 
+-- Treat .txt files as markdown
+vim.api.nvim_create_autocmd({ "BufRead", "BufNewFile" }, {
+  pattern = "*.txt",
+  callback = function()
+    vim.bo.filetype = "markdown"
+  end,
+})
+
 -- Detect filetype from shebang when no extension is present
 local shebang_ft = require("custom.shebang_ft")
 
