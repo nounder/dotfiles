@@ -1,3 +1,0 @@
-#!/bin/sh
-
-exec bunx --bun @openai/codex

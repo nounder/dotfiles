@@ -1,3 +1,0 @@
-#!/bin/sh
-
-exec bun i -g --latest opencode-ai
