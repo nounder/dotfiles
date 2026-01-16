@@ -6,6 +6,12 @@
 # Disable control character display (^C, ^D, etc.)
 stty -echoctl 2>/dev/null
 
+# Reset sequence for cleaning up after abruptly terminated programs
+# \e[0m    - reset text attributes (color, bold, underline, etc.)
+# \e[?25h  - show cursor (in case it was hidden)
+# \e[?7h   - re-enable line wrapping
+_TERM_RESET=$'\e[0m\e[?25h\e[?7h'
+
 # Readline settings (bash)
 if [[ -n "$BASH_VERSION" ]]; then
     bind 'set show-all-if-ambiguous on'
@@ -185,24 +191,24 @@ if [[ "$CURRENT_SHELL" == "zsh" ]]; then
     setopt PROMPT_SUBST
     if [[ -x "$NOUNDER_PROMPT" ]]; then
         precmd() {
-            PROMPT="$("$NOUNDER_PROMPT")"
+            PROMPT="%{${_TERM_RESET}%}$("$NOUNDER_PROMPT")"
         }
     else
         precmd() {
-            PROMPT="$(build_prompt)"$'\n''%B%F{red}$ %f%b'
+            PROMPT="%{${_TERM_RESET}%}$(build_prompt)"$'\n''%B%F{red}$ %f%b'
         }
     fi
 else
     # Bash prompt setup
     if [[ -x "$NOUNDER_PROMPT" ]]; then
         set_prompt() {
-            PS1="$("$NOUNDER_PROMPT")"
+            PS1="\[${_TERM_RESET}\]$("$NOUNDER_PROMPT")"
         }
     else
         set_prompt() {
             local prompt_top
             prompt_top=$(build_prompt)
-            PS1="${prompt_top}\n\[\e[1;31m\]\$ \[\e[0m\]"
+            PS1="\[${_TERM_RESET}\]${prompt_top}\n\[\e[1;31m\]\$ \[\e[0m\]"
         }
     fi
     PROMPT_COMMAND=set_prompt
