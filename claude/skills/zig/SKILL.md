@@ -7,7 +7,9 @@ description: Use when writing Zig code. Contains Zig 0.15 API changes and patter
 
 ## CRITICAL: API Changes from 0.14
 
-### ArrayList -> ArrayListUnmanaged
+### ArrayList (now unmanaged by default)
+
+In 0.15, `std.ArrayList` is now the unmanaged version (previously `ArrayListUnmanaged`). It doesn't store the allocator - you pass it to each method.
 
 ```zig
 // OLD (0.14)
@@ -15,11 +17,18 @@ var list = std.ArrayList(T).init(allocator);
 defer list.deinit();
 try list.append(item);
 
-// NEW (0.15)
-var list = std.ArrayListUnmanaged(T){};
+// NEW (0.15) - std.ArrayList is unmanaged
+var list: std.ArrayList(T) = .empty;
 defer list.deinit(allocator);
 try list.append(allocator, item);
+
+// If you need the managed version (stores allocator):
+var list = std.array_list.Managed(T).init(allocator);
+defer list.deinit();
+try list.append(item);
 ```
+
+Note: `std.ArrayListUnmanaged` is deprecated and now just an alias for `std.ArrayList`.
 
 ### stdout/stderr
 

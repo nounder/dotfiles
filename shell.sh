@@ -18,6 +18,7 @@ if [[ -n "$BASH_VERSION" ]]; then
     bind 'set bell-style none'
     bind 'set completion-ignore-case on'
     bind 'set completion-map-case on'
+    bind 'set enable-bracketed-paste off'
     # Don't save cd commands in history
     HISTIGNORE="cd:cd *:cd -:..:--"
 fi
@@ -57,6 +58,16 @@ is_in_worktree() {
     return 1
 }
 
+# Wrap ANSI escape codes for proper prompt length calculation
+# Bash needs \001...\002, zsh needs %{...%}
+_esc() {
+    if [[ "$CURRENT_SHELL" == "zsh" ]]; then
+        printf '%%{%s%%}' "$1"
+    else
+        printf '\001%s\002' "$1"
+    fi
+}
+
 # Get directory icon based on repo type
 directory_icon() {
     if is_in_worktree; then
@@ -85,7 +96,10 @@ shorten_path_in_repo() {
     # Ensure git_root is an absolute path
     [[ "$git_root" != /* ]] && git_root="$PWD/$git_root"
 
-    local result=""
+    local result="" bold reset dim
+    bold=$(_esc $'\e[1m')
+    reset=$(_esc $'\e[0m')
+    dim=$(_esc $'\e[90m')
 
     if is_in_worktree; then
         # In worktree: show original repo path
@@ -99,13 +113,12 @@ shorten_path_in_repo() {
         repo_parent=$(dirname "$repo_path")
         repo_basename=$(basename "$repo_path")
 
-        # Build result with ANSI codes (not prompt escapes)
         if [[ "$repo_parent" != "." ]]; then
             result="${repo_parent}/"
         fi
 
         # Repo basename in bold
-        result="${result}\e[1m${repo_basename}\e[0m\e[90m"
+        result="${result}${bold}${repo_basename}${reset}${dim}"
 
         # Get relative path from worktree root
         rel_path="${PWD#$git_root/}"
@@ -126,7 +139,7 @@ shorten_path_in_repo() {
         fi
 
         # Repo basename in bold
-        result="${result}\e[1m${repo_basename}\e[0m\e[90m"
+        result="${result}${bold}${repo_basename}${reset}${dim}"
 
         # Get relative path from repo root
         rel_path="${PWD#$git_root/}"
@@ -137,7 +150,7 @@ shorten_path_in_repo() {
         fi
     fi
 
-    echo -e "$result"
+    printf '%s' "$result"
 }
 
 # Get git icon if in repo
@@ -145,7 +158,7 @@ prompt_git_icon() {
     local git_dir
     git_dir=$(git rev-parse --git-dir 2>/dev/null)
     if [[ -n "$git_dir" ]]; then
-        echo -e "\e[33m$(directory_icon)\e[90m"
+        printf '%s%s%s' "$(_esc $'\e[33m')" "$(directory_icon)" "$(_esc $'\e[90m')"
     fi
 }
 
@@ -166,21 +179,23 @@ prompt_git_branch() {
                 branch="${branch:0:$((max_branch_len - 3))}..."
             fi
 
-            echo -e " \e[33m${ICON_BRANCH}${branch}\e[90m"
+            printf ' %s%s%s%s' "$(_esc $'\e[33m')" "${ICON_BRANCH}${branch}" "$(_esc $'\e[90m')"
         fi
     fi
 }
 
 # Build the prompt
 build_prompt() {
-    local git_icon path_part branch_part
+    local git_icon path_part branch_part dim reset
 
     git_icon=$(prompt_git_icon)
     path_part=$(shorten_path_in_repo)
     branch_part=$(prompt_git_branch)
+    dim=$(_esc $'\e[90m')
+    reset=$(_esc $'\e[0m')
 
     # Newline, then grey color, git icon, path, branch
-    echo -e "\n\e[90m${git_icon}${path_part}${branch_part}\e[0m"
+    printf '\n%s%s%s%s%s' "$dim" "$git_icon" "$path_part" "$branch_part" "$reset"
 }
 
 # Set up prompt based on shell
@@ -205,11 +220,7 @@ else
             PS1="\[${_TERM_RESET}\]$("$NOUNDER_PROMPT")"
         }
     else
-        set_prompt() {
-            local prompt_top
-            prompt_top=$(build_prompt)
-            PS1="\[${_TERM_RESET}\]${prompt_top}\n\[\e[1;31m\]\$ \[\e[0m\]"
-        }
+        PS1='\[\e[0m\]\n\[\e[90m\]\w\[\e[0m\]\n\[\e[1;31m\]\$ \[\e[0m\]'
     fi
     PROMPT_COMMAND=set_prompt
 fi

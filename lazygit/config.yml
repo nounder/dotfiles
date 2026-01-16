@@ -1,5 +1,6 @@
 gui:
   showFileTree: false
+  showCommandLog: false
 git:
   pagers:
     - externalDiffCommand: difft --color=always --syntax-highlight=on
