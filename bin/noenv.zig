@@ -215,9 +215,16 @@ fn processEnvrc(allocator: std.mem.Allocator, pwd: []const u8, stdout: std.fs.Fi
         return;
     }
 
-    // Check if we're in the same directory as before
+    const scope_dir = if (envrc_path) |ep|
+        (std.fs.path.dirname(ep) orelse pwd)
+    else if (env_files.items.len > 0)
+        (std.fs.path.dirname(env_files.items[env_files.items.len - 1]) orelse pwd)
+    else
+        pwd;
+
+    // Check if we're in the same environment scope as before
     const prev_dir = std.posix.getenv("NOENV_DIR");
-    if (prev_dir != null and std.mem.eql(u8, prev_dir.?, pwd)) {
+    if (prev_dir != null and std.mem.eql(u8, prev_dir.?, scope_dir)) {
         // Same directory - check if watched files changed
         const check_path = envrc_path orelse if (env_files.items.len > 0) env_files.items[env_files.items.len - 1] else null;
         if (check_path) |cp| {
@@ -254,7 +261,7 @@ fn processEnvrc(allocator: std.mem.Allocator, pwd: []const u8, stdout: std.fs.Fi
 
     // Output export commands
     if (env_files.items.len > 0 or envrc_path != null) {
-        try ctx.outputExports(allocator, stdout, stderr, pwd);
+        try ctx.outputExports(allocator, stdout, stderr, scope_dir);
     }
 }
 
