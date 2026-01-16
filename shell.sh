@@ -3,6 +3,9 @@
 # Exit early for non-interactive shells
 [[ $- != *i* ]] && return
 
+# Disable control character display (^C, ^D, etc.)
+stty -echoctl 2>/dev/null
+
 # Readline settings (bash)
 if [[ -n "$BASH_VERSION" ]]; then
     bind 'set show-all-if-ambiguous on'
