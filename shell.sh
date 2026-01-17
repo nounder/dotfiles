@@ -24,11 +24,7 @@ if [[ -n "$BASH_VERSION" ]]; then
 fi
 
 # Detect shell and arch
-if [ -n "$ZSH_VERSION" ]; then
-    CURRENT_SHELL="zsh"
-elif [ -n "$BASH_VERSION" ]; then
-    CURRENT_SHELL="bash"
-fi
+CURRENT_SHELL="bash"
 
 case "$(uname -sm)" in
     "Darwin arm64") _ARCH="darwin-arm64" ;;
@@ -59,13 +55,9 @@ is_in_worktree() {
 }
 
 # Wrap ANSI escape codes for proper prompt length calculation
-# Bash needs \001...\002, zsh needs %{...%}
+# Bash needs \001...\002
 _esc() {
-    if [[ "$CURRENT_SHELL" == "zsh" ]]; then
-        printf '%%{%s%%}' "$1"
-    else
-        printf '\001%s\002' "$1"
-    fi
+    printf '\001%s\002' "$1"
 }
 
 # Get directory icon based on repo type
@@ -198,42 +190,23 @@ build_prompt() {
     printf '\n%s%s%s%s%s' "$dim" "$git_icon" "$path_part" "$branch_part" "$reset"
 }
 
-# Set up prompt based on shell
+# Set up prompt
 NOUNDER_PROMPT="$HOME/dotfiles/bin/noprompt-$_ARCH"
 
-if [[ "$CURRENT_SHELL" == "zsh" ]]; then
-    # Zsh prompt setup
-    setopt PROMPT_SUBST
-    if [[ -x "$NOUNDER_PROMPT" ]]; then
-        precmd() {
-            PROMPT="%{${_TERM_RESET}%}$("$NOUNDER_PROMPT")"
-        }
-    else
-        precmd() {
-            PROMPT="%{${_TERM_RESET}%}$(build_prompt)"$'\n''%B%F{red}$ %f%b'
-        }
-    fi
+if [[ -x "$NOUNDER_PROMPT" ]]; then
+    set_prompt() {
+        PS1="\[${_TERM_RESET}\]$("$NOUNDER_PROMPT")"
+    }
 else
-    # Bash prompt setup
-    if [[ -x "$NOUNDER_PROMPT" ]]; then
-        set_prompt() {
-            PS1="\[${_TERM_RESET}\]$("$NOUNDER_PROMPT")"
-        }
-    else
-        PS1='\[\e[0m\]\n\[\e[90m\]\w\[\e[0m\]\n\[\e[1;31m\]\$ \[\e[0m\]'
-    fi
-    PROMPT_COMMAND=set_prompt
+    PS1='\[\e[0m\]\n\[\e[90m\]\w\[\e[0m\]\n\[\e[1;31m\]\$ \[\e[0m\]'
 fi
+PROMPT_COMMAND=set_prompt
 
 # PATH setup
 export PATH="$HOME/dotfiles/bin:$HOME/.bun/bin:$HOME/.cargo/bin:$HOME/.local/bin:$HOME/bin:$HOME/.deno/bin:/usr/local/bin:/opt/homebrew/bin:/opt/homebrew/sbin:$HOME/go/bin:$PATH:node_modules/.bin:../node_modules/.bin:$HOME/.lmstudio/bin"
 
 # Environment variables
-if [[ "$CURRENT_SHELL" == "zsh" ]]; then
-    export SHELL=$(which zsh)
-else
-    export SHELL=$(which bash)
-fi
+export SHELL=$(which bash)
 export EDITOR=$(which nvim)
 export XDG_CONFIG_HOME="$HOME/.config"
 export FZF_DEFAULT_OPTS='--cycle --layout=default --height=90% --preview-window=wrap --marker="*" --no-scrollbar --preview-window=border-left'
@@ -295,11 +268,7 @@ if [[ -x "$_NOENV_BIN" ]]; then
     _noenv_hook() {
         eval "$("$_NOENV_BIN" hook)"
     }
-    if [[ "$CURRENT_SHELL" == "zsh" ]]; then
-        precmd_functions+=(_noenv_hook)
-    else
-        PROMPT_COMMAND="_noenv_hook${PROMPT_COMMAND:+;$PROMPT_COMMAND}"
-    fi
+    PROMPT_COMMAND="_noenv_hook${PROMPT_COMMAND:+;$PROMPT_COMMAND}"
 fi
 
 # z - jump around (using nozo)
@@ -518,196 +487,8 @@ _fzf_tab_complete() {
 }
 
 # FZF Keybindings
-if [[ "$CURRENT_SHELL" == "zsh" ]]; then
-    _fzf_search_history_widget() {
-        local selected
-        selected=$(fc -l 1 | sed 's/^ *[0-9]* *//' | awk '!seen[$0]++' | fzf --scheme=history --prompt="History> " --query="$BUFFER")
-        if [[ -n "$selected" ]]; then
-            BUFFER="$selected"
-            CURSOR=${#selected}
-        fi
-        zle redisplay
-    }
-    zle -N _fzf_search_history_widget
-
-    _fzf_search_directory_widget() {
-        local fd_cmd selected
-        if command -v fdfind &> /dev/null; then
-            fd_cmd="fdfind"
-        elif command -v fd &> /dev/null; then
-            fd_cmd="fd"
-        else
-            fd_cmd="find . -type f"
-        fi
-
-        if [[ "$fd_cmd" == "find"* ]]; then
-            selected=$($fd_cmd 2>/dev/null | fzf --multi --prompt="Directory> ")
-        else
-            selected=$($fd_cmd --color=always 2>/dev/null | fzf --ansi --multi --prompt="Directory> ")
-        fi
-
-        if [[ -n "$selected" ]]; then
-            if [[ -z "$BUFFER" ]]; then
-                zle redisplay
-                ${EDITOR:-vim} $selected
-            else
-                BUFFER="${BUFFER}${selected}"
-                CURSOR=${#BUFFER}
-            fi
-        fi
-        zle redisplay
-    }
-    zle -N _fzf_search_directory_widget
-
-    _fzf_search_git_log_widget() {
-        if ! git rev-parse --git-dir &>/dev/null; then
-            zle -M "Not in a git repository"
-            return
-        fi
-
-        local format='%C(bold blue)%h%C(reset) - %C(cyan)%ad%C(reset) %C(yellow)%d%C(reset) %C(normal)%s%C(reset)  %C(dim normal)[%an]%C(reset)'
-        local selected
-        selected=$(git log --no-show-signature --color=always --format=format:"$format" --date=short | \
-            fzf --ansi --multi --scheme=history --prompt="Git Log> " \
-                --preview='git show --color=always --stat --patch {1}')
-
-        if [[ -n "$selected" ]]; then
-            local hashes=""
-            while IFS= read -r line; do
-                local abbrev=$(echo "$line" | awk '{print $1}')
-                local full=$(git rev-parse "$abbrev" 2>/dev/null)
-                [[ -n "$full" ]] && hashes="$hashes $full"
-            done <<< "$selected"
-            hashes="${hashes# }"
-            BUFFER="${BUFFER}${hashes}"
-            CURSOR=${#BUFFER}
-        fi
-        zle redisplay
-    }
-    zle -N _fzf_search_git_log_widget
-
-    _fzf_search_git_status_widget() {
-        if ! git rev-parse --git-dir &>/dev/null; then
-            zle -M "Not in a git repository"
-            return
-        fi
-
-        local selected
-        selected=$(git -c color.status=always status --short | \
-            fzf --ansi --multi --prompt="Git Status> " --nth="2.." \
-                --preview='file=$(echo {} | sed "s/^...//" | sed "s/.* -> //"); git diff --color=always -- "$file" 2>/dev/null || cat "$file"')
-
-        if [[ -n "$selected" ]]; then
-            local paths=""
-            while IFS= read -r line; do
-                local path
-                if [[ "${line:0:1}" == "R" ]]; then
-                    path=$(echo "$line" | sed 's/.* -> //')
-                else
-                    path=$(echo "$line" | sed 's/^...//')
-                fi
-                paths="$paths $path"
-            done <<< "$selected"
-            paths="${paths# }"
-            BUFFER="${BUFFER}${paths}"
-            CURSOR=${#BUFFER}
-        fi
-        zle redisplay
-    }
-    zle -N _fzf_search_git_status_widget
-
-    _fzf_complete_widget() {
-        local word cmd completions prompt prefix_dir
-        word="${LBUFFER##* }"
-        cmd="${LBUFFER%% *}"
-        prompt="Complete"
-        prefix_dir=""
-
-        if [[ "$LBUFFER" != *" "* ]]; then
-            # Completing command name
-            prompt="Command"
-            completions=$(compgen -c -- "$word" 2>/dev/null | head -100)
-        else
-            # Fall back to file/option completion
-            if [[ "$word" == -* ]]; then
-                prompt="Option"
-                # Try to get options from --help
-                local help_opts=$("$cmd" --help 2>/dev/null | grep -oE '(^|[[:space:]])-[a-zA-Z-]+' | tr -d ' ' | sort -u | head -50)
-                [[ -n "$help_opts" ]] && completions="$help_opts"
-            fi
-
-            # Add file completions
-            prompt="${prompt:-File}"
-            # Check if word has a directory prefix that exists
-            if [[ "$word" == */* ]]; then
-                local dir_part="${word%/*}"
-                local file_part="${word##*/}"
-                if [[ -d "$dir_part" ]]; then
-                    prefix_dir="$dir_part"
-                    # Get completions relative to the directory
-                    completions=$(cd "$dir_part" && compgen -f -- "$file_part" 2>/dev/null)
-                else
-                    local file_completions=$(compgen -f -- "$word" 2>/dev/null)
-                    [[ -n "$file_completions" ]] && completions="${completions}${completions:+$'\n'}${file_completions}"
-                fi
-            else
-                local file_completions=$(compgen -f -- "$word" 2>/dev/null)
-                [[ -n "$file_completions" ]] && completions="${completions}${completions:+$'\n'}${file_completions}"
-            fi
-        fi
-
-        if [[ -n "$completions" ]]; then
-            local selected fzf_key unique_completions
-            unique_completions=$(echo "$completions" | awk '!seen[$0]++')
-            # Auto-select if only one candidate
-            if [[ $(echo "$unique_completions" | wc -l) -eq 1 ]]; then
-                selected="$unique_completions"
-                fzf_key="tab"
-            else
-                selected=$(echo "$unique_completions" | fzf --height=40% --reverse --prompt="${prompt}> " --query="${word##*/}" --expect=tab)
-                fzf_key=${selected%%$'\n'*}
-                selected=${selected#*$'\n'}
-            fi
-            if [[ -n "$selected" ]]; then
-                if [[ -n "$prefix_dir" ]]; then
-                    # We have a directory prefix, reconstruct the full path
-                    LBUFFER="${LBUFFER%$word}${prefix_dir}/${selected}"
-                elif [[ "$word" == */* && "$selected" != /* ]]; then
-                    LBUFFER="${LBUFFER%/*}/$selected"
-                elif [[ -n "$word" ]]; then
-                    LBUFFER="${LBUFFER%$word}$selected"
-                else
-                    LBUFFER="${LBUFFER}$selected"
-                fi
-                # If Enter was pressed (not tab), execute the command
-                if [[ "$fzf_key" != "tab" ]]; then
-                    zle accept-line
-                    return
-                fi
-            fi
-        fi
-        zle redisplay
-    }
-    zle -N _fzf_complete_widget
-
-    _fzf_tab_widget() {
-        if [[ -z "$LBUFFER" ]]; then
-            _fzf_search_directory_widget
-        else
-            _fzf_complete_widget
-        fi
-    }
-    zle -N _fzf_tab_widget
-
-    bindkey '^R' _fzf_search_history_widget
-    bindkey '\e^F' _fzf_search_directory_widget
-    bindkey '\e^L' _fzf_search_git_log_widget
-    bindkey '\e^S' _fzf_search_git_status_widget
-    bindkey '^I' _fzf_tab_widget
-else
-    bind -x '"\C-r": _fzf_search_history'
-    bind -x '"\e\C-f": _fzf_search_directory'
-    bind -x '"\e\C-l": _fzf_search_git_log'
-    bind -x '"\e\C-s": _fzf_search_git_status'
-    bind -x '"\t": _fzf_tab_complete'
-fi
+bind -x '"\C-r": _fzf_search_history'
+bind -x '"\e\C-f": _fzf_search_directory'
+bind -x '"\e\C-l": _fzf_search_git_log'
+bind -x '"\e\C-s": _fzf_search_git_status'
+bind -x '"\t": _fzf_tab_complete'
