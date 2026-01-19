@@ -31,6 +31,8 @@ fi
 
 if [[ "${EDITOR:-vi}" == *hx* ]]; then
   "$EDITOR" +999999 "$file_path"
+elif [[ "${EDITOR:-vi}" == *nvim* ]] || [[ "${EDITOR:-vi}" == *vim* ]]; then
+  "$EDITOR" +999999 "$file_path"
 else
   "${EDITOR:-vi}" "$file_path"
 fi

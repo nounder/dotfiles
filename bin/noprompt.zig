@@ -232,11 +232,13 @@ const GitRepo = struct {
 };
 
 const Color = struct {
-    const reset = "\x1b[0m";
-    const bold = "\x1b[1m";
-    const yellow = "\x1b[33m";
-    const bright_black = "\x1b[90m";
-    const bold_red = "\x1b[1;31m";
+    // Wrapped in \x01...\x02 so readline knows these bytes are invisible.
+    // Without this, Ctrl+A miscalculates the start of input position.
+    const reset = "\x01\x1b[0m\x02";
+    const bold = "\x01\x1b[1m\x02";
+    const yellow = "\x01\x1b[33m\x02";
+    const bright_black = "\x01\x1b[90m\x02";
+    const bold_red = "\x01\x1b[1;31m\x02";
 };
 
 const Icons = struct {

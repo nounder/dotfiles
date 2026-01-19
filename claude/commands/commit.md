@@ -11,9 +11,12 @@ model: haiku
 - Current branch: !`git branch --show-current`
 - Recent commits: !`git log --oneline -10`
 
+DO NOT capitalize message title.
+
 ## Your task
 
-Stage all chanages made in this session and create a single git commit.
+Stage all chanages made in this session and create a single git commit. DO NOT
+include files you have not touched in this session.
 
 If user asks to push, also push the changes.
 
