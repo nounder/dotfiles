@@ -10,7 +10,8 @@ stty -echoctl 2>/dev/null
 # \e[0m    - reset text attributes (color, bold, underline, etc.)
 # \e[?25h  - show cursor (in case it was hidden)
 # \e[?7h   - re-enable line wrapping
-_TERM_RESET=$'\e[0m\e[?25h\e[?7h'
+# \e[?1000l\e[?1002l\e[?1003l\e[?1006l - disable all mouse tracking modes
+_TERM_RESET=$'\e[0m\e[?25h\e[?7h\e[?1000l\e[?1002l\e[?1003l\e[?1006l'
 
 # Readline settings (bash)
 if [[ -n "$BASH_VERSION" ]]; then
@@ -21,6 +22,8 @@ if [[ -n "$BASH_VERSION" ]]; then
     bind 'set enable-bracketed-paste off'
     # Don't save cd commands in history
     HISTIGNORE="cd:cd *:cd -:..:--"
+    # Save history immediately after each command (don't wait for shell exit)
+    PROMPT_COMMAND="${PROMPT_COMMAND:+$PROMPT_COMMAND;}history -a"
 fi
 
 # Detect shell and arch
