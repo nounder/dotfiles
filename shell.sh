@@ -22,8 +22,7 @@ if [[ -n "$BASH_VERSION" ]]; then
     bind 'set enable-bracketed-paste off'
     # Don't save cd commands in history
     HISTIGNORE="cd:cd *:cd -:..:--"
-    # Save history immediately after each command (don't wait for shell exit)
-    PROMPT_COMMAND="${PROMPT_COMMAND:+$PROMPT_COMMAND;}history -a"
+
 fi
 
 # Detect shell and arch
@@ -207,6 +206,26 @@ PROMPT_COMMAND=set_prompt
 
 # PATH setup
 export PATH="$HOME/dotfiles/bin:$HOME/.bun/bin:$HOME/.cargo/bin:$HOME/.local/bin:$HOME/bin:$HOME/.deno/bin:/usr/local/bin:/opt/homebrew/bin:/opt/homebrew/sbin:$HOME/go/bin:$PATH:node_modules/.bin:../node_modules/.bin:$HOME/.lmstudio/bin"
+
+# Per-directory history using nohi (frecency-based)
+if [[ -n "$BASH_VERSION" ]] && command -v nohi &>/dev/null; then
+    unset HISTFILE
+    _NOHI_DIR="$PWD"
+    _nohi_sync() {
+        local cmd
+        cmd=$(fc -ln -1 2>/dev/null)
+        cmd="${cmd#"${cmd%%[![:space:]]*}"}"  # trim leading whitespace
+        [[ -n "$cmd" ]] && nohi --add "$_NOHI_DIR" "$cmd"
+        # Reload history on directory change
+        if [[ "$PWD" != "$_NOHI_DIR" ]]; then
+            _NOHI_DIR="$PWD"
+            history -c
+            while IFS= read -r c; do history -s "$c"; done < <(nohi --get "$PWD" 2>/dev/null | tac)
+        fi
+    }
+    PROMPT_COMMAND="_nohi_sync${PROMPT_COMMAND:+;$PROMPT_COMMAND}"
+    while IFS= read -r cmd; do history -s "$cmd"; done < <(nohi --get "$PWD" 2>/dev/null | tac)
+fi
 
 # Environment variables
 export SHELL=$(which bash)
