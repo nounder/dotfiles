@@ -268,14 +268,67 @@ fn processEnvrc(allocator: std.mem.Allocator, pwd: []const u8, stdout: std.fs.Fi
 fn unsetPreviousVars(stdout: std.fs.File, stderr: std.fs.File) !void {
     const prev_vars = std.posix.getenv("NOENV_VARS") orelse return;
     const prev_dir = std.posix.getenv("NOENV_DIR");
+    const prev_path_adds = std.posix.getenv("NOENV_PATH_ADDS");
 
-    if (prev_vars.len == 0) return;
+    if (prev_vars.len == 0 and (prev_path_adds == null or prev_path_adds.?.len == 0)) return;
 
     // Collect var names for summary
     var removed = std.ArrayListUnmanaged([]const u8){};
     defer removed.deinit(std.heap.page_allocator);
 
-    // Unset each var
+    // Handle path variable removals (remove only added segments, don't unset)
+    if (prev_path_adds) |path_adds| {
+        if (path_adds.len > 0) {
+            // Format: VAR1=path1,path2;VAR2=path3,path4
+            var var_it = std.mem.splitScalar(u8, path_adds, ';');
+            while (var_it.next()) |var_entry| {
+                if (var_entry.len == 0) continue;
+                const eq_pos = std.mem.indexOf(u8, var_entry, "=") orelse continue;
+                const var_name = var_entry[0..eq_pos];
+                const paths_to_remove = var_entry[eq_pos + 1 ..];
+
+                // Get current value of the variable
+                const current_value = std.posix.getenv(var_name) orelse continue;
+
+                // Build new value excluding the paths we added
+                var new_value = std.ArrayListUnmanaged(u8){};
+                defer new_value.deinit(std.heap.page_allocator);
+
+                var path_it = std.mem.splitScalar(u8, current_value, ':');
+                var first = true;
+                while (path_it.next()) |path_segment| {
+                    if (path_segment.len == 0) continue;
+
+                    // Check if this segment should be removed
+                    var should_remove = false;
+                    var remove_it = std.mem.splitScalar(u8, paths_to_remove, ',');
+                    while (remove_it.next()) |to_remove| {
+                        if (std.mem.eql(u8, path_segment, to_remove)) {
+                            should_remove = true;
+                            break;
+                        }
+                    }
+
+                    if (!should_remove) {
+                        if (!first) new_value.append(std.heap.page_allocator, ':') catch {};
+                        new_value.appendSlice(std.heap.page_allocator, path_segment) catch {};
+                        first = false;
+                    }
+                }
+
+                // Export the cleaned value
+                try stdout.writeAll("export ");
+                try stdout.writeAll(var_name);
+                try stdout.writeAll("='");
+                try stdout.writeAll(new_value.items);
+                try stdout.writeAll("';\n");
+
+                removed.append(std.heap.page_allocator, var_name) catch {};
+            }
+        }
+    }
+
+    // Unset each non-path var
     var it = std.mem.splitScalar(u8, prev_vars, ':');
     while (it.next()) |var_name| {
         if (var_name.len == 0) continue;
@@ -289,9 +342,11 @@ fn unsetPreviousVars(stdout: std.fs.File, stderr: std.fs.File) !void {
     try stdout.writeAll("unset NOENV_VARS;\n");
     try stdout.writeAll("unset NOENV_DIR;\n");
     try stdout.writeAll("unset NOENV_WATCH;\n");
+    try stdout.writeAll("unset NOENV_PATH_ADDS;\n");
 
     // Print summary
     if (removed.items.len > 0) {
+        const use_color = stderr.isTty();
         stderr.writeAll("noenv: ") catch {};
         if (prev_dir) |dir| {
             stderr.writeAll("~") catch {};
@@ -303,12 +358,14 @@ fn unsetPreviousVars(stdout: std.fs.File, stderr: std.fs.File) !void {
             }
             stderr.writeAll(" ") catch {};
         }
-        stderr.writeAll("\x1b[31m-") catch {};
+        if (use_color) stderr.writeAll("\x1b[31m") catch {};
+        stderr.writeAll("-") catch {};
         for (removed.items, 0..) |key, i| {
             if (i > 0) stderr.writeAll(" ") catch {};
             stderr.writeAll(key) catch {};
         }
-        stderr.writeAll("\x1b[0m\n") catch {};
+        if (use_color) stderr.writeAll("\x1b[0m") catch {};
+        stderr.writeAll("\n") catch {};
     }
 }
 
@@ -317,6 +374,7 @@ const EnvContext = struct {
     env: std.StringHashMapUnmanaged([]const u8),
     exports: std.StringHashMapUnmanaged([]const u8),
     watch_files: std.ArrayListUnmanaged([]const u8),
+    path_adds: std.StringHashMapUnmanaged(std.ArrayListUnmanaged([]const u8)), // var_name -> list of added paths
     base_dir: []const u8,
 
     fn init(allocator: std.mem.Allocator) EnvContext {
@@ -325,6 +383,7 @@ const EnvContext = struct {
             .env = std.StringHashMapUnmanaged([]const u8){},
             .exports = std.StringHashMapUnmanaged([]const u8){},
             .watch_files = std.ArrayListUnmanaged([]const u8){},
+            .path_adds = std.StringHashMapUnmanaged(std.ArrayListUnmanaged([]const u8)){},
             .base_dir = "",
         };
     }
@@ -348,6 +407,16 @@ const EnvContext = struct {
             self.allocator.free(f);
         }
         self.watch_files.deinit(self.allocator);
+
+        var path_it = self.path_adds.iterator();
+        while (path_it.next()) |entry| {
+            self.allocator.free(entry.key_ptr.*);
+            for (entry.value_ptr.items) |p| {
+                self.allocator.free(p);
+            }
+            entry.value_ptr.deinit(self.allocator);
+        }
+        self.path_adds.deinit(self.allocator);
     }
 
     fn executeEnvrcOnly(self: *EnvContext, path: []const u8) anyerror!void {
@@ -587,16 +656,26 @@ const EnvContext = struct {
 
         const current = self.getVar(var_name);
 
-        // Build new path value
+        // Build new path value and track additions
         var new_path = std.ArrayListUnmanaged(u8){};
         defer new_path.deinit(self.allocator);
 
+        // Get or create the list of added paths for this variable
+        const gop = try self.path_adds.getOrPut(self.allocator, var_name);
+        if (!gop.found_existing) {
+            gop.key_ptr.* = try self.allocator.dupe(u8, var_name);
+            gop.value_ptr.* = std.ArrayListUnmanaged([]const u8){};
+        }
+
         for (paths) |p| {
             const expanded = try self.expandPath(p);
-            defer if (expanded.ptr != p.ptr) self.allocator.free(expanded);
+            const expanded_owned = if (expanded.ptr != p.ptr) expanded else try self.allocator.dupe(u8, expanded);
+
+            // Track this addition
+            try gop.value_ptr.append(self.allocator, expanded_owned);
 
             if (new_path.items.len > 0) try new_path.append(self.allocator, ':');
-            try new_path.appendSlice(self.allocator, expanded);
+            try new_path.appendSlice(self.allocator, expanded_owned);
         }
 
         if (current.len > 0) {
@@ -954,11 +1033,16 @@ const EnvContext = struct {
         defer added.deinit(allocator);
         var tracked_vars = std.ArrayListUnmanaged(u8){};
         defer tracked_vars.deinit(allocator);
+        var tracked_path_adds = std.ArrayListUnmanaged(u8){};
+        defer tracked_path_adds.deinit(allocator);
 
         var it = self.exports.iterator();
         while (it.next()) |entry| {
             const key = entry.key_ptr.*;
             const value = entry.value_ptr.*;
+
+            // Check if this is a path variable we modified
+            const is_path_var = self.path_adds.contains(key);
 
             if (value.len == 0) {
                 // Unset - don't track
@@ -966,9 +1050,11 @@ const EnvContext = struct {
                 try writer.writeAll(key);
                 try writer.writeAll(";\n");
             } else {
-                // Track this var
-                if (tracked_vars.items.len > 0) try tracked_vars.append(allocator, ':');
-                try tracked_vars.appendSlice(allocator, key);
+                // Track this var (but path vars go to NOENV_PATH_ADDS, not NOENV_VARS)
+                if (!is_path_var) {
+                    if (tracked_vars.items.len > 0) try tracked_vars.append(allocator, ':');
+                    try tracked_vars.appendSlice(allocator, key);
+                }
 
                 // Check if this is a new or changed value
                 const current = std.posix.getenv(key);
@@ -991,9 +1077,30 @@ const EnvContext = struct {
             }
         }
 
+        // Build NOENV_PATH_ADDS: VAR1=path1,path2;VAR2=path3
+        var path_it = self.path_adds.iterator();
+        while (path_it.next()) |entry| {
+            const var_name = entry.key_ptr.*;
+            const paths = entry.value_ptr.items;
+
+            if (paths.len == 0) continue;
+
+            if (tracked_path_adds.items.len > 0) try tracked_path_adds.append(allocator, ';');
+            try tracked_path_adds.appendSlice(allocator, var_name);
+            try tracked_path_adds.append(allocator, '=');
+
+            for (paths, 0..) |p, i| {
+                if (i > 0) try tracked_path_adds.append(allocator, ',');
+                try tracked_path_adds.appendSlice(allocator, p);
+            }
+        }
+
         // Export tracking vars
         try writer.writeAll("export NOENV_VARS='");
         try writer.writeAll(tracked_vars.items);
+        try writer.writeAll("';\n");
+        try writer.writeAll("export NOENV_PATH_ADDS='");
+        try writer.writeAll(tracked_path_adds.items);
         try writer.writeAll("';\n");
         try writer.writeAll("export NOENV_DIR='");
         try writer.writeAll(envrc_dir);
@@ -1045,6 +1152,7 @@ const EnvContext = struct {
 
         // Print summary to stderr
         if (added.items.len > 0) {
+            const use_color = stderr.isTty();
             const home = std.posix.getenv("HOME") orelse "";
             stderr.writeAll("noenv: ~") catch {};
             if (home.len > 0 and std.mem.startsWith(u8, envrc_dir, home)) {
@@ -1052,12 +1160,15 @@ const EnvContext = struct {
             } else {
                 stderr.writeAll(envrc_dir) catch {};
             }
-            stderr.writeAll(" \x1b[32m+") catch {};
+            stderr.writeAll(" ") catch {};
+            if (use_color) stderr.writeAll("\x1b[32m") catch {};
+            stderr.writeAll("+") catch {};
             for (added.items, 0..) |key, i| {
                 if (i > 0) stderr.writeAll(" ") catch {};
                 stderr.writeAll(key) catch {};
             }
-            stderr.writeAll("\x1b[0m\n") catch {};
+            if (use_color) stderr.writeAll("\x1b[0m") catch {};
+            stderr.writeAll("\n") catch {};
         }
     }
 };
