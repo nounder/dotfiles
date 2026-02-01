@@ -90,6 +90,8 @@ pub fn main() !void {
             const stdout = std.fs.File.stdout();
             try stdout.writeAll(t);
             try stdout.writeAll("\n");
+        } else {
+            std.process.exit(1);
         }
     }
 }
