@@ -302,7 +302,13 @@ NOZO="$HOME/dotfiles/bin/nozo-$_ARCH"
 if [[ -x "$NOZO" ]]; then
   z() {
     local result=$("$NOZO" "$@")
-    [[ -d "$result" ]] && cd "$result" || [[ -n "$result" ]] && echo "$result"
+    if [[ -d "$result" ]]; then
+      cd "$result"
+    elif [[ -n "$result" ]]; then
+      echo "$result"
+    else
+      return 1
+    fi
   }
   PROMPT_COMMAND="${PROMPT_COMMAND:+$PROMPT_COMMAND;}($NOZO --add \"\$PWD\" &)"
 fi
