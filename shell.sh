@@ -461,20 +461,61 @@ _fzf_tab_complete() {
 
       # Add file completions
       prompt="${prompt:-File}"
-      local file_completions=$(compgen -f -- "$word" 2>/dev/null)
-      [[ -n "$file_completions" ]] && completions="${completions}${completions:+$'\n'}${file_completions}"
+
+      # Try fuzzy path completion if word contains /
+      if [[ "$word" == */* ]]; then
+        local glob_word="$word"
+        local prefix=""
+
+        # Handle ~ prefix: expand but preserve as literal prefix
+        if [[ "$word" == "~/"* ]]; then
+          prefix="$HOME/"
+          glob_word="${word:2}"
+        elif [[ "$word" == /* ]]; then
+          prefix="/"
+          glob_word="${word:1}"
+        fi
+
+        # Build glob pattern: each segment gets * appended
+        local glob_pattern="" segment
+        while IFS= read -r -d '/' segment; do
+          [[ -n "$segment" ]] && glob_pattern+="${segment}*/"
+        done <<< "$glob_word/"
+
+        # Remove extra trailing /
+        glob_pattern="${glob_pattern%/}"
+
+        # Handle trailing slash in original input
+        [[ "$word" == */ ]] && glob_pattern+="/"
+
+        local fuzzy_matches
+        fuzzy_matches=$(compgen -G "${prefix}${glob_pattern}" 2>/dev/null)
+        [[ -n "$fuzzy_matches" ]] && completions="${completions}${completions:+$'\n'}${fuzzy_matches}"
+      fi
+
+      # Fall back to exact compgen -f if no fuzzy matches
+      if [[ -z "$completions" ]]; then
+        local file_completions=$(compgen -f -- "$word" 2>/dev/null)
+        [[ -n "$file_completions" ]] && completions="${completions}${completions:+$'\n'}${file_completions}"
+      fi
     fi
   fi
 
   if [[ -n "$completions" ]]; then
-    local selected fzf_key unique_completions
+    local selected fzf_key unique_completions fzf_query
     unique_completions=$(echo "$completions" | awk '!seen[$0]++')
+    # For fuzzy path matches, don't pre-filter; otherwise use last segment
+    if [[ "$word" == */* ]]; then
+      fzf_query=""
+    else
+      fzf_query="${word##*/}"
+    fi
     # Auto-select if only one candidate
     if [[ $(echo "$unique_completions" | wc -l) -eq 1 ]]; then
       selected="$unique_completions"
       fzf_key="tab"
     else
-      selected=$(echo "$unique_completions" | fzf --height=40% --reverse --prompt="${prompt}> " --query="${word##*/}" --expect=tab)
+      selected=$(echo "$unique_completions" | fzf --height=40% --reverse --prompt="${prompt}> " --query="$fzf_query" --expect=tab)
       fzf_key=${selected%%$'\n'*}
       selected=${selected#*$'\n'}
     fi
@@ -486,10 +527,9 @@ _fzf_tab_complete() {
       READLINE_POINT=$((${#prefix} + ${#selected}))
       # If Enter was pressed (not tab), execute the command
       if [[ "$fzf_key" != "tab" ]]; then
-        printf '%s\n' "$READLINE_LINE"
-        eval "$READLINE_LINE"
-        READLINE_LINE=""
-        READLINE_POINT=0
+        # Simulate pressing Enter by binding accept-line
+        bind '"\e[0n": accept-line'
+        printf '\e[5n'
       fi
     fi
   fi
