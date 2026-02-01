@@ -42,10 +42,43 @@ pub fn main() !void {
         }
         try addEntry(allocator, datafile, path, cmd_buf[0..cmd_len]);
     } else if (std.mem.eql(u8, cmd, "--get")) {
-        // Get history for path: nohi --get <path>
+        // Get history for path: nohi --get [--recent] <path>
         if (args.len < 3) return;
-        const path = args[2];
-        try getHistory(allocator, datafile, path);
+        var by_recent = false;
+        var path_idx: usize = 2;
+        if (std.mem.eql(u8, args[2], "--recent")) {
+            by_recent = true;
+            path_idx = 3;
+            if (args.len < 4) return;
+        }
+        const path = args[path_idx];
+        const now = std.time.timestamp();
+
+        var result = try getHistory(allocator, datafile, path);
+        defer result.deinit(allocator);
+
+        // Sort by recency or frecency
+        if (by_recent) {
+            std.mem.sort(Entry, result.matching.items, {}, struct {
+                fn f(_: void, a: Entry, b: Entry) bool {
+                    return a.time > b.time;
+                }
+            }.f);
+        } else {
+            std.mem.sort(Entry, result.matching.items, now, struct {
+                fn f(n: i64, a: Entry, b: Entry) bool {
+                    return a.frecent(n) > b.frecent(n);
+                }
+            }.f);
+        }
+
+        // Output commands
+        const stdout = std.fs.File.stdout();
+        var buf: [4096]u8 = undefined;
+        for (result.matching.items) |e| {
+            const line = std.fmt.bufPrint(&buf, "{s}\n", .{e.cmd}) catch continue;
+            try stdout.writeAll(line);
+        }
     } else if (std.mem.eql(u8, cmd, "--list")) {
         // List all entries
         try listEntries(allocator, datafile);
@@ -63,10 +96,10 @@ fn printUsage() !void {
         \\nohi - per-directory command history with frecency
         \\
         \\Usage:
-        \\  nohi --add <path> <command>   Add command to history for path
-        \\  nohi --get <path>             Get history for path (sorted by frecency)
-        \\  nohi --list                   List all entries
-        \\  nohi --prune                  Remove entries for non-existent directories
+        \\  nohi --add <path> <command>      Add command to history for path
+        \\  nohi --get [--recent] <path>     Get history (frecency or recency order)
+        \\  nohi --list                      List all entries
+        \\  nohi --prune                     Remove entries for non-existent directories
         \\
     );
 }
@@ -211,21 +244,30 @@ fn addEntry(allocator: std.mem.Allocator, datafile: []const u8, path: []const u8
     try writeEntries(allocator, datafile, entries.items);
 }
 
-fn getHistory(allocator: std.mem.Allocator, datafile: []const u8, path: []const u8) !void {
+const HistoryResult = struct {
+    entries: std.ArrayListUnmanaged(Entry),
+    matching: std.ArrayListUnmanaged(Entry),
+
+    fn deinit(self: *HistoryResult, allocator: std.mem.Allocator) void {
+        for (self.entries.items) |e| freeEntry(allocator, e);
+        self.entries.deinit(allocator);
+        self.matching.deinit(allocator);
+    }
+};
+
+fn getHistory(allocator: std.mem.Allocator, datafile: []const u8, path: []const u8) !HistoryResult {
     var entries = try readEntries(allocator, datafile);
-    defer {
+    errdefer {
         for (entries.items) |e| freeEntry(allocator, e);
         entries.deinit(allocator);
     }
 
-    const now = std.time.timestamp();
-    const stdout = std.fs.File.stdout();
-
     // Filter to matching path (exact match or parent directories) and collect unique commands
     var matching = std.ArrayListUnmanaged(Entry){};
-    defer matching.deinit(allocator);
+    errdefer matching.deinit(allocator);
 
-    var seen = std.StringHashMap(void).init(allocator);
+    // Track most recent entry for each command
+    var seen = std.StringHashMap(usize).init(allocator);
     defer seen.deinit();
 
     for (entries.items) |e| {
@@ -235,27 +277,19 @@ fn getHistory(allocator: std.mem.Allocator, datafile: []const u8, path: []const 
             path.len > e.path.len and
             path[e.path.len] == '/');
         if (is_match) {
-            // Dedupe by command
-            if (!seen.contains(e.cmd)) {
-                try seen.put(e.cmd, {});
+            // Dedupe by command, keeping the most recent entry
+            if (seen.get(e.cmd)) |idx| {
+                if (e.time > matching.items[idx].time) {
+                    matching.items[idx] = e;
+                }
+            } else {
+                try seen.put(e.cmd, matching.items.len);
                 try matching.append(allocator, e);
             }
         }
     }
 
-    // Sort by frecency (descending)
-    std.mem.sort(Entry, matching.items, now, struct {
-        fn lessThan(n: i64, a: Entry, b: Entry) bool {
-            return a.frecent(n) > b.frecent(n);
-        }
-    }.lessThan);
-
-    // Output commands only (for bash history -r)
-    var buf: [4096]u8 = undefined;
-    for (matching.items) |e| {
-        const line = std.fmt.bufPrint(&buf, "{s}\n", .{e.cmd}) catch continue;
-        try stdout.writeAll(line);
-    }
+    return .{ .entries = entries, .matching = matching };
 }
 
 fn listEntries(allocator: std.mem.Allocator, datafile: []const u8) !void {

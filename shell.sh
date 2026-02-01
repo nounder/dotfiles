@@ -207,24 +207,28 @@ PROMPT_COMMAND=set_prompt
 # PATH setup
 export PATH="$HOME/dotfiles/bin:$HOME/.bun/bin:$HOME/.cargo/bin:$HOME/.local/bin:$HOME/bin:$HOME/.deno/bin:/usr/local/bin:/opt/homebrew/bin:/opt/homebrew/sbin:$HOME/go/bin:$PATH:node_modules/.bin:../node_modules/.bin:$HOME/.lmstudio/bin"
 
-# Per-directory history using nohi (frecency-based)
+# Per-directory history using nohi
 if [[ -n "$BASH_VERSION" ]] && command -v nohi &>/dev/null && command -v tac &>/dev/null; then
   unset HISTFILE
   _NOHI_DIR="$PWD"
+  _NOHI_EXIT=0
+  # Capture exit code immediately (must be first in PROMPT_COMMAND)
+  _nohi_capture() { _NOHI_EXIT=$?; }
   _nohi_sync() {
     local cmd
     cmd=$(fc -ln -1 2>/dev/null)
     cmd="${cmd#"${cmd%%[![:space:]]*}"}" # trim leading whitespace
-    [[ -n "$cmd" ]] && nohi --add "$_NOHI_DIR" "$cmd" 2>/dev/null
+    # Skip failed commands and commands starting with space
+    [[ $_NOHI_EXIT -eq 0 && -n "$cmd" && "${cmd:0:1}" != " " ]] && nohi --add "$_NOHI_DIR" "$cmd" 2>/dev/null
     # Reload history on directory change
     if [[ "$PWD" != "$_NOHI_DIR" ]]; then
       _NOHI_DIR="$PWD"
       history -c
-      while IFS= read -r c; do history -s "$c"; done < <(nohi --get "$PWD" 2>/dev/null | tac 2>/dev/null)
+      while IFS= read -r c; do history -s "$c"; done < <(nohi --get --recent "$PWD" 2>/dev/null | tac 2>/dev/null)
     fi
   }
-  PROMPT_COMMAND="_nohi_sync${PROMPT_COMMAND:+;$PROMPT_COMMAND}"
-  while IFS= read -r cmd; do history -s "$cmd"; done < <(nohi --get "$PWD" 2>/dev/null | tac 2>/dev/null)
+  PROMPT_COMMAND="_nohi_capture;_nohi_sync${PROMPT_COMMAND:+;$PROMPT_COMMAND}"
+  while IFS= read -r cmd; do history -s "$cmd"; done < <(nohi --get --recent "$PWD" 2>/dev/null | tac 2>/dev/null)
 fi
 
 # Environment variables
@@ -306,7 +310,12 @@ fi
 # FZF Functions
 _fzf_search_history() {
   local selected
-  selected=$(history | sed 's/^ *[0-9]* *//' | awk '!seen[$0]++' | fzf --scheme=history --prompt="History> " --query="$READLINE_LINE")
+  # Use nohi with frecency ordering if available, otherwise fall back to bash history
+  if command -v nohi &>/dev/null; then
+    selected=$(nohi --get "$PWD" 2>/dev/null | fzf --scheme=history --prompt="History> " --query="$READLINE_LINE")
+  else
+    selected=$(history | sed 's/^ *[0-9]* *//' | awk '!seen[$0]++' | fzf --scheme=history --prompt="History> " --query="$READLINE_LINE")
+  fi
   if [[ -n "$selected" ]]; then
     READLINE_LINE="$selected"
     READLINE_POINT=${#selected}
