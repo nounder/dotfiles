@@ -477,9 +477,22 @@ _fzf_tab_complete() {
         fi
 
         # Build glob pattern: each segment gets * appended
+        # Insert * before non-alphanumeric chars (fish-style: eff-st -> eff*-st*, foo_bar -> foo*_bar*)
         local glob_pattern="" segment
         while IFS= read -r -d '/' segment; do
-          [[ -n "$segment" ]] && glob_pattern+="${segment}*/"
+          if [[ -n "$segment" ]]; then
+            local expanded_segment=""
+            local i char
+            for ((i=0; i<${#segment}; i++)); do
+              char="${segment:i:1}"
+              if [[ "$char" =~ [^a-zA-Z0-9] ]]; then
+                expanded_segment+="*$char"
+              else
+                expanded_segment+="$char"
+              fi
+            done
+            glob_pattern+="${expanded_segment}*/"
+          fi
         done <<< "$glob_word/"
 
         # Remove extra trailing /
