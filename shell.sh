@@ -406,7 +406,6 @@ _fzf_tab_complete() {
   local cmd="${words[0]}"
   local completions=""
   local prompt="Complete"
-  local prefix_dir=""
 
   if [[ ${#words[@]} -le 1 && "$line" != *" " ]]; then
     # Completing command name
@@ -451,22 +450,10 @@ _fzf_tab_complete() {
         fi
       fi
 
-      # Add file completions - check for directory prefix
+      # Add file completions
       prompt="${prompt:-File}"
-      if [[ "$word" == */* ]]; then
-        local dir_part="${word%/*}"
-        local file_part="${word##*/}"
-        if [[ -d "$dir_part" ]]; then
-          prefix_dir="$dir_part"
-          completions=$(cd "$dir_part" && compgen -f -- "$file_part" 2>/dev/null)
-        else
-          local file_completions=$(compgen -f -- "$word" 2>/dev/null)
-          [[ -n "$file_completions" ]] && completions="${completions}${completions:+$'\n'}${file_completions}"
-        fi
-      else
-        local file_completions=$(compgen -f -- "$word" 2>/dev/null)
-        [[ -n "$file_completions" ]] && completions="${completions}${completions:+$'\n'}${file_completions}"
-      fi
+      local file_completions=$(compgen -f -- "$word" 2>/dev/null)
+      [[ -n "$file_completions" ]] && completions="${completions}${completions:+$'\n'}${file_completions}"
     fi
   fi
 
@@ -485,18 +472,9 @@ _fzf_tab_complete() {
     if [[ -n "$selected" ]]; then
       local prefix="${READLINE_LINE:0:$((READLINE_POINT - ${#word}))}"
       local suffix="${READLINE_LINE:$READLINE_POINT}"
-      if [[ -n "$prefix_dir" ]]; then
-        # We have a directory prefix, reconstruct the full path
-        READLINE_LINE="${prefix}${prefix_dir}/${selected}${suffix}"
-        READLINE_POINT=$((${#prefix} + ${#prefix_dir} + 1 + ${#selected}))
-      elif [[ "$word" == */* && "$selected" != /* ]]; then
-        local word_dir="${word%/*}"
-        READLINE_LINE="${prefix}${word_dir}/${selected}${suffix}"
-        READLINE_POINT=$((${#prefix} + ${#word_dir} + 1 + ${#selected}))
-      else
-        READLINE_LINE="${prefix}${selected}${suffix}"
-        READLINE_POINT=$((${#prefix} + ${#selected}))
-      fi
+      # compgen returns full paths, so just use selected directly
+      READLINE_LINE="${prefix}${selected}${suffix}"
+      READLINE_POINT=$((${#prefix} + ${#selected}))
       # If Enter was pressed (not tab), execute the command
       if [[ "$fzf_key" != "tab" ]]; then
         printf '%s\n' "$READLINE_LINE"
