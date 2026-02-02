@@ -66,7 +66,7 @@ return {
   {
     -- https://github.com/dmmulroy/tsc.nvim
     "dmmulroy/tsc.nvim",
-    dev = true,
+    --dev = true,
     cmd = {
       "TSC",
       "TSCStop",

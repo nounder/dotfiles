@@ -2,7 +2,7 @@ return {
   {
     -- https://github.com/nounder/tree-copy.nvim
     "nounder/tree-copy.nvim",
-    dev = true,
+    -- dev = true,
     config = function()
       require("tree-copy").setup()
     end,
