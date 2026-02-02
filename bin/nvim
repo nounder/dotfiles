@@ -1,7 +1,0 @@
-#!/usr/bin/env fish
-
-set -l script_dir (dirname (realpath (status --current-filename)))
-set -l other_path (for dir in $PATH; test $dir != $script_dir; and echo $dir; end)
-set -l og_nvim (PATH=$other_path which nvim)
-
-direnv exec $script_dir $og_nvim $argv
