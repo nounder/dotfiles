@@ -271,11 +271,17 @@ fn getHistory(allocator: std.mem.Allocator, datafile: []const u8, path: []const 
     defer seen.deinit();
 
     for (entries.items) |e| {
-        // Match if entry path equals current path OR entry path is a parent of current path
+        // Match if:
+        // 1. entry path equals current path
+        // 2. entry path is a parent of current path
+        // 3. entry path is a child of current path (include subdirectories)
         const is_match = std.mem.eql(u8, e.path, path) or
             (std.mem.startsWith(u8, path, e.path) and
             path.len > e.path.len and
-            path[e.path.len] == '/');
+            path[e.path.len] == '/') or
+            (std.mem.startsWith(u8, e.path, path) and
+            e.path.len > path.len and
+            e.path[path.len] == '/');
         if (is_match) {
             // Dedupe by command, keeping the most recent entry
             if (seen.get(e.cmd)) |idx| {
