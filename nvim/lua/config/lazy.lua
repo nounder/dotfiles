@@ -13,7 +13,7 @@ require("lazy").setup({
     patterns = {
       "nounder",
     },
-    fallback = false,
+    fallback = true,
   },
   spec = {
     -- add LazyVim and import its plugins
