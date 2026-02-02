@@ -14,6 +14,9 @@ pub fn main() !void {
     const columns_str = std.posix.getenv("COLUMNS") orelse "80";
     const columns = std.fmt.parseInt(usize, columns_str, 10) catch 80;
 
+    // Check if we're on a remote machine (SSH connection)
+    const is_remote = std.posix.getenv("SSH_CONNECTION") != null;
+
     // Check if in git repo
     var repo: ?GitRepo = GitRepo.find(allocator, pwd) catch null;
     defer if (repo) |*r| r.deinit();
@@ -25,6 +28,15 @@ pub fn main() !void {
     // Start building prompt
     try stdout.writeAll("\n");
     try stdout.writeAll(Color.bright_black);
+
+    // Show hostname if remote
+    if (is_remote) {
+        const hostname = getHostname(allocator) catch "unknown";
+        defer if (!std.mem.eql(u8, hostname, "unknown")) allocator.free(hostname);
+        try stdout.writeAll(Icons.server);
+        try stdout.writeAll(hostname);
+        try stdout.writeAll(" ");
+    }
 
     // Git icon (yellow)
     if (repo != null) {
@@ -112,6 +124,28 @@ fn tildePath(allocator: std.mem.Allocator, path: []const u8, home: []const u8) !
         return result;
     }
     return path;
+}
+
+fn getHostname(allocator: std.mem.Allocator) ![]u8 {
+    // Use HOSTNAME environment variable if present
+    const hostname_str = if (std.posix.getenv("HOSTNAME")) |env_hostname|
+        env_hostname
+    else blk: {
+        // Fallback to gethostname syscall
+        var buf: [std.posix.HOST_NAME_MAX]u8 = undefined;
+        const result = std.posix.gethostname(&buf) catch return error.CannotGetHostname;
+        break :blk result;
+    };
+
+    // Remove .local or .lan suffix if present
+    var end = hostname_str.len;
+    if (std.mem.endsWith(u8, hostname_str, ".local")) {
+        end = hostname_str.len - 6;
+    } else if (std.mem.endsWith(u8, hostname_str, ".lan")) {
+        end = hostname_str.len - 4;
+    }
+
+    return allocator.dupe(u8, hostname_str[0..end]);
 }
 
 const GitRepo = struct {
@@ -237,11 +271,13 @@ const Color = struct {
     const reset = "\x01\x1b[0m\x02";
     const bold = "\x01\x1b[1m\x02";
     const yellow = "\x01\x1b[33m\x02";
+    const green = "\x01\x1b[32m\x02";
     const bright_black = "\x01\x1b[90m\x02";
     const bold_red = "\x01\x1b[1;31m\x02";
 };
 
 const Icons = struct {
+    const server = "\u{EB3A} ";
     const folder = "\u{F401} ";
     const worktree = "\u{F52E} ";
     const branch = "\u{F418} ";
