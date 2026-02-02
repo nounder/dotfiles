@@ -6,21 +6,16 @@ bufferline = "multiple"
 default-yank-register = "+"
 popup-border = "all"
 gutters = ["diff"]
-inline-completion-timeout = 150
 end-of-line-diagnostics = "disable"
 
 [editor.lsp]
 display-inlay-hints = false
-# inline-completion-auto-trigger = false
-# Minimum severity to show a diagnostic after the end of a line:
-# end-of-line-diagnostics = "hint"
 
 [editor.inline-diagnostics]
 cursor-line = "disable"
 other-lines = "disable"
 
 [keys.normal]
-tab = ":sh zellij-picker open"
 C-y = [
   ':sh rm -f /tmp/unique-file',
   ':insert-output yazi "%{buffer_name}" --chooser-file=/tmp/unique-file',
@@ -54,9 +49,4 @@ s = "goto_word"
 "$" = "goto_line_end"
 
 [keys.insert]
-tab = "inline_completion_accept"
-# C-e = "inline_completion_dismiss"
-# C-j = "inline_completion_next"
-# C-k = "inline_completion_prev"
-C-space = "inline_completion_trigger"
 C-l = "completion"
