@@ -47,19 +47,25 @@ safe_link "$DOTFILES_DIR/ghostty" "$CONFIG/ghostty"
 safe_link "$DOTFILES_DIR/opencode" "$CONFIG/opencode"
 safe_link "$DOTFILES_DIR/nushell" "$CONFIG/nushell"
 safe_link "$DOTFILES_DIR/lazygit" "$CONFIG/lazygit"
-safe_link "$DOTFILES_DIR/opencode" "$CONFIG/opencode"
 
 safe_link "$DOTFILES_DIR/tmux.conf" "$HOME/.tmux.conf"
 
 mkdir -p "$CONFIG/direnv"
 safe_link "$DOTFILES_DIR/direnv.toml" "$CONFIG/direnv/direnv.toml"
 
+# Claude Code
 if [ -d "$HOME/.claude" ]; then
   safe_link "$DOTFILES_DIR/claude/settings.json" "$HOME/.claude/settings.json"
   safe_link "$DOTFILES_DIR/claude/commands" "$HOME/.claude/commands"
   safe_link "$DOTFILES_DIR/claude/skills" "$HOME/.claude/skills"
   safe_link "$DOTFILES_DIR/claude/agents" "$HOME/.claude/agents"
 fi
+
+# Codex
+mkdir -p "$HOME/.codex"
+safe_link "$DOTFILES_DIR/claude/skills" "$HOME/.codex/skills"
+
+# OpenCode (uses ~/.config/opencode which is already linked, but also supports ~/.claude/skills)
 
 # Install launch agent only if LaunchAgents directory exists
 if [ -d "$HOME/Library/LaunchAgents" ]; then
