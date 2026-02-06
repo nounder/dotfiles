@@ -50,7 +50,7 @@ language-servers = [
   "typescript-language-server",
   "fs_watcher_lsp",
 ]
-formatter = { command = "dprint", args = ["fmt", "--stdin", "ts"] }
+formatter = { command = "oxfmt", args = ["--stdin-filepath", "file.ts"] }
 auto-format = true
 
 [[language]]
@@ -59,7 +59,7 @@ language-servers = [
   "typescript-language-server",
   "fs_watcher_lsp",
 ]
-formatter = { command = "dprint", args = ["fmt", "--stdin", "js"] }
+formatter = { command = "oxfmt", args = ["--stdin-filepath", "file.js"] }
 auto-format = true
 
 [[language]]
@@ -68,7 +68,7 @@ language-servers = [
   "typescript-language-server",
   "fs_watcher_lsp",
 ]
-formatter = { command = "dprint", args = ["fmt", "--stdin", "tsx"] }
+formatter = { command = "oxfmt", args = ["--stdin-filepath", "file.tsx"] }
 auto-format = true
 
 [[language]]
@@ -77,18 +77,18 @@ language-servers = [
   "typescript-language-server",
   "fs_watcher_lsp",
 ]
-formatter = { command = "dprint", args = ["fmt", "--stdin", "jsx"] }
+formatter = { command = "oxfmt", args = ["--stdin-filepath", "file.jsx"] }
 auto-format = true
 
 [[language]]
 name = "json"
-formatter = { command = "dprint", args = ["fmt", "--stdin", "json"] }
+formatter = { command = "oxfmt", args = ["--stdin-filepath", "file.json"] }
 auto-format = true
 
 [[language]]
 name = "markdown"
 file-types = ["md", "markdown", "txt"]
-formatter = { command = "dprint", args = ["fmt", "--stdin", "md"] }
+formatter = { command = "oxfmt", args = ["--stdin-filepath", "file.md"] }
 auto-format = true
 soft-wrap.enable = true
 
@@ -99,17 +99,17 @@ auto-format = true
 
 [[language]]
 name = "html"
-formatter = { command = "dprint", args = ["fmt", "--stdin", "html"] }
+formatter = { command = "oxfmt", args = ["--stdin-filepath", "file.html"] }
 auto-format = true
 
 [[language]]
 name = "css"
-formatter = { command = "dprint", args = ["fmt", "--stdin", "css"] }
+formatter = { command = "oxfmt", args = ["--stdin-filepath", "file.css"] }
 auto-format = true
 
 [[language]]
 name = "scss"
-formatter = { command = "dprint", args = ["fmt", "--stdin", "scss"] }
+formatter = { command = "oxfmt", args = ["--stdin-filepath", "file.scss"] }
 auto-format = true
 
 [[language]]

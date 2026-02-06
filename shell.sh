@@ -211,24 +211,22 @@ export PATH="$HOME/dotfiles/bin:$HOME/.bun/bin:$HOME/.cargo/bin:$HOME/.local/bin
 if [[ -n "$BASH_VERSION" ]] && command -v nohi &>/dev/null && command -v tac &>/dev/null; then
   unset HISTFILE
   _NOHI_DIR="$PWD"
-  _NOHI_EXIT=0
-  # Capture exit code immediately (must be first in PROMPT_COMMAND)
-  _nohi_capture() { _NOHI_EXIT=$?; }
   _nohi_sync() {
+    local _nohi_exit=$?
     local cmd
     cmd=$(fc -ln -1 2>/dev/null)
     cmd="${cmd#"${cmd%%[![:space:]]*}"}" # trim leading whitespace
     # Skip failed commands and commands starting with space
-    [[ $_NOHI_EXIT -eq 0 && -n "$cmd" && "${cmd:0:1}" != " " ]] && nohi --add "$_NOHI_DIR" "$cmd" 2>/dev/null
+    [[ $_nohi_exit -eq 0 && -n "$cmd" && "${cmd:0:1}" != " " ]] && nohi --add "$_NOHI_DIR" "$cmd" 2>/dev/null
     # Reload history on directory change
     if [[ "$PWD" != "$_NOHI_DIR" ]]; then
       _NOHI_DIR="$PWD"
       history -c
-      while IFS= read -r c; do history -s "$c"; done < <(nohi --get --recent "$PWD" 2>/dev/null | tac 2>/dev/null)
+      while IFS= read -r c; do history -s -- "$c"; done < <(nohi --get --recent "$PWD" 2>/dev/null | tac 2>/dev/null)
     fi
   }
-  PROMPT_COMMAND="_nohi_capture;_nohi_sync${PROMPT_COMMAND:+;$PROMPT_COMMAND}"
-  while IFS= read -r cmd; do history -s "$cmd"; done < <(nohi --get --recent "$PWD" 2>/dev/null | tac 2>/dev/null)
+  PROMPT_COMMAND="_nohi_sync${PROMPT_COMMAND:+;$PROMPT_COMMAND}"
+  while IFS= read -r cmd; do history -s -- "$cmd"; done < <(nohi --get --recent "$PWD" 2>/dev/null | tac 2>/dev/null)
 fi
 
 # Environment variables
@@ -284,6 +282,9 @@ alias claude="claude --dangerously-skip-permissions"
 alias sonnet="claude --model sonnet"
 alias opus="claude --model opus"
 alias haiku="claude --model haiku"
+alias co=dotfiles-edit
+alias eg="nvim -c ':Neogit kind=replace'"
+alias oc=opencode
 
 # noenv hook (lightweight direnv alternative)
 _NOENV_BIN="$HOME/dotfiles/bin/noenv-$_ARCH"
