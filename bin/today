@@ -1,0 +1,27 @@
+#!/usr/bin/env bash
+DAYS=0
+
+if [ -n "$1" ]; then
+    DAYS="$1"
+
+    if [ "$DAYS" -gt 0 ]; then
+        DAYS="+$DAYS"
+    elif [ "$DAYS" -lt 0 ]; then
+        DAYS="-${DAYS#-}"
+    fi
+fi
+
+if [ "$DAYS" -eq 0 ]; then
+    NAME=$(date "+%Y-%m-%d")
+else
+    NAME=$(date -v"${DAYS}d" "+%Y-%m-%d")
+fi
+
+FILE="$HOME/Documents/Journal/$NAME.md"
+
+if [ -f "$FILE" ]; then
+    "$EDITOR" "$FILE"
+else
+    echo -e "$NAME\n==========\n\n" > "$FILE"
+    "$EDITOR" +4 "$FILE"
+fi

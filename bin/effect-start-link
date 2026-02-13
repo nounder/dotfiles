@@ -1,0 +1,18 @@
+#!/bin/sh
+set -e
+
+SOURCE_DIR="$HOME/Projects/effect-start"
+NODE_MODULES="$PWD/node_modules"
+
+if [ ! -d "$NODE_MODULES" ]; then
+  echo "No node_modules in current directory" >&2
+  exit 1
+fi
+
+rm -rf "$NODE_MODULES/effect-start"
+ln -s "$SOURCE_DIR" "$NODE_MODULES/effect-start"
+echo "Linked effect-start -> $SOURCE_DIR"
+
+rm -rf "$NODE_MODULES/effect"
+ln -s "$SOURCE_DIR/node_modules/effect" "$NODE_MODULES/effect"
+echo "Linked effect -> $SOURCE_DIR/node_modules/effect"
