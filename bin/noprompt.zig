@@ -26,7 +26,6 @@ pub fn main() !void {
     defer if (branch) |b| allocator.free(b);
 
     // Start building prompt
-    try stdout.writeAll("\n");
     try stdout.writeAll(Color.bright_black);
 
     // Show hostname if remote

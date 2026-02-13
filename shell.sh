@@ -197,7 +197,12 @@ NOUNDER_PROMPT="$HOME/dotfiles/bin/noprompt-$_ARCH"
 
 if [[ -x "$NOUNDER_PROMPT" ]]; then
   set_prompt() {
+    # Add newline before prompt if a command was executed
+    if [[ -n "$_CMD_EXECUTED" ]]; then
+      printf '\n'
+    fi
     PS1="\[${_TERM_RESET}\]$("$NOUNDER_PROMPT")"
+    _CMD_EXECUTED=1
   }
 else
   PS1='\[\e[0m\]\n\[\e[90m\]\w\[\e[0m\]\n\[\e[1;31m\]\$ \[\e[0m\]'
@@ -561,3 +566,4 @@ bind -x '"\e\C-f": _fzf_search_directory'
 bind -x '"\e\C-l": _fzf_search_git_log'
 bind -x '"\e\C-s": _fzf_search_git_status'
 bind -x '"\t": _fzf_tab_complete'
+export PATH="/opt/homebrew/opt/sqlite/bin:$PATH"
