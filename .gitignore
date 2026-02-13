@@ -3,3 +3,5 @@ local/
 .envrc
 tree/
 nushell/history.txt
+.zig-cache/
+zig-out/

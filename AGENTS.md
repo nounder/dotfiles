@@ -1,21 +1,14 @@
-# Shell config
+Default shell: bash
 
-- Bash is the default shell (config in `shell.sh`, also works with zsh)
-- Fish shell config is in `fish/config.fish` (legacy)
+Config & shell profile: ./shell.sh
 
-# Fish shell
+We use custom zig programs to enhance the shell, written in Zig such as:
 
-Do NOT execute long commands in if statement, like this:
+- noprompt: for custom prompts,
+- noenv: direnv replacement,
+- nohi: for managing history,
+- nozo: fast jump between directories.
 
-```fish
-if not git fetch origin "$branch_name:$branch_name" 2>/dev/null
-  # ...
-```
+Their executables and source is in ./bin, (ie. bin/{noprompt,.zig})
 
-INSTEAD do this:
-
-```
-git fetch origin "$branch_name:$branch_name" 2>/dev/null
-  if not test $status -eq 0
-    # ...
-```
+Run `zig build` after you make any changes to zig source code.
