@@ -566,13 +566,22 @@ _fzf_tab_complete() {
       selected=${fzf_out#*$'\n'}
     fi
     if [[ -n "$selected" ]]; then
+      # Escape special characters in the selected candidate
+      local escaped
+      escaped=$(printf '%q' "$selected")
+      # printf %q adds quotes around clean strings unnecessarily - undo for simple paths
+      [[ "$escaped" == \$\'*\' ]] || escaped="${escaped//\\\//\/}"
       local prefix="${READLINE_LINE:0:$((READLINE_POINT - ${#word}))}"
       local suffix="${READLINE_LINE:$READLINE_POINT}"
-      READLINE_LINE="${prefix}${selected}${suffix}"
-      READLINE_POINT=$((${#prefix} + ${#selected}))
-      # If tab was pressed on a directory, re-invoke completion
+      READLINE_LINE="${prefix}${escaped}${suffix}"
+      READLINE_POINT=$((${#prefix} + ${#escaped}))
       if [[ "$fzf_key" == "tab" && "$selected" == */ ]]; then
+        # Tab on a directory: re-invoke completion
         _fzf_tab_complete
+      elif [[ "$fzf_key" != "tab" ]]; then
+        # Enter: execute the command
+        bind '"\e[0n": accept-line'
+        printf '\e[5n'
       fi
     fi
   fi
