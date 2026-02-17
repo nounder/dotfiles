@@ -488,38 +488,47 @@ _fzf_tab_complete() {
           glob_word="${word:1}"
         fi
 
-        # Build glob pattern: each segment gets * appended
-        # Insert * before non-alphanumeric chars (fish-style: eff-st -> eff*-st*, foo_bar -> foo*_bar*)
-        local glob_pattern="" segment
-        while IFS= read -r -d '/' segment; do
-          if [[ -n "$segment" ]]; then
-            local expanded_segment=""
-            local i char
-            for ((i=0; i<${#segment}; i++)); do
-              char="${segment:i:1}"
-              if [[ "$char" =~ [^a-zA-Z0-9] ]]; then
-                expanded_segment+="*$char"
-              else
-                expanded_segment+="$char"
-              fi
-            done
-            glob_pattern+="${expanded_segment}*/"
+        if [[ "$word" == */ ]]; then
+          # Trailing slash: list contents of that directory
+          local file_completions=$(compgen -f -- "$word" 2>/dev/null)
+          [[ -n "$file_completions" ]] && completions="${completions}${completions:+$'\n'}${file_completions}"
+        else
+          # Build glob pattern: each segment gets * appended
+          # Insert * before non-alphanumeric chars (fish-style: eff-st -> eff*-st*, foo_bar -> foo*_bar*)
+          local glob_pattern="" segment
+          while IFS= read -r -d '/' segment; do
+            if [[ -n "$segment" ]]; then
+              local expanded_segment=""
+              local i char
+              for ((i=0; i<${#segment}; i++)); do
+                char="${segment:i:1}"
+                if [[ "$char" =~ [^a-zA-Z0-9] ]]; then
+                  expanded_segment+="*$char"
+                else
+                  expanded_segment+="$char"
+                fi
+              done
+              glob_pattern+="${expanded_segment}*/"
+            fi
+          done <<< "$glob_word/"
+
+          # Remove extra trailing /
+          glob_pattern="${glob_pattern%/}"
+
+          local fuzzy_matches
+          fuzzy_matches=$(compgen -G "${prefix}${glob_pattern}" 2>/dev/null)
+          [[ -n "$fuzzy_matches" ]] && completions="${completions}${completions:+$'\n'}${fuzzy_matches}"
+
+          # Fall back to exact compgen -f
+          if [[ -z "$completions" ]]; then
+            local file_completions=$(compgen -f -- "$word" 2>/dev/null)
+            [[ -n "$file_completions" ]] && completions="${completions}${completions:+$'\n'}${file_completions}"
           fi
-        done <<< "$glob_word/"
-
-        # Remove extra trailing /
-        glob_pattern="${glob_pattern%/}"
-
-        # Handle trailing slash in original input
-        [[ "$word" == */ ]] && glob_pattern+="/"
-
-        local fuzzy_matches
-        fuzzy_matches=$(compgen -G "${prefix}${glob_pattern}" 2>/dev/null)
-        [[ -n "$fuzzy_matches" ]] && completions="${completions}${completions:+$'\n'}${fuzzy_matches}"
+        fi
       fi
 
-      # Fall back to exact compgen -f if no fuzzy matches
-      if [[ -z "$completions" ]]; then
+      # Fall back to exact compgen -f if no path separator
+      if [[ "$word" != */* && -z "$completions" ]]; then
         local file_completions=$(compgen -f -- "$word" 2>/dev/null)
         [[ -n "$file_completions" ]] && completions="${completions}${completions:+$'\n'}${file_completions}"
       fi
@@ -527,6 +536,17 @@ _fzf_tab_complete() {
   fi
 
   if [[ -n "$completions" ]]; then
+    # Append / to directory entries
+    local _comp_with_slash="" _comp_entry
+    while IFS= read -r _comp_entry; do
+      if [[ -d "$_comp_entry" && "$_comp_entry" != */ ]]; then
+        _comp_with_slash+="${_comp_entry}/"$'\n'
+      else
+        _comp_with_slash+="${_comp_entry}"$'\n'
+      fi
+    done <<< "$completions"
+    completions="${_comp_with_slash%$'\n'}"
+
     local selected fzf_key unique_completions fzf_query
     unique_completions=$(echo "$completions" | awk '!seen[$0]++')
     # For fuzzy path matches, don't pre-filter; otherwise use last segment
@@ -535,26 +555,24 @@ _fzf_tab_complete() {
     else
       fzf_query="${word##*/}"
     fi
-    # Auto-select if only one candidate
-    if [[ $(echo "$unique_completions" | wc -l) -eq 1 ]]; then
+    # Auto-select if only one candidate and it's a directory
+    if [[ $(echo "$unique_completions" | wc -l) -eq 1 ]] && [[ "$unique_completions" == */ ]]; then
       selected="$unique_completions"
       fzf_key="tab"
     else
-      selected=$(echo "$unique_completions" | fzf --height=40% --reverse --prompt="${prompt}> " --query="$fzf_query" --expect=tab)
-      fzf_key=${selected%%$'\n'*}
-      selected=${selected#*$'\n'}
+      local fzf_out fzf_key
+      fzf_out=$(echo "$unique_completions" | fzf --height=40% --reverse --prompt="${prompt}> " --query="$fzf_query" --expect=tab)
+      fzf_key=${fzf_out%%$'\n'*}
+      selected=${fzf_out#*$'\n'}
     fi
     if [[ -n "$selected" ]]; then
       local prefix="${READLINE_LINE:0:$((READLINE_POINT - ${#word}))}"
       local suffix="${READLINE_LINE:$READLINE_POINT}"
-      # compgen returns full paths, so just use selected directly
       READLINE_LINE="${prefix}${selected}${suffix}"
       READLINE_POINT=$((${#prefix} + ${#selected}))
-      # If Enter was pressed (not tab), execute the command
-      if [[ "$fzf_key" != "tab" ]]; then
-        # Simulate pressing Enter by binding accept-line
-        bind '"\e[0n": accept-line'
-        printf '\e[5n'
+      # If tab was pressed on a directory, re-invoke completion
+      if [[ "$fzf_key" == "tab" && "$selected" == */ ]]; then
+        _fzf_tab_complete
       fi
     fi
   fi
