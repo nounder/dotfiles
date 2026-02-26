@@ -204,10 +204,10 @@ if [[ -x "$NOUNDER_PROMPT" ]]; then
     PS1="\[${_TERM_RESET}\]$("$NOUNDER_PROMPT")"
     _CMD_EXECUTED=1
   }
+  PROMPT_COMMAND=set_prompt
 else
   PS1='\[\e[0m\]\n\[\e[90m\]\w\[\e[0m\]\n\[\e[1;31m\]\$ \[\e[0m\]'
 fi
-PROMPT_COMMAND=set_prompt
 
 # PATH setup
 export PATH="$HOME/dotfiles/bin:$HOME/.bun/bin:$HOME/.cargo/bin:$HOME/.local/bin:$HOME/bin:$HOME/.deno/bin:/usr/local/bin:/opt/homebrew/bin:/opt/homebrew/sbin:$HOME/go/bin:$PATH:node_modules/.bin:../node_modules/.bin:$HOME/.lmstudio/bin"
