@@ -235,8 +235,8 @@ if [[ -n "$BASH_VERSION" ]] && command -v nohi &>/dev/null && command -v tac &>/
 fi
 
 # Environment variables
-export SHELL=$(which bash)
-export EDITOR=$(which nvim)
+export SHELL=$(command -v bash)
+export EDITOR=$(command -v nvim)
 export XDG_CONFIG_HOME="$HOME/.config"
 export FZF_DEFAULT_OPTS='--cycle --layout=default --height=90% --preview-window=wrap --marker="*" --no-scrollbar --preview-window=border-left'
 export TERM=xterm-256color
