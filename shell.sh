@@ -210,7 +210,7 @@ else
 fi
 
 # PATH setup
-export PATH="$HOME/dotfiles/bin:$HOME/.bun/bin:$HOME/.cargo/bin:$HOME/.local/bin:$HOME/bin:$HOME/.deno/bin:/usr/local/bin:/opt/homebrew/bin:/opt/homebrew/sbin:$HOME/go/bin:$PATH:node_modules/.bin:../node_modules/.bin:$HOME/.lmstudio/bin"
+export PATH="$HOME/dotfiles/bin:$HOME/.bun/bin:$HOME/.cargo/bin:$HOME/.local/bin:$HOME/bin:$HOME/.npm/bin:/usr/local/bin:/opt/homebrew/bin:/opt/homebrew/sbin:$HOME/go/bin:$PATH:node_modules/.bin:../node_modules/.bin"
 
 # Per-directory history using nohi
 if [[ -n "$BASH_VERSION" ]] && command -v nohi &>/dev/null && command -v tac &>/dev/null; then
