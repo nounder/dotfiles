@@ -10,6 +10,7 @@ font-size = 15
 font-family = "JetBrainsMono Nerd Font"
 #font-family = "Comic Mono"
 
+confirm-close-surface = false
 clipboard-paste-protection = false
 copy-on-select = false
 selection-invert-fg-bg = true
@@ -20,7 +21,7 @@ mouse-shift-capture = false
 # background-blur = macos-glass-clear
 background-blur = macos-glass-regular
 #background-blur = true
-background-opacity = 0.5
+background-opacity = 0.2
 background-opacity-cells = true
 
 command = /opt/homebrew/bin/bash
