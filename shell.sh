@@ -461,6 +461,12 @@ _fzf_tab_complete() {
 
     # Fall back to file/directory completion if no custom completions
     if [[ -z "$completions" ]]; then
+      # Use directory-only completion for cd/pushd/rmdir
+      local _compgen_type="-f"
+      case "$cmd" in
+        cd|pushd|rmdir) _compgen_type="-d"; prompt="Directory" ;;
+      esac
+
       # Check if word looks like an option
       if [[ "$word" == -* ]]; then
         prompt="Option"
@@ -490,7 +496,7 @@ _fzf_tab_complete() {
 
         if [[ "$word" == */ ]]; then
           # Trailing slash: list contents of that directory
-          local file_completions=$(compgen -f -- "$word" 2>/dev/null)
+          local file_completions=$(compgen ${_compgen_type} -- "$word" 2>/dev/null)
           [[ -n "$file_completions" ]] && completions="${completions}${completions:+$'\n'}${file_completions}"
         else
           # Build glob pattern: each segment gets * appended
@@ -517,11 +523,15 @@ _fzf_tab_complete() {
 
           local fuzzy_matches
           fuzzy_matches=$(compgen -G "${prefix}${glob_pattern}" 2>/dev/null)
+          if [[ -n "$fuzzy_matches" && "$_compgen_type" == "-d" ]]; then
+            # Filter to directories only
+            fuzzy_matches=$(echo "$fuzzy_matches" | while IFS= read -r _m; do [[ -d "$_m" ]] && echo "$_m"; done)
+          fi
           [[ -n "$fuzzy_matches" ]] && completions="${completions}${completions:+$'\n'}${fuzzy_matches}"
 
           # Fall back to exact compgen -f
           if [[ -z "$completions" ]]; then
-            local file_completions=$(compgen -f -- "$word" 2>/dev/null)
+            local file_completions=$(compgen $_compgen_type -- "$word" 2>/dev/null)
             [[ -n "$file_completions" ]] && completions="${completions}${completions:+$'\n'}${file_completions}"
           fi
         fi
@@ -529,7 +539,7 @@ _fzf_tab_complete() {
 
       # Fall back to exact compgen -f if no path separator
       if [[ "$word" != */* && -z "$completions" ]]; then
-        local file_completions=$(compgen -f -- "$word" 2>/dev/null)
+        local file_completions=$(compgen $_compgen_type -- "$word" 2>/dev/null)
         [[ -n "$file_completions" ]] && completions="${completions}${completions:+$'\n'}${file_completions}"
       fi
     fi
@@ -555,10 +565,16 @@ _fzf_tab_complete() {
     else
       fzf_query="${word##*/}"
     fi
-    # Auto-select if only one candidate and it's a directory
+    # Auto-select if only one candidate and it's a directory: complete inline, don't recurse
     if [[ $(echo "$unique_completions" | wc -l) -eq 1 ]] && [[ "$unique_completions" == */ ]]; then
-      selected="$unique_completions"
-      fzf_key="tab"
+      local escaped
+      escaped=$(printf '%q' "$unique_completions")
+      [[ "$escaped" == \$\'*\' ]] || escaped="${escaped//\\\//\/}"
+      local prefix="${READLINE_LINE:0:$((READLINE_POINT - ${#word}))}"
+      local suffix="${READLINE_LINE:$READLINE_POINT}"
+      READLINE_LINE="${prefix}${escaped}${suffix}"
+      READLINE_POINT=$((${#prefix} + ${#escaped}))
+      return
     else
       local fzf_out fzf_key
       fzf_out=$(echo "$unique_completions" | fzf --height=40% --reverse --prompt="${prompt}> " --query="$fzf_query" --expect=tab)
