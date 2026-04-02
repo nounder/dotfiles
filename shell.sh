@@ -22,6 +22,8 @@ if [[ -n "$BASH_VERSION" ]]; then
   bind 'set enable-bracketed-paste off'
   # Don't save cd commands in history
   HISTIGNORE="cd:cd *:cd -:..:--"
+  # Auto-cd into directories (fish-like)
+  shopt -s autocd
 
 fi
 
@@ -429,9 +431,16 @@ _fzf_tab_complete() {
   local prompt="Complete"
 
   if [[ ${#words[@]} -le 1 && "$line" != *" " ]]; then
-    # Completing command name
+    # Completing command name + local files/directories
     prompt="Command"
     completions=$(compgen -c -- "$word" 2>/dev/null | head -100)
+    local local_files=$(compgen -f -- "$word" 2>/dev/null | sed 's|^|./|')
+    [[ -n "$local_files" ]] && completions="${completions}${completions:+$'\n'}${local_files}"
+    # Substring match for local files
+    if [[ -n "$word" ]]; then
+      local local_substr=$(compgen -G "*${word}*" 2>/dev/null | sed 's|^|./|')
+      [[ -n "$local_substr" ]] && completions="${completions}${completions:+$'\n'}${local_substr}"
+    fi
   else
     # Completing arguments - try to get context-aware completions
 
