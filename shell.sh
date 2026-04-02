@@ -529,18 +529,36 @@ _fzf_tab_complete() {
           fi
           [[ -n "$fuzzy_matches" ]] && completions="${completions}${completions:+$'\n'}${fuzzy_matches}"
 
-          # Fall back to exact compgen -f
+          # Fall back to exact prefix + substring match
           if [[ -z "$completions" ]]; then
             local file_completions=$(compgen $_compgen_type -- "$word" 2>/dev/null)
             [[ -n "$file_completions" ]] && completions="${completions}${completions:+$'\n'}${file_completions}"
+            # Substring match within the directory
+            local dir_part="${word%/*}/"
+            local base_part="${word##*/}"
+            if [[ -n "$base_part" ]]; then
+              local substr_completions=$(compgen -G "${dir_part}*${base_part}*" 2>/dev/null)
+              if [[ -n "$substr_completions" && "$_compgen_type" == "-d" ]]; then
+                substr_completions=$(echo "$substr_completions" | while IFS= read -r _m; do [[ -d "$_m" ]] && echo "$_m"; done)
+              fi
+              [[ -n "$substr_completions" ]] && completions="${completions}${completions:+$'\n'}${substr_completions}"
+            fi
           fi
         fi
       fi
 
-      # Fall back to exact compgen -f if no path separator
-      if [[ "$word" != */* && -z "$completions" ]]; then
+      # No path separator: prefix match first, then substring match
+      if [[ "$word" != */* ]]; then
         local file_completions=$(compgen $_compgen_type -- "$word" 2>/dev/null)
         [[ -n "$file_completions" ]] && completions="${completions}${completions:+$'\n'}${file_completions}"
+        # Substring match: *word*
+        if [[ -n "$word" ]]; then
+          local substr_completions=$(compgen -G "*${word}*" 2>/dev/null)
+          if [[ -n "$substr_completions" && "$_compgen_type" == "-d" ]]; then
+            substr_completions=$(echo "$substr_completions" | while IFS= read -r _m; do [[ -d "$_m" ]] && echo "$_m"; done)
+          fi
+          [[ -n "$substr_completions" ]] && completions="${completions}${completions:+$'\n'}${substr_completions}"
+        fi
       fi
     fi
   fi
