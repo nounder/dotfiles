@@ -1,0 +1,8 @@
+#!/bin/sh
+# Strip Co-Authored-By lines from AI agents (Claude, Codex, etc.)
+
+grep -ivE '^co-authored-by:.*(claude|codex|openai|anthropic|copilot|noreply@anthropic\.com|noreply@openai\.com)' "$1" > "$1.tmp"
+
+# Remove trailing blank lines
+sed -e :a -e '/^\n*$/{$d;N;ba' -e '}' "$1.tmp" > "$1"
+rm -f "$1.tmp"
