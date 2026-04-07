@@ -240,7 +240,7 @@ fi
 export SHELL=$(command -v bash)
 export EDITOR=$(command -v nvim)
 export XDG_CONFIG_HOME="$HOME/.config"
-export FZF_DEFAULT_OPTS='--cycle --layout=default --height=90% --preview-window=wrap --marker="*" --no-scrollbar --preview-window=border-left'
+export NOM_DEFAULT_OPTS='--cycle --layout=default --height=90% --preview-window=wrap --marker="*" --no-scrollbar --preview-window=border-left'
 export TERM=xterm-256color
 
 # Aliases
@@ -321,22 +321,23 @@ if [[ -x "$NOZO" ]]; then
   PROMPT_COMMAND="${PROMPT_COMMAND:+$PROMPT_COMMAND;}($NOZO --add \"\$PWD\" &)"
 fi
 
-# FZF Functions
-_fzf_search_history() {
+# Nom Functions
+_nom_search_history() {
   local selected
   # Use nohi with frecency ordering if available, otherwise fall back to bash history
   if command -v nohi &>/dev/null; then
-    selected=$(nohi --get "$PWD" 2>/dev/null | fzf --scheme=history --prompt="History> " --query="$READLINE_LINE")
+    selected=$(nohi --get "$PWD" 2>/dev/null | nom --scheme=history --prompt="History> " --query="$READLINE_LINE")
   else
-    selected=$(history | sed 's/^ *[0-9]* *//' | awk '!seen[$0]++' | fzf --scheme=history --prompt="History> " --query="$READLINE_LINE")
+    selected=$(history | sed 's/^ *[0-9]* *//' | awk '!seen[$0]++' | nom --scheme=history --prompt="History> " --query="$READLINE_LINE")
   fi
+  printf '%s' "$_TERM_RESET"
   if [[ -n "$selected" ]]; then
     READLINE_LINE="$selected"
     READLINE_POINT=${#selected}
   fi
 }
 
-_fzf_search_directory() {
+_nom_search_directory() {
   local fd_cmd selected
   if command -v fdfind &>/dev/null; then
     fd_cmd="fdfind"
@@ -347,10 +348,11 @@ _fzf_search_directory() {
   fi
 
   if [[ "$fd_cmd" == "find"* ]]; then
-    selected=$($fd_cmd 2>/dev/null | fzf --multi --prompt="Directory> ")
+    selected=$($fd_cmd 2>/dev/null | nom --multi --prompt="Directory> ")
   else
-    selected=$($fd_cmd --color=always 2>/dev/null | fzf --ansi --multi --prompt="Directory> ")
+    selected=$($fd_cmd --color=always 2>/dev/null | nom --ansi --multi --prompt="Directory> ")
   fi
+  printf '%s' "$_TERM_RESET"
 
   if [[ -n "$selected" ]]; then
     if [[ -z "$READLINE_LINE" ]]; then
@@ -362,7 +364,7 @@ _fzf_search_directory() {
   fi
 }
 
-_fzf_search_git_log() {
+_nom_search_git_log() {
   if ! git rev-parse --git-dir &>/dev/null; then
     echo "Not in a git repository" >&2
     return
@@ -371,8 +373,9 @@ _fzf_search_git_log() {
   local format='%C(bold blue)%h%C(reset) - %C(cyan)%ad%C(reset) %C(yellow)%d%C(reset) %C(normal)%s%C(reset)  %C(dim normal)[%an]%C(reset)'
   local selected
   selected=$(git log --no-show-signature --color=always --format=format:"$format" --date=short |
-    fzf --ansi --multi --scheme=history --prompt="Git Log> " \
+    nom --ansi --multi --scheme=history --prompt="Git Log> " \
       --preview='git show --color=always --stat --patch {1}')
+  printf '%s' "$_TERM_RESET"
 
   if [[ -n "$selected" ]]; then
     local hashes=""
@@ -387,7 +390,7 @@ _fzf_search_git_log() {
   fi
 }
 
-_fzf_search_git_status() {
+_nom_search_git_status() {
   if ! git rev-parse --git-dir &>/dev/null; then
     echo "Not in a git repository" >&2
     return
@@ -395,8 +398,9 @@ _fzf_search_git_status() {
 
   local selected
   selected=$(git -c color.status=always status --short |
-    fzf --ansi --multi --prompt="Git Status> " --nth="2.." \
+    nom --ansi --multi --prompt="Git Status> " --nth="2.." \
       --preview='file=$(echo {} | sed "s/^...//" | sed "s/.* -> //"); git diff --color=always -- "$file" 2>/dev/null || cat "$file"')
+  printf '%s' "$_TERM_RESET"
 
   if [[ -n "$selected" ]]; then
     local paths=""
@@ -415,12 +419,12 @@ _fzf_search_git_status() {
   fi
 }
 
-_fzf_tab_complete() {
+_nom_tab_complete() {
   local line="${READLINE_LINE:0:$READLINE_POINT}"
 
   # Empty prompt - use directory search
   if [[ -z "$line" ]]; then
-    _fzf_search_directory
+    _nom_search_directory
     return
   fi
 
@@ -434,11 +438,11 @@ _fzf_tab_complete() {
     # Completing command name + local files/directories
     prompt="Command"
     completions=$(compgen -c -- "$word" 2>/dev/null | head -100)
-    local local_files=$(compgen -f -- "$word" 2>/dev/null | sed 's|^|./|')
+    local local_files=$(compgen -f -- "$word" 2>/dev/null | sed '/^\.\//!s|^|./|')
     [[ -n "$local_files" ]] && completions="${completions}${completions:+$'\n'}${local_files}"
     # Substring match for local files
     if [[ -n "$word" ]]; then
-      local local_substr=$(compgen -G "*${word}*" 2>/dev/null | sed 's|^|./|')
+      local local_substr=$(compgen -G "*${word}*" 2>/dev/null | sed '/^\.\//!s|^|./|')
       [[ -n "$local_substr" ]] && completions="${completions}${completions:+$'\n'}${local_substr}"
     fi
   else
@@ -584,13 +588,13 @@ _fzf_tab_complete() {
     done <<< "$completions"
     completions="${_comp_with_slash%$'\n'}"
 
-    local selected fzf_key unique_completions fzf_query
+    local selected nom_key unique_completions nom_query
     unique_completions=$(echo "$completions" | awk '!seen[$0]++')
     # For fuzzy path matches, don't pre-filter; otherwise use last segment
     if [[ "$word" == */* ]]; then
-      fzf_query=""
+      nom_query=""
     else
-      fzf_query="${word##*/}"
+      nom_query="${word##*/}"
     fi
     # Auto-select if only one candidate and it's a directory: complete inline, don't recurse
     if [[ $(echo "$unique_completions" | wc -l) -eq 1 ]] && [[ "$unique_completions" == */ ]]; then
@@ -603,10 +607,11 @@ _fzf_tab_complete() {
       READLINE_POINT=$((${#prefix} + ${#escaped}))
       return
     else
-      local fzf_out fzf_key
-      fzf_out=$(echo "$unique_completions" | fzf --height=40% --reverse --prompt="${prompt}> " --query="$fzf_query" --expect=tab)
-      fzf_key=${fzf_out%%$'\n'*}
-      selected=${fzf_out#*$'\n'}
+      local nom_out nom_key
+      nom_out=$(echo "$unique_completions" | nom --height=40% --reverse --prompt="${prompt}> " --query="$nom_query" --expect=tab)
+      printf '%s' "$_TERM_RESET"
+      nom_key=${nom_out%%$'\n'*}
+      selected=${nom_out#*$'\n'}
     fi
     if [[ -n "$selected" ]]; then
       # Escape special characters in the selected candidate
@@ -618,10 +623,10 @@ _fzf_tab_complete() {
       local suffix="${READLINE_LINE:$READLINE_POINT}"
       READLINE_LINE="${prefix}${escaped}${suffix}"
       READLINE_POINT=$((${#prefix} + ${#escaped}))
-      if [[ "$fzf_key" == "tab" && "$selected" == */ ]]; then
+      if [[ "$nom_key" == "tab" && "$selected" == */ ]]; then
         # Tab on a directory: re-invoke completion
-        _fzf_tab_complete
-      elif [[ "$fzf_key" != "tab" ]]; then
+        _nom_tab_complete
+      elif [[ "$nom_key" != "tab" ]]; then
         # Enter: execute the command
         bind '"\e[0n": accept-line'
         printf '\e[5n'
@@ -630,10 +635,12 @@ _fzf_tab_complete() {
   fi
 }
 
-# FZF Keybindings
-bind -x '"\C-r": _fzf_search_history'
-bind -x '"\e\C-f": _fzf_search_directory'
-bind -x '"\e\C-l": _fzf_search_git_log'
-bind -x '"\e\C-s": _fzf_search_git_status'
-bind -x '"\t": _fzf_tab_complete'
+# Nom Keybindings
+if [[ -n "$BASH_VERSION" ]]; then
+  bind -x '"\C-r": _nom_search_history'
+  bind -x '"\e\C-f": _nom_search_directory'
+  bind -x '"\e\C-l": _nom_search_git_log'
+  bind -x '"\e\C-s": _nom_search_git_status'
+  bind -x '"\t": _nom_tab_complete'
+fi
 export PATH="/opt/homebrew/opt/sqlite/bin:$PATH"
