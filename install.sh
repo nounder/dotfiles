@@ -75,8 +75,12 @@ if [ -d "$HOME/Library/LaunchAgents" ]; then
   fi
 fi
 
-if [ -f "$HOME/.ssh/config" ] && ! grep -q "Include.*dotfiles/ssh/config" "$HOME/.ssh/config" 2>/dev/null; then
-  echo "Include ~/dotfiles/ssh/config" >> "$HOME/.ssh/config"
+mkdir -p "$HOME/.ssh/config.d"
+if [ -f "$HOME/.ssh/config" ]; then
+  grep -q "Include.*config.d" "$HOME/.ssh/config" 2>/dev/null || \
+    echo "Include ~/.ssh/config.d/*" >> "$HOME/.ssh/config"
+  grep -q "Include.*dotfiles/ssh/config" "$HOME/.ssh/config" 2>/dev/null || \
+    echo "Include ~/dotfiles/ssh/config" >> "$HOME/.ssh/config"
 fi
 
 safe_link "$DOTFILES_DIR/home-fdignore" "$HOME/.fdignore"
