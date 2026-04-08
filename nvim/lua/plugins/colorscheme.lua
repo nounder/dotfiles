@@ -10,6 +10,8 @@ return {
         DiffDelete = { link = "GitSignsDelete" },
         DiffText = { bg = "NONE", fg = "#8cbee2" },
         DiffFile = { link = "GruvboxYellowBold" },
+        NeogitDiffAddInline = { bg = "NONE", underline = true },
+        NeogitDiffDeleteInline = { bg = "NONE", underline = true },
         BlinkCmpGhostText = { link = "GruvboxBg4" },
         NonText = { link = "GruvboxBg4" },
         TreesitterContextBottom = { underline = true, sp = "Gray" },
