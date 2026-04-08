@@ -285,10 +285,9 @@ alias gc1="git clone --depth=1"
 alias py="python"
 alias ..="cd .."
 alias codex="codex --yolo"
-alias claude="claude-boosted"
-alias sonnet="claude-boosted --model sonnet"
-alias opus="claude-boosted --model opus"
-alias haiku="claude-boosted --model haiku"
+alias sonnet="claude --model sonnet"
+alias opus="claude --model opus"
+alias haiku="claude --model haiku"
 alias co=dotfiles-edit
 alias eg="nvim -c ':Neogit kind=replace'"
 alias oc=opencode
@@ -643,4 +642,7 @@ if [[ -n "$BASH_VERSION" ]]; then
   bind -x '"\e\C-s": _nom_search_git_status'
   bind -x '"\t": _nom_tab_complete'
 fi
+# Source local overrides (not checked in)
+[[ -f "$HOME/dotfiles/local.sh" ]] && source "$HOME/dotfiles/local.sh"
+
 export PATH="/opt/homebrew/opt/sqlite/bin:$PATH"
