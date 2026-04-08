@@ -46,6 +46,6 @@ keybind = super+down=goto_split:down
 keybind = super+l=goto_split:next
 keybind = super+shift+equal=equalize_splits
 
-keybind = super+left_bracket=previous_tab
-keybind = super+right_bracket=next_tab
+keybind = super+[=previous_tab
+keybind = super+]=next_tab
 keybind = super+shift+s=write_scrollback_file:paste
