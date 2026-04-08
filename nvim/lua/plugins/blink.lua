@@ -28,6 +28,7 @@ return {
       enabled = function()
         local disabled_filetypes = {
           "text",
+          "gitcommit",
           "snacks_picker_input",
         }
 
