@@ -1,0 +1,5 @@
+repo/
+Projects/
+node_modules/
+agent/sessions/
+agent/auth.json

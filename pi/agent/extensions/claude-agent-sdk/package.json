@@ -1,0 +1,14 @@
+{
+  "name": "pi-extension-claude-agent-sdk",
+  "private": true,
+  "type": "module",
+  "pi": {
+    "extensions": [
+      "./index.ts"
+    ]
+  },
+  "dependencies": {
+    "@anthropic-ai/claude-agent-sdk": "^0.2",
+    "@anthropic-ai/sdk": "^0.85"
+  }
+}

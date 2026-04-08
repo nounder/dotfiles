@@ -49,6 +49,7 @@ safe_link "$DOTFILES_DIR/nushell" "$CONFIG/nushell"
 safe_link "$DOTFILES_DIR/lazygit" "$CONFIG/lazygit"
 
 safe_link "$DOTFILES_DIR/tmux.conf" "$HOME/.tmux.conf"
+safe_link "$DOTFILES_DIR/pi" "$HOME/.pi"
 
 mkdir -p "$CONFIG/direnv"
 safe_link "$DOTFILES_DIR/direnv.toml" "$CONFIG/direnv/direnv.toml"
