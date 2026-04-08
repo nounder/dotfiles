@@ -285,6 +285,7 @@ alias gc1="git clone --depth=1"
 alias py="python"
 alias ..="cd .."
 alias codex="codex --yolo"
+alias claude="claude --dangerously-skip-permissions"
 alias sonnet="claude --model sonnet"
 alias opus="claude --model opus"
 alias haiku="claude --model haiku"
@@ -595,7 +596,7 @@ _nom_tab_complete() {
     else
       nom_query="${word##*/}"
     fi
-    # Auto-select if only one candidate and it's a directory: complete inline, don't recurse
+    # Auto-select if only one candidate and it's a directory: complete inline, then descend into it
     if [[ $(echo "$unique_completions" | wc -l) -eq 1 ]] && [[ "$unique_completions" == */ ]]; then
       local escaped
       escaped=$(printf '%q' "$unique_completions")
@@ -604,6 +605,7 @@ _nom_tab_complete() {
       local suffix="${READLINE_LINE:$READLINE_POINT}"
       READLINE_LINE="${prefix}${escaped}${suffix}"
       READLINE_POINT=$((${#prefix} + ${#escaped}))
+      _nom_tab_complete
       return
     else
       local nom_out nom_key
