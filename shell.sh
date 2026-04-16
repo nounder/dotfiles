@@ -237,6 +237,7 @@ if [[ -n "$BASH_VERSION" ]] && command -v nohi &>/dev/null && command -v tac &>/
 fi
 
 # Environment variables
+export PATH="/opt/homebrew/opt/sqlite/bin:$PATH"
 export SHELL=$(command -v bash)
 export EDITOR=$(command -v nvim)
 export XDG_CONFIG_HOME="$HOME/.config"
@@ -600,7 +601,7 @@ _nom_tab_complete() {
     if [[ $(echo "$unique_completions" | wc -l) -eq 1 ]] && [[ "$unique_completions" == */ ]]; then
       local escaped
       escaped=$(printf '%q' "$unique_completions")
-      [[ "$escaped" == \$\'*\' ]] || escaped="${escaped//\\\//\/}"
+      [[ "$escaped" == \$\'*\' ]] || { escaped="${escaped//\\\//\/}"; escaped="${escaped//\\~/\~}"; }
       local prefix="${READLINE_LINE:0:$((READLINE_POINT - ${#word}))}"
       local suffix="${READLINE_LINE:$READLINE_POINT}"
       READLINE_LINE="${prefix}${escaped}${suffix}"
@@ -618,8 +619,8 @@ _nom_tab_complete() {
       # Escape special characters in the selected candidate
       local escaped
       escaped=$(printf '%q' "$selected")
-      # printf %q adds quotes around clean strings unnecessarily - undo for simple paths
-      [[ "$escaped" == \$\'*\' ]] || escaped="${escaped//\\\//\/}"
+      # printf %q over-escapes for shell completion - undo harmless chars
+      [[ "$escaped" == \$\'*\' ]] || { escaped="${escaped//\\\//\/}"; escaped="${escaped//\\~/\~}"; }
       local prefix="${READLINE_LINE:0:$((READLINE_POINT - ${#word}))}"
       local suffix="${READLINE_LINE:$READLINE_POINT}"
       READLINE_LINE="${prefix}${escaped}${suffix}"
@@ -647,4 +648,3 @@ fi
 # Source local overrides (not checked in)
 [[ -f "$HOME/dotfiles/local.sh" ]] && source "$HOME/dotfiles/local.sh"
 
-export PATH="/opt/homebrew/opt/sqlite/bin:$PATH"
