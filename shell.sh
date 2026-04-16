@@ -597,8 +597,8 @@ _nom_tab_complete() {
     else
       nom_query="${word##*/}"
     fi
-    # Auto-select if only one candidate and it's a directory: complete inline, then descend into it
-    if [[ $(echo "$unique_completions" | wc -l) -eq 1 ]] && [[ "$unique_completions" == */ ]]; then
+    # Auto-descend into a sole directory candidate only if the user already typed the full name
+    if [[ $(echo "$unique_completions" | wc -l) -eq 1 ]] && [[ "$unique_completions" == */ ]] && [[ "$word" == */ || "${word}" == "${unique_completions%/}" ]]; then
       local escaped
       escaped=$(printf '%q' "$unique_completions")
       [[ "$escaped" == \$\'*\' ]] || { escaped="${escaped//\\\//\/}"; escaped="${escaped//\\~/\~}"; }
