@@ -1,68 +1,62 @@
 ///usr/bin/env zig run "$0" -- "$@"; exit
 const std = @import("std");
+const Io = std.Io;
 
-pub fn main() !void {
-    var gpa = std.heap.GeneralPurposeAllocator(.{}){};
-    defer _ = gpa.deinit();
-    const allocator = gpa.allocator();
+pub fn main(init: std.process.Init) !void {
+    const gpa = init.gpa;
+    const io = init.io;
+    const env = init.environ_map;
 
-    const stdout = std.fs.File.stdout();
+    var stdout_buf: [4096]u8 = undefined;
+    var stdout_w = Io.File.stdout().writer(io, &stdout_buf);
+    const stdout: *Io.Writer = &stdout_w.interface;
+    defer stdout.flush() catch {};
 
-    // Get environment variables
-    const home = std.posix.getenv("HOME") orelse "";
-    const pwd = std.posix.getenv("PWD") orelse ".";
-    const columns_str = std.posix.getenv("COLUMNS") orelse "80";
+    const home = env.get("HOME") orelse "";
+    const pwd = env.get("PWD") orelse ".";
+    const columns_str = env.get("COLUMNS") orelse "80";
     const columns = std.fmt.parseInt(usize, columns_str, 10) catch 80;
 
-    // Check if we're on a remote machine (SSH connection)
-    const is_remote = std.posix.getenv("SSH_CONNECTION") != null;
+    const is_remote = env.get("SSH_CONNECTION") != null;
 
-    // Check if in git repo
-    var repo: ?GitRepo = GitRepo.find(allocator, pwd) catch null;
+    var repo: ?GitRepo = GitRepo.find(gpa, io, pwd) catch null;
     defer if (repo) |*r| r.deinit();
 
     const is_worktree = if (repo) |*r| r.isWorktree() catch false else false;
     const branch = if (repo) |*r| r.branch() catch null else null;
-    defer if (branch) |b| allocator.free(b);
+    defer if (branch) |b| gpa.free(b);
 
-    // Start building prompt
     try stdout.writeAll(Color.bright_black);
 
-    // Show hostname if remote
     if (is_remote) {
-        const hostname = getHostname(allocator) catch "unknown";
-        defer if (!std.mem.eql(u8, hostname, "unknown")) allocator.free(hostname);
+        const hostname = getHostname(gpa, env) catch "unknown";
+        defer if (!std.mem.eql(u8, hostname, "unknown")) gpa.free(hostname);
         try stdout.writeAll(Icons.server);
         try stdout.writeAll(hostname);
         try stdout.writeAll(" ");
     }
 
-    // Git icon (yellow)
     if (repo != null) {
         try stdout.writeAll(Color.yellow);
         try stdout.writeAll(if (is_worktree) Icons.worktree else Icons.folder);
         try stdout.writeAll(Color.bright_black);
     }
 
-    // Path
     if (repo) |r| {
         var repo_path: []const u8 = r.root;
 
-        // Worktree: show original repo path
         const common_dir = if (is_worktree) r.commonDir() catch null else null;
-        defer if (common_dir) |cd| allocator.free(cd);
+        defer if (common_dir) |cd| gpa.free(cd);
         if (common_dir) |cd| {
             if (std.fs.path.dirname(cd)) |dir| repo_path = dir;
         }
 
-        // Replace home with ~
-        const display_path = tildePath(allocator, repo_path, home) catch repo_path;
-        defer if (display_path.ptr != repo_path.ptr) allocator.free(display_path);
+        const display_path = tildePath(gpa, repo_path, home) catch repo_path;
+        defer if (display_path.ptr != repo_path.ptr) gpa.free(display_path);
 
         const parent = std.fs.path.dirname(display_path);
         const basename = std.fs.path.basename(display_path);
 
-        // Print parent path
         if (parent) |p| {
             if (!std.mem.eql(u8, p, ".")) {
                 try stdout.writeAll(p);
@@ -70,13 +64,11 @@ pub fn main() !void {
             }
         }
 
-        // Print repo name in bold
         try stdout.writeAll(Color.bold);
         try stdout.writeAll(basename);
         try stdout.writeAll(Color.reset);
         try stdout.writeAll(Color.bright_black);
 
-        // Print relative path from repo root
         if (pwd.len > r.root.len and std.mem.startsWith(u8, pwd, r.root)) {
             const rel_path = pwd[r.root.len..];
             if (rel_path.len > 0 and rel_path[0] == '/') {
@@ -84,13 +76,11 @@ pub fn main() !void {
             }
         }
     } else {
-        // Not in git repo
-        const display_path = tildePath(allocator, pwd, home) catch pwd;
-        defer if (display_path.ptr != pwd.ptr) allocator.free(display_path);
+        const display_path = tildePath(gpa, pwd, home) catch pwd;
+        defer if (display_path.ptr != pwd.ptr) gpa.free(display_path);
         try stdout.writeAll(display_path);
     }
 
-    // Branch
     if (branch) |b| {
         const max_branch_len = if (columns > 13) columns - 13 else 20;
         try stdout.writeAll(" ");
@@ -109,7 +99,6 @@ pub fn main() !void {
     try stdout.writeAll(Color.reset);
     try stdout.writeAll("\n");
 
-    // Prompt symbol
     try stdout.writeAll(Color.bold_red);
     try stdout.writeAll("$ ");
     try stdout.writeAll(Color.reset);
@@ -125,18 +114,15 @@ fn tildePath(allocator: std.mem.Allocator, path: []const u8, home: []const u8) !
     return path;
 }
 
-fn getHostname(allocator: std.mem.Allocator) ![]u8 {
-    // Use HOSTNAME environment variable if present
-    const hostname_str = if (std.posix.getenv("HOSTNAME")) |env_hostname|
+fn getHostname(allocator: std.mem.Allocator, env: *std.process.Environ.Map) ![]u8 {
+    const hostname_str = if (env.get("HOSTNAME")) |env_hostname|
         env_hostname
     else blk: {
-        // Fallback to gethostname syscall
         var buf: [std.posix.HOST_NAME_MAX]u8 = undefined;
         const result = std.posix.gethostname(&buf) catch return error.CannotGetHostname;
         break :blk result;
     };
 
-    // Remove .local or .lan suffix if present
     var end = hostname_str.len;
     if (std.mem.endsWith(u8, hostname_str, ".local")) {
         end = hostname_str.len - 6;
@@ -149,27 +135,28 @@ fn getHostname(allocator: std.mem.Allocator) ![]u8 {
 
 const GitRepo = struct {
     allocator: std.mem.Allocator,
+    io: Io,
     git_dir: []u8,
     root: []u8,
 
-    fn find(allocator: std.mem.Allocator, start_path: []const u8) !GitRepo {
+    fn find(allocator: std.mem.Allocator, io: Io, start_path: []const u8) !GitRepo {
         var current = try allocator.dupe(u8, start_path);
 
         while (true) {
             const git_path = try std.fs.path.join(allocator, &.{ current, ".git" });
             defer allocator.free(git_path);
 
-            const stat_result = std.fs.cwd().statFile(git_path);
+            const stat_result = Io.Dir.cwd().statFile(io, git_path, .{});
             if (stat_result) |stat| {
                 if (stat.kind == .directory) {
                     return .{
                         .allocator = allocator,
+                        .io = io,
                         .git_dir = try allocator.dupe(u8, git_path),
                         .root = current,
                     };
                 } else if (stat.kind == .file) {
-                    // Worktree - .git is a file containing "gitdir: <path>"
-                    const content = try readFile(allocator, git_path);
+                    const content = try readFile(allocator, io, git_path);
                     defer allocator.free(content);
 
                     if (std.mem.startsWith(u8, content, "gitdir: ")) {
@@ -178,7 +165,7 @@ const GitRepo = struct {
                             try std.fs.path.resolve(allocator, &.{ current, gitdir_ref })
                         else
                             try allocator.dupe(u8, gitdir_ref);
-                        return .{ .allocator = allocator, .git_dir = git_dir, .root = current };
+                        return .{ .allocator = allocator, .io = io, .git_dir = git_dir, .root = current };
                     }
                     allocator.free(current);
                     return error.InvalidGitFile;
@@ -190,7 +177,6 @@ const GitRepo = struct {
                 }
             }
 
-            // Go up one directory
             const parent = std.fs.path.dirname(current) orelse {
                 allocator.free(current);
                 return error.NotGitRepo;
@@ -214,7 +200,7 @@ const GitRepo = struct {
         const path = try std.fs.path.join(self.allocator, &.{ self.git_dir, "commondir" });
         defer self.allocator.free(path);
 
-        if (readFile(self.allocator, path)) |content| {
+        if (readFile(self.allocator, self.io, path)) |content| {
             defer self.allocator.free(content);
             if (content[0] != '/') {
                 return std.fs.path.resolve(self.allocator, &.{ self.git_dir, content });
@@ -229,7 +215,7 @@ const GitRepo = struct {
         const path = try std.fs.path.join(self.allocator, &.{ self.git_dir, "HEAD" });
         defer self.allocator.free(path);
 
-        const content = try readFile(self.allocator, path);
+        const content = try readFile(self.allocator, self.io, path);
         defer self.allocator.free(content);
 
         if (std.mem.startsWith(u8, content, "ref: refs/heads/")) {
@@ -237,7 +223,6 @@ const GitRepo = struct {
         } else if (std.mem.startsWith(u8, content, "ref: ")) {
             return self.allocator.dupe(u8, content[5..]);
         }
-        // Detached HEAD - short hash
         return self.allocator.dupe(u8, content[0..@min(content.len, 7)]);
     }
 
@@ -246,23 +231,26 @@ const GitRepo = struct {
         defer self.allocator.free(common);
         return !std.mem.eql(u8, self.git_dir, common);
     }
-
-    fn readFile(allocator: std.mem.Allocator, path: []const u8) ![]u8 {
-        const file = try std.fs.openFileAbsolute(path, .{});
-        defer file.close();
-
-        var buf: [4096]u8 = undefined;
-        const len = try file.readAll(&buf);
-        if (len == 0) return error.NoOutput;
-
-        var end = len;
-        while (end > 0 and (buf[end - 1] == '\n' or buf[end - 1] == '\r')) end -= 1;
-
-        const result = try allocator.alloc(u8, end);
-        @memcpy(result, buf[0..end]);
-        return result;
-    }
 };
+
+fn readFile(allocator: std.mem.Allocator, io: Io, path: []const u8) ![]u8 {
+    const file = try Io.Dir.openFileAbsolute(io, path, .{});
+    defer file.close(io);
+
+    var buf: [4096]u8 = undefined;
+    var fr = file.reader(io, &.{});
+    const len = fr.interface.readSliceShort(&buf) catch |err| switch (err) {
+        error.ReadFailed => return fr.err.?,
+    };
+    if (len == 0) return error.NoOutput;
+
+    var end = len;
+    while (end > 0 and (buf[end - 1] == '\n' or buf[end - 1] == '\r')) end -= 1;
+
+    const result = try allocator.alloc(u8, end);
+    @memcpy(result, buf[0..end]);
+    return result;
+}
 
 const Color = struct {
     // Wrapped in \x01...\x02 so readline knows these bytes are invisible.

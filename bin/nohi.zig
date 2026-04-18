@@ -4,31 +4,35 @@
 // Stores history in ~/.nohi with format: PATH\tCMD\tRANK\tTIME\n
 //
 const std = @import("std");
+const Io = std.Io;
 
-pub fn main() !void {
-    var gpa = std.heap.GeneralPurposeAllocator(.{}){};
-    defer _ = gpa.deinit();
-    const allocator = gpa.allocator();
+pub fn main(init: std.process.Init) !void {
+    const gpa = init.gpa;
+    const arena = init.arena.allocator();
+    const io = init.io;
+    const env = init.environ_map;
 
-    const args = try std.process.argsAlloc(allocator);
-    defer std.process.argsFree(allocator, args);
+    const args = try init.minimal.args.toSlice(arena);
 
-    const home = std.posix.getenv("HOME") orelse return error.NoHome;
-    const datafile = try std.fs.path.join(allocator, &.{ home, ".nohi" });
-    defer allocator.free(datafile);
+    const home = env.get("HOME") orelse return error.NoHome;
+    const datafile = try std.fs.path.join(gpa, &.{ home, ".nohi" });
+    defer gpa.free(datafile);
+
+    var stdout_buf: [4096]u8 = undefined;
+    var stdout_w = Io.File.stdout().writer(io, &stdout_buf);
+    const stdout: *Io.Writer = &stdout_w.interface;
+    defer stdout.flush() catch {};
 
     if (args.len < 2) {
-        try printUsage();
+        try printUsage(stdout);
         return;
     }
 
     const cmd = args[1];
 
     if (std.mem.eql(u8, cmd, "--add")) {
-        // Add command: nohi --add <path> <command>
         if (args.len < 4) return;
         const path = args[2];
-        // Join remaining args as the command
         var cmd_buf: [4096]u8 = undefined;
         var cmd_len: usize = 0;
         for (args[3..]) |arg| {
@@ -40,9 +44,8 @@ pub fn main() !void {
             @memcpy(cmd_buf[cmd_len..][0..arg.len], arg);
             cmd_len += arg.len;
         }
-        try addEntry(allocator, datafile, path, cmd_buf[0..cmd_len]);
+        try addEntry(gpa, io, datafile, path, cmd_buf[0..cmd_len]);
     } else if (std.mem.eql(u8, cmd, "--get")) {
-        // Get history for path: nohi --get [--recent] <path>
         if (args.len < 3) return;
         var by_recent = false;
         var path_idx: usize = 2;
@@ -52,12 +55,11 @@ pub fn main() !void {
             if (args.len < 4) return;
         }
         const path = args[path_idx];
-        const now = std.time.timestamp();
+        const now = nowSeconds(io);
 
-        var result = try getHistory(allocator, datafile, path);
-        defer result.deinit(allocator);
+        var result = try getHistory(gpa, io, datafile, path);
+        defer result.deinit(gpa);
 
-        // Sort by recency or frecency
         if (by_recent) {
             std.mem.sort(Entry, result.matching.items, {}, struct {
                 fn f(_: void, a: Entry, b: Entry) bool {
@@ -72,26 +74,23 @@ pub fn main() !void {
             }.f);
         }
 
-        // Output commands
-        const stdout = std.fs.File.stdout();
-        var buf: [4096]u8 = undefined;
         for (result.matching.items) |e| {
-            const line = std.fmt.bufPrint(&buf, "{s}\n", .{e.cmd}) catch continue;
-            try stdout.writeAll(line);
+            try stdout.print("{s}\n", .{e.cmd});
         }
     } else if (std.mem.eql(u8, cmd, "--list")) {
-        // List all entries
-        try listEntries(allocator, datafile);
+        try listEntries(gpa, io, datafile, stdout);
     } else if (std.mem.eql(u8, cmd, "--prune")) {
-        // Remove entries for non-existent directories
-        try pruneEntries(allocator, datafile);
+        try pruneEntries(gpa, io, datafile, stdout);
     } else {
-        try printUsage();
+        try printUsage(stdout);
     }
 }
 
-fn printUsage() !void {
-    const stdout = std.fs.File.stdout();
+fn nowSeconds(io: Io) i64 {
+    return Io.Clock.real.now(io).toSeconds();
+}
+
+fn printUsage(stdout: *Io.Writer) !void {
     try stdout.writeAll(
         \\nohi - per-directory command history with frecency
         \\
@@ -139,26 +138,31 @@ fn freeEntry(allocator: std.mem.Allocator, e: Entry) void {
     allocator.free(e.cmd);
 }
 
-fn readEntries(allocator: std.mem.Allocator, datafile: []const u8) !std.ArrayListUnmanaged(Entry) {
-    var entries = std.ArrayListUnmanaged(Entry){};
+fn readEntries(allocator: std.mem.Allocator, io: Io, datafile: []const u8) !std.ArrayListUnmanaged(Entry) {
+    var entries: std.ArrayListUnmanaged(Entry) = .empty;
     errdefer {
         for (entries.items) |e| freeEntry(allocator, e);
         entries.deinit(allocator);
     }
 
-    const file = std.fs.openFileAbsolute(datafile, .{}) catch |err| {
+    const file = Io.Dir.openFileAbsolute(io, datafile, .{}) catch |err| {
         if (err == error.FileNotFound) return entries;
         return err;
     };
-    defer file.close();
+    defer file.close(io);
 
-    // Read entire file
-    const content = try file.readToEndAlloc(allocator, 10 * 1024 * 1024); // 10MB max
-    defer allocator.free(content);
+    // Read entire file via allocating writer
+    var aw: Io.Writer.Allocating = .init(allocator);
+    defer aw.deinit();
+    var fr = file.reader(io, &.{});
+    _ = fr.interface.streamRemaining(&aw.writer) catch |err| switch (err) {
+        error.ReadFailed => return fr.err.?,
+        else => |e| return e,
+    };
+    const content = aw.written();
 
     if (content.len == 0) return entries;
 
-    // Parse line by line
     var it = std.mem.splitScalar(u8, content, '\n');
     while (it.next()) |line| {
         if (line.len == 0) continue;
@@ -169,41 +173,41 @@ fn readEntries(allocator: std.mem.Allocator, datafile: []const u8) !std.ArrayLis
     return entries;
 }
 
-fn writeEntries(allocator: std.mem.Allocator, datafile: []const u8, entries: []const Entry) !void {
-    _ = allocator;
+fn writeEntries(io: Io, datafile: []const u8, entries: []const Entry) !void {
     // Write to temp file first
     var tmp_buf: [4096]u8 = undefined;
-    const tmp_path = try std.fmt.bufPrint(&tmp_buf, "{s}.{d}", .{ datafile, std.time.timestamp() });
+    const tmp_path = try std.fmt.bufPrint(&tmp_buf, "{s}.{d}", .{ datafile, Io.Clock.real.now(io).toSeconds() });
 
-    const file = try std.fs.createFileAbsolute(tmp_path, .{});
-    defer file.close();
+    const file = try Io.Dir.createFileAbsolute(io, tmp_path, .{});
+    defer file.close(io);
 
-    var line_buf: [8192]u8 = undefined;
+    var write_buf: [4096]u8 = undefined;
+    var fw = file.writer(io, &write_buf);
+    const w: *Io.Writer = &fw.interface;
+
     for (entries) |e| {
-        const line = std.fmt.bufPrint(&line_buf, "{s}\t{s}\t{d:.1}\t{d}\n", .{ e.path, e.cmd, e.rank, e.time }) catch continue;
-        try file.writeAll(line);
+        w.print("{s}\t{s}\t{d:.1}\t{d}\n", .{ e.path, e.cmd, e.rank, e.time }) catch continue;
     }
+    try w.flush();
 
     // Atomic rename
-    std.fs.renameAbsolute(tmp_path, datafile) catch {
-        std.fs.deleteFileAbsolute(tmp_path) catch {};
+    Io.Dir.renameAbsolute(tmp_path, datafile, io) catch {
+        Io.Dir.deleteFileAbsolute(io, tmp_path) catch {};
     };
 }
 
-fn addEntry(allocator: std.mem.Allocator, datafile: []const u8, path: []const u8, cmd: []const u8) !void {
-    // Skip empty commands or commands starting with space
+fn addEntry(allocator: std.mem.Allocator, io: Io, datafile: []const u8, path: []const u8, cmd: []const u8) !void {
     if (cmd.len == 0) return;
     if (cmd[0] == ' ') return;
 
-    const now = std.time.timestamp();
+    const now = nowSeconds(io);
 
-    var entries = try readEntries(allocator, datafile);
+    var entries = try readEntries(allocator, io, datafile);
     defer {
         for (entries.items) |e| freeEntry(allocator, e);
         entries.deinit(allocator);
     }
 
-    // Find existing entry for same path+cmd or add new
     var found = false;
     for (entries.items) |*e| {
         if (std.mem.eql(u8, e.path, path) and std.mem.eql(u8, e.cmd, cmd)) {
@@ -229,7 +233,6 @@ fn addEntry(allocator: std.mem.Allocator, datafile: []const u8, path: []const u8
 
     if (total_rank > 10000) {
         for (entries.items) |*e| e.rank *= 0.9;
-        // Remove entries with rank < 0.1
         var i: usize = 0;
         while (i < entries.items.len) {
             if (entries.items[i].rank < 0.1) {
@@ -241,7 +244,7 @@ fn addEntry(allocator: std.mem.Allocator, datafile: []const u8, path: []const u8
         }
     }
 
-    try writeEntries(allocator, datafile, entries.items);
+    try writeEntries(io, datafile, entries.items);
 }
 
 const HistoryResult = struct {
@@ -255,35 +258,28 @@ const HistoryResult = struct {
     }
 };
 
-fn getHistory(allocator: std.mem.Allocator, datafile: []const u8, path: []const u8) !HistoryResult {
-    var entries = try readEntries(allocator, datafile);
+fn getHistory(allocator: std.mem.Allocator, io: Io, datafile: []const u8, path: []const u8) !HistoryResult {
+    var entries = try readEntries(allocator, io, datafile);
     errdefer {
         for (entries.items) |e| freeEntry(allocator, e);
         entries.deinit(allocator);
     }
 
-    // Filter to matching path (exact match or parent directories) and collect unique commands
-    var matching = std.ArrayListUnmanaged(Entry){};
+    var matching: std.ArrayListUnmanaged(Entry) = .empty;
     errdefer matching.deinit(allocator);
 
-    // Track most recent entry for each command
     var seen = std.StringHashMap(usize).init(allocator);
     defer seen.deinit();
 
     for (entries.items) |e| {
-        // Match if:
-        // 1. entry path equals current path
-        // 2. entry path is a parent of current path
-        // 3. entry path is a child of current path (include subdirectories)
         const is_match = std.mem.eql(u8, e.path, path) or
             (std.mem.startsWith(u8, path, e.path) and
-            path.len > e.path.len and
-            path[e.path.len] == '/') or
+                path.len > e.path.len and
+                path[e.path.len] == '/') or
             (std.mem.startsWith(u8, e.path, path) and
-            e.path.len > path.len and
-            e.path[path.len] == '/');
+                e.path.len > path.len and
+                e.path[path.len] == '/');
         if (is_match) {
-            // Dedupe by command, keeping the most recent entry
             if (seen.get(e.cmd)) |idx| {
                 if (e.time > matching.items[idx].time) {
                     matching.items[idx] = e;
@@ -298,46 +294,40 @@ fn getHistory(allocator: std.mem.Allocator, datafile: []const u8, path: []const 
     return .{ .entries = entries, .matching = matching };
 }
 
-fn listEntries(allocator: std.mem.Allocator, datafile: []const u8) !void {
-    var entries = try readEntries(allocator, datafile);
+fn listEntries(allocator: std.mem.Allocator, io: Io, datafile: []const u8, stdout: *Io.Writer) !void {
+    var entries = try readEntries(allocator, io, datafile);
     defer {
         for (entries.items) |e| freeEntry(allocator, e);
         entries.deinit(allocator);
     }
 
-    const now = std.time.timestamp();
-    const stdout = std.fs.File.stdout();
+    const now = nowSeconds(io);
 
-    // Sort by frecency (descending)
     std.mem.sort(Entry, entries.items, now, struct {
         fn lessThan(n: i64, a: Entry, b: Entry) bool {
             return a.frecent(n) > b.frecent(n);
         }
     }.lessThan);
 
-    var buf: [8192]u8 = undefined;
     for (entries.items) |e| {
-        const line = std.fmt.bufPrint(&buf, "{d:>8.1}  {s}  {s}\n", .{ e.frecent(now), e.path, e.cmd }) catch continue;
-        try stdout.writeAll(line);
+        try stdout.print("{d:>8.1}  {s}  {s}\n", .{ e.frecent(now), e.path, e.cmd });
     }
 }
 
-fn pruneEntries(allocator: std.mem.Allocator, datafile: []const u8) !void {
-    var entries = try readEntries(allocator, datafile);
+fn pruneEntries(allocator: std.mem.Allocator, io: Io, datafile: []const u8, stdout: *Io.Writer) !void {
+    var entries = try readEntries(allocator, io, datafile);
     defer {
         for (entries.items) |e| freeEntry(allocator, e);
         entries.deinit(allocator);
     }
 
-    const stdout = std.fs.File.stdout();
     var removed: usize = 0;
 
-    // Remove entries for non-existent directories
     var i: usize = 0;
     while (i < entries.items.len) {
         const path = entries.items[i].path;
         const is_dir = blk: {
-            const stat = std.fs.cwd().statFile(path) catch break :blk false;
+            const stat = Io.Dir.cwd().statFile(io, path, .{}) catch break :blk false;
             break :blk stat.kind == .directory;
         };
 
@@ -350,8 +340,6 @@ fn pruneEntries(allocator: std.mem.Allocator, datafile: []const u8) !void {
         }
     }
 
-    try writeEntries(allocator, datafile, entries.items);
-    var buf: [64]u8 = undefined;
-    const line = std.fmt.bufPrint(&buf, "Pruned {d} entries\n", .{removed}) catch return;
-    try stdout.writeAll(line);
+    try writeEntries(io, datafile, entries.items);
+    try stdout.print("Pruned {d} entries\n", .{removed});
 }

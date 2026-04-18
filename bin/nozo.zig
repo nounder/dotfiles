@@ -5,53 +5,53 @@
 // Uses ~/.z datafile format compatible with z.sh/z.lua
 //
 const std = @import("std");
+const Io = std.Io;
 
-pub fn main() !void {
-    var gpa = std.heap.GeneralPurposeAllocator(.{}){};
-    defer _ = gpa.deinit();
-    const allocator = gpa.allocator();
+pub fn main(init: std.process.Init) !void {
+    const gpa = init.gpa;
+    const arena = init.arena.allocator();
+    const io = init.io;
+    const env = init.environ_map;
 
-    const args = try std.process.argsAlloc(allocator);
-    defer std.process.argsFree(allocator, args);
+    const args = try init.minimal.args.toSlice(arena);
 
-    const home = std.posix.getenv("HOME") orelse return error.NoHome;
-    const datafile = try std.fs.path.join(allocator, &.{ home, ".z" });
-    defer allocator.free(datafile);
+    const home = env.get("HOME") orelse return error.NoHome;
+    const datafile = try std.fs.path.join(gpa, &.{ home, ".z" });
+    defer gpa.free(datafile);
+
+    var stdout_buf: [4096]u8 = undefined;
+    var stdout_w = Io.File.stdout().writer(io, &stdout_buf);
+    const stdout: *Io.Writer = &stdout_w.interface;
+    defer stdout.flush() catch {};
 
     if (args.len < 2) {
-        // No args - list all entries
-        try listEntries(allocator, datafile, .frecent);
+        try listEntries(gpa, io, datafile, .frecent, stdout);
         return;
     }
 
     const cmd = args[1];
 
     if (std.mem.eql(u8, cmd, "--add")) {
-        // Add directory to database
         if (args.len < 3) return;
         const path = args[2];
-        if (std.mem.eql(u8, path, home)) return; // Skip home
-        try addEntry(allocator, datafile, path);
+        if (std.mem.eql(u8, path, home)) return;
+        try addEntry(gpa, io, datafile, path);
     } else if (std.mem.eql(u8, cmd, "--complete")) {
-        // Tab completion
         const query = if (args.len > 2) args[2] else "";
-        try completeEntries(allocator, datafile, query);
+        try completeEntries(gpa, io, datafile, query, stdout);
     } else if (std.mem.eql(u8, cmd, "-l")) {
-        // List mode
         const typ: SortType = if (args.len > 2 and std.mem.eql(u8, args[2], "-r"))
             .rank
         else if (args.len > 2 and std.mem.eql(u8, args[2], "-t"))
             .recent
         else
             .frecent;
-        try listEntries(allocator, datafile, typ);
+        try listEntries(gpa, io, datafile, typ, stdout);
     } else if (std.mem.eql(u8, cmd, "-h")) {
-        const stdout = std.fs.File.stdout();
         try stdout.writeAll("z [-h][-l][-r][-t] args\n");
     } else {
-        // Jump mode - find best match
-        var query_parts = std.ArrayListUnmanaged([]const u8){};
-        defer query_parts.deinit(allocator);
+        var query_parts: std.ArrayListUnmanaged([]const u8) = .empty;
+        defer query_parts.deinit(gpa);
 
         var sort_type: SortType = .frecent;
         var i: usize = 1;
@@ -62,35 +62,32 @@ pub fn main() !void {
             } else if (std.mem.eql(u8, arg, "-t")) {
                 sort_type = .recent;
             } else if (std.mem.eql(u8, arg, "--")) {
-                // Everything after -- is query
                 i += 1;
                 while (i < args.len) : (i += 1) {
-                    try query_parts.append(allocator, args[i]);
+                    try query_parts.append(gpa, args[i]);
                 }
             } else if (!std.mem.startsWith(u8, arg, "-")) {
-                try query_parts.append(allocator, arg);
+                try query_parts.append(gpa, arg);
             }
         }
 
-        // If last arg is a valid directory, just output it
         if (query_parts.items.len > 0) {
             const last = query_parts.items[query_parts.items.len - 1];
-            if (isDirectory(last)) {
-                const stdout = std.fs.File.stdout();
+            if (isDirectory(io, last)) {
                 try stdout.writeAll(last);
                 try stdout.writeAll("\n");
                 return;
             }
         }
 
-        const target = try findBestMatch(allocator, datafile, query_parts.items, sort_type);
-        defer if (target) |t| allocator.free(t);
+        const target = try findBestMatch(gpa, io, datafile, query_parts.items, sort_type);
+        defer if (target) |t| gpa.free(t);
 
         if (target) |t| {
-            const stdout = std.fs.File.stdout();
             try stdout.writeAll(t);
             try stdout.writeAll("\n");
         } else {
+            try stdout.flush();
             std.process.exit(1);
         }
     }
@@ -115,10 +112,14 @@ const Entry = struct {
         return switch (sort_type) {
             .frecent => self.frecent(now),
             .rank => self.rank,
-            .recent => @as(f64, @floatFromInt(now - self.time)) * -1, // Negative so higher is better
+            .recent => @as(f64, @floatFromInt(now - self.time)) * -1,
         };
     }
 };
+
+fn nowSeconds(io: Io) i64 {
+    return Io.Clock.real.now(io).toSeconds();
+}
 
 fn parseLine(allocator: std.mem.Allocator, line: []const u8) !Entry {
     var it = std.mem.splitScalar(u8, line, '|');
@@ -133,32 +134,32 @@ fn parseLine(allocator: std.mem.Allocator, line: []const u8) !Entry {
     };
 }
 
-fn readEntries(allocator: std.mem.Allocator, datafile: []const u8) !std.ArrayListUnmanaged(Entry) {
-    var entries = std.ArrayListUnmanaged(Entry){};
+fn readEntries(allocator: std.mem.Allocator, io: Io, datafile: []const u8) !std.ArrayListUnmanaged(Entry) {
+    var entries: std.ArrayListUnmanaged(Entry) = .empty;
     errdefer {
         for (entries.items) |e| allocator.free(e.path);
         entries.deinit(allocator);
     }
 
-    const file = std.fs.openFileAbsolute(datafile, .{}) catch |err| {
+    const file = Io.Dir.openFileAbsolute(io, datafile, .{}) catch |err| {
         if (err == error.FileNotFound) return entries;
         return err;
     };
-    defer file.close();
+    defer file.close(io);
 
-    // Read entire file
     var buf: [65536]u8 = undefined;
-    const len = try file.readAll(&buf);
+    var fr = file.reader(io, &.{});
+    const len = fr.interface.readSliceShort(&buf) catch |err| switch (err) {
+        error.ReadFailed => return fr.err.?,
+    };
     if (len == 0) return entries;
 
-    // Parse line by line
     var it = std.mem.splitScalar(u8, buf[0..len], '\n');
     while (it.next()) |line| {
         if (line.len == 0) continue;
 
         const entry = parseLine(allocator, line) catch continue;
-        // Only include existing directories
-        if (isDirectory(entry.path)) {
+        if (isDirectory(io, entry.path)) {
             try entries.append(allocator, entry);
         } else {
             allocator.free(entry.path);
@@ -168,38 +169,36 @@ fn readEntries(allocator: std.mem.Allocator, datafile: []const u8) !std.ArrayLis
     return entries;
 }
 
-fn writeEntries(allocator: std.mem.Allocator, datafile: []const u8, entries: []const Entry) !void {
-    _ = allocator;
-    // Write to temp file first
+fn writeEntries(io: Io, datafile: []const u8, entries: []const Entry) !void {
     var tmp_buf: [4096]u8 = undefined;
-    const tmp_path = try std.fmt.bufPrint(&tmp_buf, "{s}.{d}", .{ datafile, std.time.timestamp() });
+    const tmp_path = try std.fmt.bufPrint(&tmp_buf, "{s}.{d}", .{ datafile, nowSeconds(io) });
 
-    const file = try std.fs.createFileAbsolute(tmp_path, .{});
-    defer file.close();
+    const file = try Io.Dir.createFileAbsolute(io, tmp_path, .{});
+    defer file.close(io);
 
-    var line_buf: [4096]u8 = undefined;
+    var write_buf: [4096]u8 = undefined;
+    var fw = file.writer(io, &write_buf);
+    const w: *Io.Writer = &fw.interface;
+
     for (entries) |e| {
-        const line = std.fmt.bufPrint(&line_buf, "{s}|{d:.1}|{d}\n", .{ e.path, e.rank, e.time }) catch continue;
-        try file.writeAll(line);
+        w.print("{s}|{d:.1}|{d}\n", .{ e.path, e.rank, e.time }) catch continue;
     }
+    try w.flush();
 
-    // Atomic rename
-    std.fs.renameAbsolute(tmp_path, datafile) catch {
-        // If rename fails, just delete temp
-        std.fs.deleteFileAbsolute(tmp_path) catch {};
+    Io.Dir.renameAbsolute(tmp_path, datafile, io) catch {
+        Io.Dir.deleteFileAbsolute(io, tmp_path) catch {};
     };
 }
 
-fn addEntry(allocator: std.mem.Allocator, datafile: []const u8, path: []const u8) !void {
-    const now = std.time.timestamp();
+fn addEntry(allocator: std.mem.Allocator, io: Io, datafile: []const u8, path: []const u8) !void {
+    const now = nowSeconds(io);
 
-    var entries = try readEntries(allocator, datafile);
+    var entries = try readEntries(allocator, io, datafile);
     defer {
         for (entries.items) |e| allocator.free(e.path);
         entries.deinit(allocator);
     }
 
-    // Find existing or add new
     var found = false;
     for (entries.items) |*e| {
         if (std.mem.eql(u8, e.path, path)) {
@@ -218,7 +217,6 @@ fn addEntry(allocator: std.mem.Allocator, datafile: []const u8, path: []const u8
         });
     }
 
-    // Age entries if total rank > 1000
     var total_rank: f64 = 0;
     for (entries.items) |e| total_rank += e.rank;
 
@@ -226,7 +224,7 @@ fn addEntry(allocator: std.mem.Allocator, datafile: []const u8, path: []const u8
         for (entries.items) |*e| e.rank *= 0.9;
     }
 
-    try writeEntries(allocator, datafile, entries.items);
+    try writeEntries(io, datafile, entries.items);
 }
 
 fn toLower(buf: []u8, str: []const u8) []const u8 {
@@ -241,21 +239,17 @@ fn matchesQuery(path: []const u8, query_parts: []const []const u8) bool {
     var path_buf: [4096]u8 = undefined;
     const path_lower = toLower(&path_buf, path);
 
-    // Last query term must match the last path component
     const last_query = query_parts[query_parts.len - 1];
     var last_query_buf: [256]u8 = undefined;
     const last_query_lower = toLower(&last_query_buf, last_query);
 
-    // Find last path component
     const last_slash = std.mem.lastIndexOf(u8, path_lower, "/");
     const last_component = if (last_slash) |idx| path_lower[idx + 1 ..] else path_lower;
 
-    // Last query must be found in last component
     if (std.mem.indexOf(u8, last_component, last_query_lower) == null) {
         return false;
     }
 
-    // All terms must appear in order
     var search_start: usize = 0;
     for (query_parts) |q| {
         var q_buf: [256]u8 = undefined;
@@ -271,16 +265,16 @@ fn matchesQuery(path: []const u8, query_parts: []const []const u8) bool {
     return true;
 }
 
-fn findBestMatch(allocator: std.mem.Allocator, datafile: []const u8, query_parts: []const []const u8, sort_type: SortType) !?[]u8 {
+fn findBestMatch(allocator: std.mem.Allocator, io: Io, datafile: []const u8, query_parts: []const []const u8, sort_type: SortType) !?[]u8 {
     if (query_parts.len == 0) return null;
 
-    var entries = try readEntries(allocator, datafile);
+    var entries = try readEntries(allocator, io, datafile);
     defer {
         for (entries.items) |e| allocator.free(e.path);
         entries.deinit(allocator);
     }
 
-    const now = std.time.timestamp();
+    const now = nowSeconds(io);
 
     var best_path: ?[]const u8 = null;
     var best_score: f64 = -std.math.inf(f64);
@@ -301,17 +295,15 @@ fn findBestMatch(allocator: std.mem.Allocator, datafile: []const u8, query_parts
     return null;
 }
 
-fn listEntries(allocator: std.mem.Allocator, datafile: []const u8, sort_type: SortType) !void {
-    var entries = try readEntries(allocator, datafile);
+fn listEntries(allocator: std.mem.Allocator, io: Io, datafile: []const u8, sort_type: SortType, stdout: *Io.Writer) !void {
+    var entries = try readEntries(allocator, io, datafile);
     defer {
         for (entries.items) |e| allocator.free(e.path);
         entries.deinit(allocator);
     }
 
-    const now = std.time.timestamp();
-    const stdout = std.fs.File.stdout();
+    const now = nowSeconds(io);
 
-    // Sort by score
     const SortContext = struct {
         now: i64,
         sort_type: SortType,
@@ -324,24 +316,19 @@ fn listEntries(allocator: std.mem.Allocator, datafile: []const u8, sort_type: So
         }
     }.lessThan);
 
-    var buf: [256]u8 = undefined;
     for (entries.items) |e| {
-        const line = std.fmt.bufPrint(&buf, "{d:>10.1} {s}\n", .{ e.score(now, sort_type), e.path }) catch continue;
-        try stdout.writeAll(line);
+        try stdout.print("{d:>10.1} {s}\n", .{ e.score(now, sort_type), e.path });
     }
 }
 
-fn completeEntries(allocator: std.mem.Allocator, datafile: []const u8, query: []const u8) !void {
-    var entries = try readEntries(allocator, datafile);
+fn completeEntries(allocator: std.mem.Allocator, io: Io, datafile: []const u8, query: []const u8, stdout: *Io.Writer) !void {
+    var entries = try readEntries(allocator, io, datafile);
     defer {
         for (entries.items) |e| allocator.free(e.path);
         entries.deinit(allocator);
     }
 
-    const stdout = std.fs.File.stdout();
-
-    // Split query by spaces
-    var query_parts = std.ArrayListUnmanaged([]const u8){};
+    var query_parts: std.ArrayListUnmanaged([]const u8) = .empty;
     defer query_parts.deinit(allocator);
 
     var it = std.mem.splitScalar(u8, query, ' ');
@@ -357,7 +344,7 @@ fn completeEntries(allocator: std.mem.Allocator, datafile: []const u8, query: []
     }
 }
 
-fn isDirectory(path: []const u8) bool {
-    const stat = std.fs.cwd().statFile(path) catch return false;
+fn isDirectory(io: Io, path: []const u8) bool {
+    const stat = Io.Dir.cwd().statFile(io, path, .{}) catch return false;
     return stat.kind == .directory;
 }
