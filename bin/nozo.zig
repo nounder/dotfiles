@@ -36,6 +36,9 @@ pub fn main(init: std.process.Init) !void {
         const path = args[2];
         if (std.mem.eql(u8, path, home)) return;
         try addEntry(gpa, io, datafile, path);
+    } else if (std.mem.eql(u8, cmd, "-")) {
+        const target = if (args.len > 2) args[2] else env.get("PWD") orelse return;
+        try removeEntry(gpa, io, datafile, target);
     } else if (std.mem.eql(u8, cmd, "--complete")) {
         const query = if (args.len > 2) args[2] else "";
         try completeEntries(gpa, io, datafile, query, stdout);
@@ -223,6 +226,27 @@ fn addEntry(allocator: std.mem.Allocator, io: Io, datafile: []const u8, path: []
     if (total_rank > 1000) {
         for (entries.items) |*e| e.rank *= 0.9;
     }
+
+    try writeEntries(io, datafile, entries.items);
+}
+
+fn removeEntry(allocator: std.mem.Allocator, io: Io, datafile: []const u8, path: []const u8) !void {
+    var entries = try readEntries(allocator, io, datafile);
+    defer {
+        for (entries.items) |e| allocator.free(e.path);
+        entries.deinit(allocator);
+    }
+
+    var write_idx: usize = 0;
+    for (entries.items) |e| {
+        if (std.mem.eql(u8, e.path, path)) {
+            allocator.free(e.path);
+            continue;
+        }
+        entries.items[write_idx] = e;
+        write_idx += 1;
+    }
+    entries.items.len = write_idx;
 
     try writeEntries(io, datafile, entries.items);
 }
