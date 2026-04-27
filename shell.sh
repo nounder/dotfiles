@@ -242,6 +242,7 @@ export SHELL=$(command -v bash)
 export EDITOR=$(command -v nvim)
 export XDG_CONFIG_HOME="$HOME/.config"
 export NOM_DEFAULT_OPTS='--cycle --layout=default --height=90% --preview-window=wrap --marker="*" --no-scrollbar --preview-window=border-left'
+NOM_CMD="nom --icon always"
 export TERM=xterm-256color
 
 # Aliases
@@ -327,9 +328,9 @@ _nom_search_history() {
   local selected
   # Use nohi with frecency ordering if available, otherwise fall back to bash history
   if command -v nohi &>/dev/null; then
-    selected=$(nohi --get "$PWD" 2>/dev/null | nom --scheme=history --prompt="History> " --query="$READLINE_LINE")
+    selected=$(nohi --get "$PWD" 2>/dev/null | $NOM_CMD --scheme=history --prompt="History> " --query="$READLINE_LINE")
   else
-    selected=$(history | sed 's/^ *[0-9]* *//' | awk '!seen[$0]++' | nom --scheme=history --prompt="History> " --query="$READLINE_LINE")
+    selected=$(history | sed 's/^ *[0-9]* *//' | awk '!seen[$0]++' | $NOM_CMD --scheme=history --prompt="History> " --query="$READLINE_LINE")
   fi
   printf '%s' "$_TERM_RESET"
   if [[ -n "$selected" ]]; then
@@ -349,9 +350,9 @@ _nom_search_directory() {
   fi
 
   if [[ "$fd_cmd" == "find"* ]]; then
-    selected=$($fd_cmd 2>/dev/null | nom --multi --prompt="Directory> ")
+    selected=$($fd_cmd 2>/dev/null | $NOM_CMD --multi --prompt="Directory> ")
   else
-    selected=$($fd_cmd --color=always 2>/dev/null | nom --ansi --multi --prompt="Directory> ")
+    selected=$($fd_cmd --color=always 2>/dev/null | $NOM_CMD --ansi --multi --prompt="Directory> ")
   fi
   printf '%s' "$_TERM_RESET"
 
@@ -374,7 +375,7 @@ _nom_search_git_log() {
   local format='%C(bold blue)%h%C(reset) - %C(cyan)%ad%C(reset) %C(yellow)%d%C(reset) %C(normal)%s%C(reset)  %C(dim normal)[%an]%C(reset)'
   local selected
   selected=$(git log --no-show-signature --color=always --format=format:"$format" --date=short |
-    nom --ansi --multi --scheme=history --prompt="Git Log> " \
+    $NOM_CMD --ansi --multi --scheme=history --prompt="Git Log> " \
       --preview='git show --color=always --stat --patch {1}')
   printf '%s' "$_TERM_RESET"
 
@@ -399,7 +400,7 @@ _nom_search_git_status() {
 
   local selected
   selected=$(git -c color.status=always status --short |
-    nom --ansi --multi --prompt="Git Status> " --nth="2.." \
+    $NOM_CMD --ansi --multi --prompt="Git Status> " --nth="2.." \
       --preview='file=$(echo {} | sed "s/^...//" | sed "s/.* -> //"); git diff --color=always -- "$file" 2>/dev/null || cat "$file"')
   printf '%s' "$_TERM_RESET"
 
@@ -610,7 +611,7 @@ _nom_tab_complete() {
       return
     else
       local nom_out nom_key
-      nom_out=$(echo "$unique_completions" | nom --height=40% --reverse --prompt="${prompt}> " --query="$nom_query" --expect=tab)
+      nom_out=$(echo "$unique_completions" | $NOM_CMD --height=40% --reverse --prompt="${prompt}> " --query="$nom_query" --expect=tab)
       printf '%s' "$_TERM_RESET"
       nom_key=${nom_out%%$'\n'*}
       selected=${nom_out#*$'\n'}
