@@ -22,8 +22,8 @@ if [[ -n "$BASH_VERSION" ]]; then
   bind 'set enable-bracketed-paste off'
   # Don't save cd commands in history
   HISTIGNORE="cd:cd *:cd -:..:--"
-  # Auto-cd into directories (fish-like)
-  shopt -s autocd
+  # Auto-cd into directories (fish-like, bash 4+)
+  shopt -s autocd 2>/dev/null
 
 fi
 
