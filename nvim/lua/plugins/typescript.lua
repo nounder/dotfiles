@@ -31,37 +31,6 @@ return {
         },
       },
     },
-    keys = {
-      {
-        "K",
-        function()
-          local original_file = vim.api.nvim_buf_get_name(0)
-          vim.lsp.buf.hover()
-          vim.defer_fn(function()
-            for _, win in ipairs(vim.api.nvim_list_wins()) do
-              local config = vim.api.nvim_win_get_config(win)
-              -- Find hover window (floating, not a notification)
-              if config.relative ~= "" and config.zindex and config.zindex < 100 then
-                local buf = vim.api.nvim_win_get_buf(win)
-                local ok, conform = pcall(require, "conform")
-                if ok then
-                  vim.bo[buf].modifiable = true
-                  -- Set fake name for dprint config lookup
-                  vim.api.nvim_buf_set_name(buf, original_file .. ".hover.ts")
-                  conform.format({ bufnr = buf, async = false, formatters = { "dprint" } })
-                  vim.api.nvim_buf_set_name(buf, "")
-                  vim.bo[buf].modifiable = false
-                  vim.bo[buf].modified = false
-                end
-                return
-              end
-            end
-          end, 200)
-        end,
-        desc = "Hover with formatting",
-        ft = { "typescript", "typescriptreact", "javascript", "javascriptreact" },
-      },
-    },
   },
   {
     -- https://github.com/dmmulroy/tsc.nvim
