@@ -211,7 +211,6 @@ else
   PS1='\[\e[0m\]\n\[\e[90m\]\w\[\e[0m\]\n\[\e[1;31m\]\$ \[\e[0m\]'
 fi
 
-# PATH setup
 export PATH="$HOME/.local/bin:$HOME/dotfiles/bin:$HOME/.bun/bin:$HOME/.cargo/bin:$HOME/bin:$HOME/.npm/bin:/usr/local/bin:/opt/homebrew/bin:/opt/homebrew/sbin:$HOME/go/bin:$PATH:node_modules/.bin:../node_modules/.bin"
 
 # Per-directory history using nohi
@@ -444,7 +443,7 @@ _nom_tab_complete() {
     [[ -n "$local_files" ]] && completions="${completions}${completions:+$'\n'}${local_files}"
     # Substring match for local files
     if [[ -n "$word" ]]; then
-      local local_substr=$(compgen -G "*${word}*" 2>/dev/null | sed '/^\.\//!s|^|./|')
+      local local_substr=$( (shopt -s nocaseglob; compgen -G "*${word}*" 2>/dev/null) | sed '/^\.\//!s|^|./|')
       [[ -n "$local_substr" ]] && completions="${completions}${completions:+$'\n'}${local_substr}"
     fi
   else
@@ -537,7 +536,7 @@ _nom_tab_complete() {
           glob_pattern="${glob_pattern%/}"
 
           local fuzzy_matches
-          fuzzy_matches=$(compgen -G "${prefix}${glob_pattern}" 2>/dev/null)
+          fuzzy_matches=$( (shopt -s nocaseglob; compgen -G "${prefix}${glob_pattern}" 2>/dev/null) )
           if [[ -n "$fuzzy_matches" && "$_compgen_type" == "-d" ]]; then
             # Filter to directories only
             fuzzy_matches=$(echo "$fuzzy_matches" | while IFS= read -r _m; do [[ -d "$_m" ]] && echo "$_m"; done)
@@ -552,7 +551,7 @@ _nom_tab_complete() {
             local dir_part="${word%/*}/"
             local base_part="${word##*/}"
             if [[ -n "$base_part" ]]; then
-              local substr_completions=$(compgen -G "${dir_part}*${base_part}*" 2>/dev/null)
+              local substr_completions=$( (shopt -s nocaseglob; compgen -G "${dir_part}*${base_part}*" 2>/dev/null) )
               if [[ -n "$substr_completions" && "$_compgen_type" == "-d" ]]; then
                 substr_completions=$(echo "$substr_completions" | while IFS= read -r _m; do [[ -d "$_m" ]] && echo "$_m"; done)
               fi
@@ -568,7 +567,7 @@ _nom_tab_complete() {
         [[ -n "$file_completions" ]] && completions="${completions}${completions:+$'\n'}${file_completions}"
         # Substring match: *word*
         if [[ -n "$word" ]]; then
-          local substr_completions=$(compgen -G "*${word}*" 2>/dev/null)
+          local substr_completions=$( (shopt -s nocaseglob; compgen -G "*${word}*" 2>/dev/null) )
           if [[ -n "$substr_completions" && "$_compgen_type" == "-d" ]]; then
             substr_completions=$(echo "$substr_completions" | while IFS= read -r _m; do [[ -d "$_m" ]] && echo "$_m"; done)
           fi
@@ -649,3 +648,5 @@ fi
 # Source local overrides (not checked in)
 [[ -f "$HOME/dotfiles/local.sh" ]] && source "$HOME/dotfiles/local.sh"
 
+
+export PI_OFFLINE=1
