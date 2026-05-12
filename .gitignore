@@ -6,3 +6,4 @@ tree/
 nushell/history.txt
 .zig-cache/
 zig-out/
+.env
