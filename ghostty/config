@@ -11,6 +11,7 @@ font-family = "JetBrainsMono Nerd Font"
 #font-family = "Comic Mono"
 
 confirm-close-surface = false
+quit-after-last-window-closed = false
 clipboard-paste-protection = false
 copy-on-select = false
 selection-invert-fg-bg = true
@@ -18,10 +19,10 @@ selection-invert-fg-bg = true
 #auto-update-channel = tip
 mouse-shift-capture = false
 
-# background-blur = macos-glass-clear
-background-blur = macos-glass-regular
-#background-blur = true
-background-opacity = 0.2
+ background-blur = macos-glass-clear
+# background-blur = macos-glass-regular
+background-blur = true
+background-opacity = 0.6
 background-opacity-cells = true
 
 command = /opt/homebrew/bin/bash
@@ -38,6 +39,7 @@ window-padding-y = 6
 # custom-shader = "shaders/bettercrt.glsl"
 keybind = shift+enter=text:\n
 keybind = super+enter=toggle_split_zoom
+keybind = super+q=ignore
 
 keybind = super+up=goto_split:up
 keybind = super+left=goto_split:left
