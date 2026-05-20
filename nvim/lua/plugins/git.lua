@@ -7,12 +7,18 @@ return {
     cmd = "Neogit",
     dependencies = {
       "nvim-lua/plenary.nvim",
+      "sindrets/diffview.nvim",
     },
     opts = {
       disable_hint = true,
       commit_editor = {
         kind = "tab",
         staged_diff_split_kind = "vsplit",
+      },
+      treesitter_diff_highlight = true,
+      graph_style = "kitty",
+      integrations = {
+        diffview = true,
       },
     },
     keys = {

@@ -31,6 +31,13 @@ return {
               ["<Esc>"] = { "close", mode = { "n", "i" } },
             },
           },
+          preview = {
+            wo = {
+              number = false,
+              relativenumber = false,
+              signcolumn = "no",
+            },
+          },
         },
       },
       dashboard = {

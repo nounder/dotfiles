@@ -39,7 +39,7 @@ require("lazy").setup({
   },
   install = {
     colorscheme = {
-      "gruvbox-material",
+      "minischeme",
       "tokyonight",
       "habamax",
     },
