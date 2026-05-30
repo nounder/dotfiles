@@ -13,6 +13,14 @@ local nmap = function(lhs, rhs, desc)
   -- See `:h vim.keymap.set()`
   vim.keymap.set("n", lhs, rhs, { desc = desc })
 end
+-- Same, but for Normal + Visual modes at once (handy for register tweaks).
+local nxmap = function(lhs, rhs, desc)
+  vim.keymap.set({ "n", "x" }, lhs, rhs, { desc = desc })
+end
+-- Insert mode mapping helper.
+local imap = function(lhs, rhs, desc)
+  vim.keymap.set("i", lhs, rhs, { desc = desc })
+end
 
 -- Paste linewise before/after current line
 -- Usage: `yiw` to yank a word and `]p` to put it on the next line.
@@ -48,6 +56,41 @@ local function restore_cr(ev)
 end
 Config.new_autocmd({ "FileType", "BufWinEnter", "TermOpen" }, nil, restore_cr, "Keep native <CR> in special buffers")
 
+-- `<CR>q` to write and quit. NOTE: this makes a bare `<CR>` (write, above) wait
+-- for 'timeoutlen' to see if a `q` follows. Lower 'timeoutlen' if it feels slow.
+nmap("<CR>q", "<Cmd>wq<CR>", "Write & quit")
+
+-- Window navigation aliases (in addition to 'mini.basics' `<C-hjkl>`).
+nmap(";;", "<C-w>w", "Other window")
+nmap("gl", "<C-w>w", "Other window")
+-- Quick vertical split. (`\` alone is the 'mini.basics' option-toggle prefix,
+-- so this uses <Leader>\ to avoid clobbering it.)
+nmap("<Leader>\\", "<C-w>v", "Vertical split")
+
+-- `;q` to delete the current buffer (mirrors the `<Leader>bd` buffer-delete).
+nmap(";q", "<Cmd>lua MiniBufremove.delete()<CR>", "Delete buffer")
+
+-- `;a` as a quick insert/escape toggle: enter Insert from Normal, leave from Insert.
+nmap(";a", "i", "Enter insert")
+imap(";a", "<Esc>", "Leave insert")
+
+-- Delete word backward in Insert mode with Alt+Backspace.
+imap("<M-BS>", "<C-w>", "Delete word backward")
+
+-- Don't clobber the unnamed register when deleting/changing small bits of text:
+-- route `x` and `c` to the black-hole register (see `:h quote_`).
+nxmap("x", '"_x', "Delete char (black hole)")
+nxmap("c", '"_c', "Change (black hole)")
+
+-- `Y` (Normal) yanks the whole buffer.
+nmap("Y", "<Cmd>%y<CR>", "Yank whole buffer")
+
+-- `z`` toggles the quote style of the string under the cursor (JS/TS family):
+-- `'single'` -> `"double"` -> `` `template` `` -> `"double"`.
+nmap("z`", function()
+  require("string-converter").toggle_string_quotes()
+end, "Toggle string quotes")
+
 -- Many general mappings are created by 'mini.basics'. See 'plugin/30_mini.lua'
 
 -- stylua: ignore start
@@ -78,6 +121,8 @@ Config.new_autocmd({ "FileType", "BufWinEnter", "TermOpen" }, nil, restore_cr, "
 -- Create a global table with information about Leader groups in certain modes.
 -- This is used to provide 'mini.clue' with extra clues.
 -- Add an entry if you create a new group.
+-- NOTE: the `<Leader>a` "+AI" group is registered in 'plugin/60_agentic.lua'
+-- (it appends to this table at source time, before 'mini.clue' setup runs).
 Config.leader_group_clues = {
   { mode = 'n', keys = '<Leader>b', desc = '+Buffer' },
   { mode = 'n', keys = '<Leader>e', desc = '+Explore/Edit' },
@@ -105,6 +150,10 @@ end
 local xmap_leader = function(suffix, rhs, desc)
   vim.keymap.set('x', '<Leader>' .. suffix, rhs, { desc = desc })
 end
+
+-- a is for 'AI'. Mappings live with the plugin in 'plugin/60_agentic.lua'
+-- (`<Leader>aa` toggle chat, `<Leader>ac` add file/selection to context).
+-- The `<Leader>a` "+AI" clue group is registered there too.
 
 -- b is for 'Buffer'. Common usage:
 -- - `<Leader>bs` - create scratch (temporary) buffer
@@ -271,6 +320,11 @@ nmap_leader('sw', '<Cmd>lua MiniSessions.write()<CR>',          'Write current')
 -- t is for 'Terminal'
 nmap_leader('tT', '<Cmd>horizontal term<CR>', 'Terminal (horizontal)')
 nmap_leader('tt', '<Cmd>vertical term<CR>',   'Terminal (vertical)')
+
+-- `<C-`>` opens a split terminal from Normal mode, and jumps back to the editor
+-- from inside a terminal. Same key both ways, mirroring the dotfiles `<C-'>`.
+vim.keymap.set('n', '<C-`>', '<Cmd>vertical term<CR>',  { desc = 'Terminal (split)' })
+vim.keymap.set('t', '<C-`>', [[<C-\><C-n><C-w>p]],       { desc = 'Back to editor' })
 
 -- v is for 'Visits'. Common usage:
 -- - `<Leader>vv` - add    "core" label to current file.
