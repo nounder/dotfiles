@@ -28,43 +28,9 @@ local now, later = MiniDeps.now, MiniDeps.later
 local now_if_args = Config.now_if_args
 
 -- Step one ===================================================================
--- Enable 'miniwinter' color scheme. It comes with 'mini.nvim' and uses 'mini.hues'.
---
--- See also:
--- - `:h mini.nvim-color-schemes` - list of other color schemes
--- - `:h MiniHues-examples` - how to define highlighting with 'mini.hues'
--- - 'plugin/40_plugins.lua' honorable mentions - other good color schemes
-now(function()
-	vim.cmd("colorscheme miniwinter")
-
-	-- Make the active color scheme transparent by stripping background colors, so
-	-- the terminal's own background / wallpaper shows through.
-	-- NOTE: requires actual transparency from the terminal emulator (a transparent
-	-- window in iTerm2/Ghostty/Kitty/WezTerm/etc.) - Neovim can only remove its
-	-- background, not create see-through. There is no pre-made transparent scheme;
-	-- 'mini.colors' generates it on the fly via `:add_transparency()`.
-	--
-	-- `resolve_links()` first is required: `add_transparency()` skips linked groups
-	-- (see `:h MiniColors-colorscheme:add_transparency()`).
-	require("mini.colors")
-		.get_colorscheme()
-		:resolve_links()
-		:add_transparency({
-			general = true, -- main editor background (Normal)
-			float = true, -- floating windows (completion, hover, pickers)
-			statusline = true, -- 'mini.statusline'
-			statuscolumn = true, -- sign/number/fold column, diagnostic signs
-			tabline = true,
-			winbar = true,
-		})
-		:apply()
-end)
-
--- You can try these other 'mini.hues'-based color schemes (uncomment with `gcc`):
--- now(function() vim.cmd('colorscheme minispring') end)
--- now(function() vim.cmd('colorscheme minisummer') end)
--- now(function() vim.cmd('colorscheme miniautumn') end)
--- now(function() vim.cmd('colorscheme randomhue') end)
+-- The color scheme is set up in its own file: 'plugin/25_colorscheme.lua'
+-- (sourced just before this one). It builds 'base16-gruvbox' via 'mini.base16'
+-- and applies transparency + highlight overrides.
 
 -- Common configuration presets. Example usage:
 -- - `<C-s>` in Insert mode - save and go to Normal mode
