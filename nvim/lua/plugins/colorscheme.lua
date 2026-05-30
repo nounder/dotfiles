@@ -43,9 +43,17 @@ return {
           base0F = "#d65d0e", -- brown
         }
         require("mini.base16").setup({ palette = p, use_cterm = true })
-        for _, g in ipairs({ "Normal", "NormalNC", "NormalFloat", "FloatBorder", "SignColumn", "EndOfBuffer", "MsgArea", "StatusLine", "StatusLineNC" }) do
+        for _, g in ipairs({
+          "Normal", "NormalNC", "NormalFloat", "FloatBorder",
+          "SignColumn", "EndOfBuffer", "MsgArea",
+          "TabLine", "TabLineFill", "TabLineSel",
+        }) do
           vim.api.nvim_set_hl(0, g, { bg = "NONE" })
         end
+        vim.api.nvim_set_hl(0, "WinSeparator", { bg = "NONE", fg = p.base02 })
+        vim.api.nvim_set_hl(0, "VertSplit", { bg = "NONE", fg = p.base02 })
+        vim.api.nvim_set_hl(0, "StatusLine", { bg = "NONE", fg = p.base02 })
+        vim.api.nvim_set_hl(0, "StatusLineNC", { bg = "NONE", fg = p.base02 })
 
         local function mix(a, b, t)
           local function c(h) return tonumber(h, 16) end
@@ -59,7 +67,13 @@ return {
         local diff_add_bg = mix(p.base00, p.base0B, 0.15)
         local diff_del_bg = mix(p.base00, p.base08, 0.15)
 
-        vim.api.nvim_set_hl(0, "StatusLine", { link = "Normal" })
+        vim.api.nvim_set_hl(0, "Identifier", { fg = p.base0D })
+        vim.api.nvim_set_hl(0, "Function", { fg = p.base0D })
+        vim.api.nvim_set_hl(0, "@variable", { fg = p.base0D })
+        vim.api.nvim_set_hl(0, "@module", { link = "Type" })
+        vim.api.nvim_set_hl(0, "@property", { fg = p.base05 })
+        vim.api.nvim_set_hl(0, "@variable.member", { fg = p.base05 })
+        vim.api.nvim_set_hl(0, "@lsp.type.property", { fg = p.base05 })
         vim.api.nvim_set_hl(0, "MsgArea", { fg = p.base04 })
         vim.api.nvim_set_hl(0, "BlinkCmpGhostText", { fg = p.base03 })
         vim.api.nvim_set_hl(0, "NonText", { fg = p.base03 })
