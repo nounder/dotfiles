@@ -181,11 +181,9 @@ now(function()
   vim.o.statusline = "%<%#NonText#%f %h%m%r%= %l,%c"
 end)
 
--- Tabline. Sets `:h 'tabline'` to show all listed buffers in a line at the top.
--- Buffers are ordered as they were created. Navigate with `[b` and `]b`.
-now(function()
-  require("mini.tabline").setup()
-end)
+-- Tabline disabled. ('mini.tabline' is not set up.) Navigate buffers with
+-- `[b` / `]b` or the buffer picker (`<Leader>fb`) instead of a visible tabline.
+vim.o.showtabline = 0
 
 -- Step one or two ============================================================
 -- Load now if Neovim is started like `nvim -- path/to/file`, otherwise - later.

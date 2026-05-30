@@ -19,6 +19,35 @@ end
 nmap("[p", '<Cmd>exe "put! " . v:register<CR>', "Paste Above")
 nmap("]p", '<Cmd>exe "put "  . v:register<CR>', "Paste Below")
 
+nmap("Q", "<Cmd>q<CR>", "Quit window")
+
+-- `<CR>` to write, but only in regular file buffers. In special buffers
+-- (quickfix, help, prompts, pickers, Neogit, etc.) `<CR>` keeps its native
+-- meaning (select item, jump to result, confirm) via a `FileType`-scoped
+-- restore below.
+nmap("<CR>", "<Cmd>write<CR>", "Write file")
+
+-- Buffer types / filetypes where `<CR>` must keep its native behavior.
+local cr_native_buftypes = { quickfix = true, nofile = true, prompt = true, help = true, terminal = true }
+local cr_native_filetypes = {
+  qf = true,
+  help = true,
+  NeogitStatus = true,
+  NeogitCommitMessage = true,
+  NeogitPopup = true,
+  minifiles = true,
+  ministarter = true,
+  checkhealth = true,
+  git = true,
+}
+local function restore_cr(ev)
+  if cr_native_buftypes[vim.bo[ev.buf].buftype] or cr_native_filetypes[vim.bo[ev.buf].filetype] then
+    -- Restore Neovim's default `<CR>` for this buffer only.
+    vim.keymap.set("n", "<CR>", "<CR>", { buffer = ev.buf })
+  end
+end
+Config.new_autocmd({ "FileType", "BufWinEnter", "TermOpen" }, nil, restore_cr, "Keep native <CR> in special buffers")
+
 -- Many general mappings are created by 'mini.basics'. See 'plugin/30_mini.lua'
 
 -- stylua: ignore start
