@@ -149,8 +149,11 @@ now(function()
   end, "Auto-save cwd session on exit")
 end)
 
--- Start screen. This is what is shown when you open Neovim like `nvim`.
--- Example usage:
+-- Start screen ('mini.starter'). Disabled: plain `nvim` opens on an empty
+-- `[No Name]` buffer (normal Vim behavior) instead of a splash screen.
+-- Re-enable by uncommenting the block below (use `gcc`).
+--
+-- Example usage when enabled:
 -- - Type prefix keys to limit available candidates
 -- - Navigate down/up with `<C-n>` and `<C-p>`
 -- - Press `<CR>` to select an entry
@@ -158,9 +161,9 @@ end)
 -- See also:
 -- - `:h MiniStarter-example-config` - non-default config examples
 -- - `:h MiniStarter-lifecycle` - how to work with Starter buffer
-now(function()
-  require("mini.starter").setup()
-end)
+-- now(function()
+--   require("mini.starter").setup()
+-- end)
 
 -- Statusline. Sets `:h 'statusline'` to show more info in a line below window.
 -- Example usage:
@@ -391,35 +394,6 @@ end)
 -- - `:h MiniAlign-algorithm` - how alignment is done on algorithmic level
 later(function()
   require("mini.align").setup()
-end)
-
--- Animate common Neovim actions. Like cursor movement, scroll, window resize,
--- window open, window close. Animations are done based on Neovim events and
--- don't require custom mappings.
---
--- It is not enabled by default because its effects are a matter of taste.
--- Also scroll and resize have some unwanted side effects (see `:h mini.animate`).
--- Uncomment next line (use `gcc`) to enable.
-later(function()
-  -- Enable only vertical scroll animation; disable the rest (cursor trail,
-  -- window resize/open/close) as their effects are a matter of taste.
-  local animate = require("mini.animate")
-  animate.setup({
-    scroll = {
-      -- Scroll glide: cubic ease-out, 8ms per step. Cubic decelerates harder
-      -- than quadratic, so it settles into the stop more gently (less abrupt).
-      -- Lower `duration` for snappier, raise for floatier. Swap `cubic` for
-      -- `quadratic`/`quartic`/`exponential`. See `:h MiniAnimate.gen_timing`.
-      timing = animate.gen_timing.cubic({ duration = 2, unit = "step", easing = "out" }),
-      -- More steps = smoother, finer glide (default 60). Higher = less abrupt
-      -- on short scrolls. See `:h MiniAnimate.config` (subscroll).
-      subscroll = animate.gen_subscroll.equal({ max_output_steps = 120 }),
-    },
-    cursor = { enable = false },
-    resize = { enable = false },
-    open = { enable = false },
-    close = { enable = false },
-  })
 end)
 
 -- Go forward/backward with square brackets. Implements consistent sets of mappings
