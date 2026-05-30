@@ -650,3 +650,4 @@ fi
 
 
 export PI_OFFLINE=1
+export NVIM_APPNAME=nvim-minimax
