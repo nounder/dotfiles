@@ -14,6 +14,7 @@ import { AuthStorage, type ExtensionAPI } from "@mariozechner/pi-coding-agent"
 import {
   createSdkMcpServer,
   query,
+  type EffortLevel,
   type SDKMessage,
   type SDKUserMessage,
   type SettingSource,
@@ -125,6 +126,7 @@ const MODELS = getModels("anthropic").map((model) => ({
   cost: model.cost,
   contextWindow: model.contextWindow,
   maxTokens: model.maxTokens,
+  thinkingLevelMap: model.thinkingLevelMap,
 }))
 
 const DEFAULT_THINKING_BUDGETS: Record<NonXhighThinkingLevel, number> = {
@@ -782,26 +784,69 @@ type ThinkingConfig =
   | { type: "adaptive" }
   | { type: "enabled"; budgetTokens: number }
 
+type MappedThinkingConfig = {
+  thinking: ThinkingConfig
+  effort?: EffortLevel
+}
+
+function getClaudeFourMinorVersion(modelId?: string): number | undefined {
+  const match = modelId?.toLowerCase().match(/claude-(?:opus|sonnet|haiku)-4[-.](\d{1,2})(?:\D|$)/)
+  if (!match) return undefined
+  const minor = Number(match[1])
+  return Number.isFinite(minor) ? minor : undefined
+}
+
+function supportsAdaptiveThinkingModel(modelId?: string): boolean {
+  const minor = getClaudeFourMinorVersion(modelId)
+  return minor !== undefined && minor >= 6
+}
+
+function supportsMaxEffortModel(modelId?: string): boolean {
+  const normalized = modelId?.toLowerCase() ?? ""
+  return (
+    normalized.includes("opus-4-6") ||
+    normalized.includes("opus-4.6") ||
+    normalized.includes("opus-4-7") ||
+    normalized.includes("opus-4.7") ||
+    normalized.includes("sonnet-4-6") ||
+    normalized.includes("sonnet-4.6")
+  )
+}
+
+function mapEffort(reasoning: ThinkingLevel, modelId?: string): EffortLevel {
+  switch (reasoning) {
+    case "minimal":
+    case "low":
+      return "low"
+    case "medium":
+      return "medium"
+    case "xhigh":
+      return supportsMaxEffortModel(modelId) ? "max" : "high"
+    case "high":
+    default:
+      return "high"
+  }
+}
+
 function mapThinkingConfig(
   reasoning?: ThinkingLevel,
   modelId?: string,
   thinkingBudgets?: SimpleStreamOptions["thinkingBudgets"],
-): ThinkingConfig | undefined {
+): MappedThinkingConfig | undefined {
   if (!reasoning) return undefined
 
-  const isOpus46 = modelId?.includes("opus-4-6") || modelId?.includes("opus-4.6")
-  if (isOpus46) {
-    return { type: "adaptive" }
+  if (supportsAdaptiveThinkingModel(modelId)) {
+    return { thinking: { type: "adaptive" }, effort: mapEffort(reasoning, modelId) }
   }
 
   const effectiveReasoning: NonXhighThinkingLevel = reasoning === "xhigh" ? "high" : reasoning
   const customBudgets = thinkingBudgets as Partial<Record<NonXhighThinkingLevel, number>> | undefined
   const customBudget = customBudgets?.[effectiveReasoning]
   if (typeof customBudget === "number" && Number.isFinite(customBudget) && customBudget > 0) {
-    return { type: "enabled", budgetTokens: customBudget }
+    return { thinking: { type: "enabled", budgetTokens: customBudget } }
   }
 
-  return { type: "enabled", budgetTokens: DEFAULT_THINKING_BUDGETS[effectiveReasoning] }
+  return { thinking: { type: "enabled", budgetTokens: DEFAULT_THINKING_BUDGETS[effectiveReasoning] } }
 }
 
 function parsePartialJson(input: string, fallback: Record<string, unknown>): Record<string, unknown> {
@@ -920,7 +965,10 @@ function streamClaudeAgentSdk(
 
       const thinkingConfig = mapThinkingConfig(options?.reasoning, model.id, options?.thinkingBudgets)
       if (thinkingConfig) {
-        queryOptions.thinking = thinkingConfig
+        queryOptions.thinking = thinkingConfig.thinking
+        if (thinkingConfig.effort) {
+          queryOptions.effort = thinkingConfig.effort
+        }
       }
 
       sdkQuery = query({ prompt, options: queryOptions })
