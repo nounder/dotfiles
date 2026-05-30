@@ -29,36 +29,25 @@ nmap("]p", '<Cmd>exe "put "  . v:register<CR>', "Paste Below")
 
 nmap("Q", "<Cmd>q<CR>", "Quit window")
 
--- `<CR>` to write, but only in regular file buffers. In special buffers
--- (quickfix, help, prompts, pickers, Neogit, etc.) `<CR>` keeps its native
--- meaning (select item, jump to result, confirm) via a `FileType`-scoped
--- restore below.
-nmap("<CR>", "<Cmd>write<CR>", "Write file")
-
--- Buffer types / filetypes where `<CR>` must keep its native behavior.
+-- `<CR>` (Normal) saves the file, mirroring '~/dotfiles/nvim'. In special
+-- buffers (quickfix, help, prompts, Neogit, mini pickers, etc.) `<CR>` keeps its
+-- native meaning (select item, jump to result, confirm). The check happens at
+-- keypress time via a `<expr>` map, so there's no autocmd timing race with
+-- plugins that set their own `<CR>` mapping.
 local cr_native_buftypes = { quickfix = true, nofile = true, prompt = true, help = true, terminal = true }
-local cr_native_filetypes = {
-  qf = true,
-  help = true,
-  NeogitStatus = true,
-  NeogitCommitMessage = true,
-  NeogitPopup = true,
-  minifiles = true,
-  ministarter = true,
-  checkhealth = true,
-  git = true,
-}
-local function restore_cr(ev)
-  if cr_native_buftypes[vim.bo[ev.buf].buftype] or cr_native_filetypes[vim.bo[ev.buf].filetype] then
-    -- Restore Neovim's default `<CR>` for this buffer only.
-    vim.keymap.set("n", "<CR>", "<CR>", { buffer = ev.buf })
+local function cr_save()
+  -- Return the keys to feed: native `<CR>` in special buffers, else write+esc.
+  if cr_native_buftypes[vim.bo.buftype] then
+    return "<CR>"
   end
+  return "<Cmd>w<CR><Esc>"
 end
-Config.new_autocmd({ "FileType", "BufWinEnter", "TermOpen" }, nil, restore_cr, "Keep native <CR> in special buffers")
+vim.keymap.set("n", "<CR>", cr_save, { expr = true, desc = "Save file" })
 
--- `<CR>q` to write and quit. NOTE: this makes a bare `<CR>` (write, above) wait
--- for 'timeoutlen' to see if a `q` follows. Lower 'timeoutlen' if it feels slow.
-nmap("<CR>q", "<Cmd>wq<CR>", "Write & quit")
+-- `<CR>q` saves and quits (chord, as in dotfiles). NOTE: a chord makes a bare
+-- `<CR>` wait for 'timeoutlen' to see if `q` follows; `Q` (above) is the no-wait
+-- way to quit. Drop this line if the save-on-Enter delay bothers you.
+vim.keymap.set("n", "<CR>q", "<Cmd>wq<CR><Esc>", { desc = "Save & quit" })
 
 -- Window navigation aliases (in addition to 'mini.basics' `<C-hjkl>`).
 nmap(";;", "<C-w>w", "Other window")
@@ -73,6 +62,16 @@ nmap(";q", "<Cmd>lua MiniBufremove.delete()<CR>", "Delete buffer")
 -- `;a` as a quick insert/escape toggle: enter Insert from Normal, leave from Insert.
 nmap(";a", "i", "Enter insert")
 imap(";a", "<Esc>", "Leave insert")
+
+-- `f` finder prefix (no Leader), ported from '~/dotfiles/nvim'. The forward
+-- `f{char}` motion is disabled in 'plugin/30_mini.lua' to free this prefix;
+-- `F`/`t`/`T` remain mini.jump motions. Uses 'mini.pick' as the picker backend.
+-- - `ff` - find files            - `fr` - recent (old) files
+-- - `fo` - resume last picker     - `fl` - lines in current buffer
+nmap("ff", '<Cmd>Pick files<CR>', "Find files")
+nmap("fr", '<Cmd>Pick oldfiles<CR>', "Recent files")
+nmap("fo", '<Cmd>Pick resume<CR>', "Resume picker")
+nmap("fl", '<Cmd>Pick buf_lines scope="all"<CR>', "Lines (buffer)")
 
 -- Delete word backward in Insert mode with Alt+Backspace.
 imap("<M-BS>", "<C-w>", "Delete word backward")

@@ -595,24 +595,16 @@ end)
 -- Jump to next/previous single character. It implements "smarter `fFtT` keys"
 -- (see `:h f`) that work across multiple lines, start "jumping mode", and
 -- highlight all target matches. Example usage:
--- - `fxff` - move *f*orward onto next character "x", then next, and next again
+-- - `Fx` - move backward onto previous character "x"
 -- - `dt)` - *d*elete *t*ill next closing parenthesis (`)`)
-later(function()
-  require("mini.jump").setup()
-end)
-
--- Jump within visible lines to pre-defined spots via iterative label filtering.
--- Spots are computed by a configurable spotter function. Example usage:
--- - Lock eyes on desired location to jump
--- - `<CR>` - start jumping; this shows character labels over target spots
--- - Type character that appears over desired location; number of target spots
---   should be reduced
--- - Keep typing labels until target spot is unique to perform the jump
 --
--- See also:
--- - `:h MiniJump2d.gen_spotter` - list of available spotters
+-- NOTE: the forward `f` mapping is DISABLED so that `f` is a finder prefix
+-- (`ff`/`fr`/`fo`/`fl`, see 'plugin/20_keymaps.lua'), mirroring '~/dotfiles/nvim'.
+-- `F` (backward), `t`/`T` (till), and `;` (repeat) remain mini.jump motions.
 later(function()
-  require("mini.jump2d").setup()
+  require("mini.jump").setup({
+    mappings = { forward = "" },
+  })
 end)
 
 -- Special key mappings. Provides helpers to map:
