@@ -171,11 +171,25 @@ later(function()
 
   -- See `:h neogit` and https://github.com/NeogitOrg/neogit for all options.
   require("neogit").setup({
+    -- Don't show the keybinding hints at the top of Neogit buffers.
+    disable_hint = true,
+    -- Highlight diffs in Neogit buffers via tree-sitter.
+    treesitter_diff_highlight = true,
+    -- Commit graph style. "kitty" uses the Kitty terminal graphics protocol
+    -- (renders best in Kitty/Ghostty); switch to "unicode" for other terminals.
+    graph_style = "kitty",
+    commit_editor = {
+      -- Open the commit message editor in its own tab page.
+      kind = "tab",
+      -- Show the staged diff alongside the message in a vertical split.
+      staged_diff_split_kind = "vsplit",
+    },
     integrations = {
       -- Reuse 'mini.pick' for selectors instead of pulling in telescope/fzf.
       -- ('mini.pick' is set up in 'plugin/30_mini.lua'.)
       mini_pick = true,
       -- No diffview.nvim; rely on Neogit's own diffs + 'mini.diff' in buffers.
+      -- (Dotfiles uses diffview=true; minimax deliberately keeps mini.diff.)
       diffview = false,
     },
     -- Open the status buffer in its own tab page rather than a floating window.
