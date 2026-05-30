@@ -18,5 +18,5 @@
 --
 -- See `:h vim.lsp.Config` and `:h vim.lsp.ClientConfig` for all available fields.
 return {
-	cmd = { "bunx", "--no-install", "yaml-language-server", "--stdio" },
+  cmd = { "bunx", "--no-install", "yaml-language-server", "--stdio" },
 }

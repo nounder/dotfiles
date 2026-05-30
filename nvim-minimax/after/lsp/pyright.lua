@@ -13,17 +13,17 @@
 --
 -- See `:h vim.lsp.Config` and `:h vim.lsp.ClientConfig` for all available fields.
 return {
-	settings = {
-		python = {
-			analysis = {
-				-- Analyze only files open in the editor, not the whole workspace, to
-				-- keep things fast in large projects. Set to "workspace" for full checks.
-				diagnosticMode = "openFilesOnly",
-				-- Surface common issues without being overly noisy.
-				typeCheckingMode = "basic",
-				useLibraryCodeForTypes = true,
-				autoImportCompletions = true,
-			},
-		},
-	},
+  settings = {
+    python = {
+      analysis = {
+        -- Analyze only files open in the editor, not the whole workspace, to
+        -- keep things fast in large projects. Set to "workspace" for full checks.
+        diagnosticMode = "openFilesOnly",
+        -- Surface common issues without being overly noisy.
+        typeCheckingMode = "basic",
+        useLibraryCodeForTypes = true,
+        autoImportCompletions = true,
+      },
+    },
+  },
 }

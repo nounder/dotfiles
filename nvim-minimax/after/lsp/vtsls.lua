@@ -12,54 +12,54 @@
 --
 -- See `:h vim.lsp.Config` and `:h vim.lsp.ClientConfig` for all available fields.
 return {
-	on_attach = function(client, buf_id)
-		-- Reduce very long list of triggers for better 'mini.completion' experience
-		client.server_capabilities.completionProvider.triggerCharacters = { ".", ":", "<", '"', "'", "/", "@" }
+  on_attach = function(client, buf_id)
+    -- Reduce very long list of triggers for better 'mini.completion' experience
+    client.server_capabilities.completionProvider.triggerCharacters = { ".", ":", "<", '"', "'", "/", "@" }
 
-		-- Toggle inlay hints on per-buffer with `<Leader>li`.
-		-- The `*.inlayHints.*` settings further down control which hints the
-		-- server computes once toggled on.
-		vim.lsp.inlay_hint.enable(false, { bufnr = buf_id })
-		vim.keymap.set("n", "<Leader>li", function()
-			local enabled = vim.lsp.inlay_hint.is_enabled({ bufnr = buf_id })
-			vim.lsp.inlay_hint.enable(not enabled, { bufnr = buf_id })
-		end, { buffer = buf_id, desc = "Toggle inlay hints" })
-	end,
-	-- Structure of these settings comes from vtsls, not Neovim.
-	-- See https://github.com/yioneko/vtsls for the full list of options.
-	settings = {
-		-- vtsls-specific options
-		vtsls = {
-			experimental = {
-				-- Group "add missing imports", "remove unused", etc. into one entry
-				completion = { enableServerSideFuzzyMatch = true },
-			},
-		},
-		-- These map onto the standard tsserver settings used by VS Code, applied
-		-- to both TypeScript and JavaScript.
-		typescript = {
-			updateImportsOnFileMove = { enabled = "always" },
-			suggest = { completeFunctionCalls = true },
-			inlayHints = {
-				parameterNames = { enabled = "literals" },
-				parameterTypes = { enabled = true },
-				variableTypes = { enabled = false },
-				propertyDeclarationTypes = { enabled = true },
-				functionLikeReturnTypes = { enabled = true },
-				enumMemberValues = { enabled = true },
-			},
-		},
-		javascript = {
-			updateImportsOnFileMove = { enabled = "always" },
-			suggest = { completeFunctionCalls = true },
-			inlayHints = {
-				parameterNames = { enabled = "literals" },
-				parameterTypes = { enabled = true },
-				variableTypes = { enabled = false },
-				propertyDeclarationTypes = { enabled = true },
-				functionLikeReturnTypes = { enabled = true },
-				enumMemberValues = { enabled = true },
-			},
-		},
-	},
+    -- Toggle inlay hints on per-buffer with `<Leader>li`.
+    -- The `*.inlayHints.*` settings further down control which hints the
+    -- server computes once toggled on.
+    vim.lsp.inlay_hint.enable(false, { bufnr = buf_id })
+    vim.keymap.set("n", "<Leader>li", function()
+      local enabled = vim.lsp.inlay_hint.is_enabled({ bufnr = buf_id })
+      vim.lsp.inlay_hint.enable(not enabled, { bufnr = buf_id })
+    end, { buffer = buf_id, desc = "Toggle inlay hints" })
+  end,
+  -- Structure of these settings comes from vtsls, not Neovim.
+  -- See https://github.com/yioneko/vtsls for the full list of options.
+  settings = {
+    -- vtsls-specific options
+    vtsls = {
+      experimental = {
+        -- Group "add missing imports", "remove unused", etc. into one entry
+        completion = { enableServerSideFuzzyMatch = true },
+      },
+    },
+    -- These map onto the standard tsserver settings used by VS Code, applied
+    -- to both TypeScript and JavaScript.
+    typescript = {
+      updateImportsOnFileMove = { enabled = "always" },
+      suggest = { completeFunctionCalls = true },
+      inlayHints = {
+        parameterNames = { enabled = "literals" },
+        parameterTypes = { enabled = true },
+        variableTypes = { enabled = false },
+        propertyDeclarationTypes = { enabled = true },
+        functionLikeReturnTypes = { enabled = true },
+        enumMemberValues = { enabled = true },
+      },
+    },
+    javascript = {
+      updateImportsOnFileMove = { enabled = "always" },
+      suggest = { completeFunctionCalls = true },
+      inlayHints = {
+        parameterNames = { enabled = "literals" },
+        parameterTypes = { enabled = true },
+        variableTypes = { enabled = false },
+        propertyDeclarationTypes = { enabled = true },
+        functionLikeReturnTypes = { enabled = true },
+        enumMemberValues = { enabled = true },
+      },
+    },
+  },
 }

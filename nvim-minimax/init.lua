@@ -47,13 +47,13 @@
 -- - `:SomeCommand ...` or `:lua ...` means execute mentioned command.
 
 -- Bootstrap 'mini.nvim' manually in a way that it gets managed by 'mini.deps'
-local mini_path = vim.fn.stdpath('data') .. '/site/pack/deps/start/mini.nvim'
+local mini_path = vim.fn.stdpath("data") .. "/site/pack/deps/start/mini.nvim"
 if not vim.loop.fs_stat(mini_path) then
   vim.cmd('echo "Installing `mini.nvim`" | redraw')
-  local origin = 'https://github.com/nvim-mini/mini.nvim'
-  local clone_cmd = { 'git', 'clone', '--filter=blob:none', origin, mini_path }
+  local origin = "https://github.com/nvim-mini/mini.nvim"
+  local clone_cmd = { "git", "clone", "--filter=blob:none", origin, mini_path }
   vim.fn.system(clone_cmd)
-  vim.cmd('packadd mini.nvim | helptags ALL')
+  vim.cmd("packadd mini.nvim | helptags ALL")
   vim.cmd('echo "Installed `mini.nvim`" | redraw')
 end
 
@@ -67,7 +67,7 @@ end
 -- - `:h MiniDeps-overview` - how to use it
 -- - `:h MiniDeps-commands` - all available commands
 -- - 'plugin/30_mini.lua' - more details about 'mini.nvim' in general
-require('mini.deps').setup()
+require("mini.deps").setup()
 
 -- Define config table to be able to pass data between scripts
 -- It is a global variable which can be use both as `_G.Config` and `Config`
@@ -81,7 +81,7 @@ _G.Config = {}
 -- - `:h autocommand`
 -- - `:h nvim_create_augroup()`
 -- - `:h nvim_create_autocmd()`
-local gr = vim.api.nvim_create_augroup('custom-config', {})
+local gr = vim.api.nvim_create_augroup("custom-config", {})
 Config.new_autocmd = function(event, pattern, callback, desc)
   local opts = { group = gr, pattern = pattern, callback = callback, desc = desc }
   vim.api.nvim_create_autocmd(event, opts)

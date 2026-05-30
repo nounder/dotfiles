@@ -11,13 +11,13 @@
 -- An example helper to create a Normal mode mapping
 local nmap = function(lhs, rhs, desc)
   -- See `:h vim.keymap.set()`
-  vim.keymap.set('n', lhs, rhs, { desc = desc })
+  vim.keymap.set("n", lhs, rhs, { desc = desc })
 end
 
 -- Paste linewise before/after current line
 -- Usage: `yiw` to yank a word and `]p` to put it on the next line.
-nmap('[p', '<Cmd>exe "put! " . v:register<CR>', 'Paste Above')
-nmap(']p', '<Cmd>exe "put "  . v:register<CR>', 'Paste Below')
+nmap("[p", '<Cmd>exe "put! " . v:register<CR>', "Paste Above")
+nmap("]p", '<Cmd>exe "put "  . v:register<CR>', "Paste Below")
 
 -- Many general mappings are created by 'mini.basics'. See 'plugin/30_mini.lua'
 
@@ -220,12 +220,20 @@ nmap_leader('oz', '<Cmd>lua MiniMisc.zoom()<CR>',          'Zoom toggle')
 -- - `<Leader>sd` - delete previously started session
 local session_new = 'vim.ui.input({ prompt = "Session name: " }, MiniSessions.write)'
 
--- Restore the "default" session: the local `Session.vim` of the current working
--- directory if present, else the latest global session. `MiniSessions.read()`
--- re-detects sessions on every call, so it finds a local session auto-saved on
--- a previous exit (see the `VimLeavePre` autocommand in 'plugin/30_mini.lua').
+-- Restore the current working directory's session. It is stored in the global
+-- sessions directory (keyed by cwd) and auto-saved on exit by the `VimLeavePre`
+-- autocommand in 'plugin/30_mini.lua'; `Config.cwd_session_name()` /
+-- `cwd_session_path()` are the shared helpers defined there. If no session exists
+-- for the cwd, fall back to the read picker.
 -- `force=true` discards unsaved buffers like LazyVim does when restoring.
-nmap_leader('ss', '<Cmd>lua MiniSessions.read(nil, { force = true })<CR>', 'Restore (cwd)')
+Config.restore_cwd_session = function()
+  if vim.fn.filereadable(Config.cwd_session_path()) == 1 then
+    MiniSessions.read(Config.cwd_session_name(), { force = true })
+  else
+    MiniSessions.select('read')
+  end
+end
+nmap_leader('ss', '<Cmd>lua Config.restore_cwd_session()<CR>', 'Restore (cwd)')
 nmap_leader('sd', '<Cmd>lua MiniSessions.select("delete")<CR>', 'Delete')
 nmap_leader('sn', '<Cmd>lua ' .. session_new .. '<CR>',         'New')
 nmap_leader('sr', '<Cmd>lua MiniSessions.select("read")<CR>',   'Read')

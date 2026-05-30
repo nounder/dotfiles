@@ -13,5 +13,5 @@
 --
 -- See `:h vim.lsp.Config` and `:h vim.lsp.ClientConfig` for all available fields.
 return {
-	cmd = { "tailwindcss-language-server", "--stdio" },
+  cmd = { "tailwindcss-language-server", "--stdio" },
 }
