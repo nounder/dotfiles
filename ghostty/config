@@ -22,7 +22,7 @@ mouse-shift-capture = false
  background-blur = macos-glass-clear
 # background-blur = macos-glass-regular
 background-blur = true
-background-opacity = 0.6
+background-opacity = 0.8
 background-opacity-cells = true
 
 command = /opt/homebrew/bin/bash

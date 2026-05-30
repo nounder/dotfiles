@@ -1,12 +1,12 @@
 {
-  "lastChangelogVersion": "0.74.0",
-  "defaultProvider": "claude-agent-sdk",
-  "defaultModel": "claude-opus-4-7",
+  "lastChangelogVersion": "0.75.5",
+  "defaultProvider": "openai-codex",
+  "defaultModel": "gpt-5.5",
   "quietStartup": true,
   "packages": [
     "git:github.com/ivanrvpereira/pi-perplexity@4e77f38"
   ],
-  "defaultThinkingLevel": "high",
+  "defaultThinkingLevel": "low",
   "enabledModels": [
     "claude-agent-sdk/claude-sonnet-4-6",
     "claude-agent-sdk/claude-opus-4-7",
