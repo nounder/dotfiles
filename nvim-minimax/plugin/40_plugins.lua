@@ -197,6 +197,11 @@ later(function()
   })
 end)
 
+-- AI chat ====================================================================
+
+-- 'agentic.nvim' (install, setup, and keymaps) lives in its own file.
+-- See 'plugin/60_agentic.lua'.
+
 -- Honorable mentions =========================================================
 
 -- 'mason-org/mason.nvim' (a.k.a. "Mason") is a great tool (package manager) for
