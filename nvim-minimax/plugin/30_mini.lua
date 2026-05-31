@@ -749,6 +749,20 @@ end)
 --   one of `<Leader>f` mappings defined in 'plugin/20_keymaps.lua'
 later(function()
   require("mini.pick").setup()
+
+  -- disable background
+  for _, g in ipairs({
+    "MiniPickNormal",
+    "MiniPickBorder",
+    "MiniPickBorderText",
+    "MiniPickPrompt",
+    "MiniPickPromptCaret",
+    "MiniPickPromptPrefix",
+    "MiniPickHeader",
+    "MiniPickMatchRanges",
+  }) do
+    vim.api.nvim_set_hl(0, g, { fg = vim.api.nvim_get_hl(0, { name = g }).fg, bg = "NONE" })
+  end
 end)
 
 -- Manage and expand snippets (templates for a frequently used text).

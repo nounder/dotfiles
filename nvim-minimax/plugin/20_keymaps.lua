@@ -217,6 +217,9 @@ nmap_leader('fC', '<Cmd>Pick git_commits path="%"<CR>',         'Commits (buf)')
 nmap_leader('fd', '<Cmd>Pick diagnostic scope="all"<CR>',       'Diagnostic workspace')
 nmap_leader('fD', '<Cmd>Pick diagnostic scope="current"<CR>',   'Diagnostic buffer')
 nmap_leader('ff', '<Cmd>Pick files<CR>',                        'Files')
+-- `<Leader><Leader>` (i.e. <Space><Space>) is an alias for `<Leader>ff` so the
+-- most common action (find files) is reachable with a double tap of Leader.
+nmap_leader(' ', '<Cmd>Pick files<CR>',                         'Files')
 nmap_leader('fg', '<Cmd>Pick grep_live<CR>',                    'Grep live')
 nmap_leader('fG', '<Cmd>Pick grep pattern="<cword>"<CR>',       'Grep current word')
 nmap_leader('fh', '<Cmd>Pick help<CR>',                         'Help tags')
