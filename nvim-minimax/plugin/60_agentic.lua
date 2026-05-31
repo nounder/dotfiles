@@ -77,9 +77,22 @@ later(function()
   add("MeanderingProgrammer/render-markdown.nvim")
   require("render-markdown").setup({
     file_types = { "AgenticChat" },
-    -- Disable heading icons + background band; tree-sitter still colors heading
-    -- text. (Matches the disabled-headings preference from '~/dotfiles/nvim'.)
-    heading = { enabled = false },
+    -- Render in EVERY mode. Default render_modes is { 'n', 'c', 't' }, so the
+    -- chat (which sits in Insert while you type a prompt) shows raw `##`/`**`.
+    -- `true` = always render regardless of mode.
+    render_modes = true,
+    -- Headings: conceal the `#`/`##`/... markers but keep the heading-text
+    -- highlight (the per-level color). `position = 'inline'` conceals the `#`s
+    -- and inlines the icon on the left; with empty `icons` nothing replaces
+    -- them, so the marker just vanishes. `backgrounds = {}` drops the colored
+    -- band, `sign = false` drops the sign column glyph. The `foregrounds`
+    -- (RenderMarkdownH1..H6) still color the heading text.
+    heading = {
+      position = "inline",
+      icons = {},
+      backgrounds = {},
+      sign = false,
+    },
     -- Keep the raw markers VISIBLE: don't conceal `**bold**`, `` `code` ``, etc.
     -- By default render-markdown raises 'conceallevel' to 3 while rendering, which
     -- hides the markers. Pinning the rendered level to 0 leaves them on screen;
