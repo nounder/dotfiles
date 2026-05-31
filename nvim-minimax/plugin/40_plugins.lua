@@ -66,6 +66,26 @@ now_if_args(function()
     -- Inline elements (bold/italic, links, code spans) of markdown. The block
     -- 'markdown' parser injects this one, so both are needed for full highlighting.
     "markdown_inline",
+    "python",
+    "typescript",
+    "tsx",
+    "javascript",
+    "json",
+    "yaml",
+    "bash",
+    "swift",
+    "c",
+    "cpp",
+    "css",
+    "html",
+    "toml",
+    "diff",
+    "zig",
+    "rust",
+    "go",
+    "sql",
+    "dockerfile",
+    "regex",
     -- Add here more languages with which you want to use tree-sitter
     -- To see available languages:
     -- - Execute `:=require('nvim-treesitter').get_available()`
