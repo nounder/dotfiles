@@ -90,7 +90,17 @@ now(function()
     -- (100%)" / "Analyzing 'Browser.ts'..."). Other notifications still show and
     -- everything remains in history (`<Leader>en`).
     lsp_progress = { enable = false },
+    -- Show only the message, dropping the default `HH:MM:SS │ ` time prefix.
+    content = { format = function(notif) return notif.msg end },
+    window = {
+      winblend = 0, -- no dimming/blend over the wallpaper (default is 25)
+      config = { title = "" }, -- drop the " Notifications " header; keep the border
+    },
   })
+
+  for _, g in ipairs({ "MiniNotifyNormal", "MiniNotifyBorder", "MiniNotifyLspProgress" }) do
+    vim.api.nvim_set_hl(0, g, { fg = vim.api.nvim_get_hl(0, { name = g }).fg, bg = "NONE" })
+  end
 end)
 
 -- Session management. A thin wrapper around `:h mksession` that consistently
