@@ -281,6 +281,40 @@ nmap_leader('gs', '<Cmd>lua MiniGit.show_at_cursor()<CR>',  'Show at cursor')
 
 xmap_leader('gs', '<Cmd>lua MiniGit.show_at_cursor()<CR>', 'Show at selection')
 
+-- References with a single-result shortcut: when there's exactly one reference
+-- other than the symbol under the cursor, jump straight to it instead of opening
+-- the quickfix list. Servers include the cursor location itself in the results,
+-- so we filter it out first ("definition + one use" → a single jump target).
+-- Otherwise fall back to the default behavior (populate quickfix + open it). The
+-- `on_list` callback replaces the default handler; see `:h on_list`.
+local function lsp_references()
+  local cur_buf = vim.api.nvim_get_current_buf()
+  local cur_pos = vim.api.nvim_win_get_cursor(0)
+  local cur_lnum = cur_pos[1]
+  vim.lsp.buf.references(nil, {
+    on_list = function(opts)
+      -- Drop the entry pointing at the cursor position itself.
+      local others = vim.tbl_filter(function(item)
+        local buf = item.bufnr or vim.fn.bufadd(item.filename)
+        return not (buf == cur_buf and item.lnum == cur_lnum)
+      end, opts.items)
+
+      if #others == 1 then
+        vim.fn.setqflist({}, ' ', opts) -- still record full list for `:cnext`/history
+        local item = others[1]
+        local buf = item.bufnr or vim.fn.bufadd(item.filename)
+        vim.fn.bufload(buf)
+        vim.api.nvim_win_set_buf(0, buf)
+        vim.api.nvim_win_set_cursor(0, { item.lnum, math.max(item.col - 1, 0) })
+        vim.cmd('normal! zz')
+      else
+        vim.fn.setqflist({}, ' ', opts)
+        vim.cmd('botright copen')
+      end
+    end,
+  })
+end
+
 -- g-prefixed LSP navigation. Set buffer-locally only when a language server
 -- attaches (see `:h LspAttach`), so in buffers without LSP these keys keep their
 -- built-in behavior. Same scheme as the LazyVim config in '~/dotfiles/nvim':
@@ -292,7 +326,7 @@ Config.new_autocmd('LspAttach', nil, function(ev)
     vim.keymap.set('n', lhs, rhs, { buffer = ev.buf, desc = 'LSP: ' .. desc })
   end
   buf_map('gd', '<Cmd>lua vim.lsp.buf.definition()<CR>',      'Definition')
-  buf_map('gr', '<Cmd>lua vim.lsp.buf.references()<CR>',      'References')
+  buf_map('gr', lsp_references,                              'References')
   buf_map('gI', '<Cmd>lua vim.lsp.buf.implementation()<CR>',  'Implementation')
   buf_map('gy', '<Cmd>lua vim.lsp.buf.type_definition()<CR>', 'Type definition')
   buf_map('gD', '<Cmd>lua vim.lsp.buf.declaration()<CR>',     'Declaration')
@@ -315,7 +349,7 @@ nmap_leader('li', '<Cmd>lua vim.lsp.buf.implementation()<CR>',  'Implementation'
 nmap_leader('lh', '<Cmd>lua vim.lsp.buf.hover()<CR>',           'Hover')
 nmap_leader('ll', '<Cmd>lua vim.lsp.codelens.run()<CR>',        'Lens')
 nmap_leader('lr', '<Cmd>lua vim.lsp.buf.rename()<CR>',          'Rename')
-nmap_leader('lR', '<Cmd>lua vim.lsp.buf.references()<CR>',      'References')
+nmap_leader('lR', lsp_references,                              'References')
 nmap_leader('ls', '<Cmd>lua vim.lsp.buf.definition()<CR>',      'Source definition')
 nmap_leader('lt', '<Cmd>lua vim.lsp.buf.type_definition()<CR>', 'Type definition')
 

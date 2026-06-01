@@ -549,6 +549,8 @@ later(function()
       miniclue.gen_clues.windows({ submode_resize = true }),
       miniclue.gen_clues.z(),
     },
+    -- Show the clue window sooner (default is 1000ms).
+    window = { delay = 200 },
     -- Explicitly opt-in for set of common keys to trigger clue window
     triggers = {
       { mode = { 'n', 'x' }, keys = '<Leader>' }, -- Leader triggers
