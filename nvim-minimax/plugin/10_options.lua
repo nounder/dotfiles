@@ -105,25 +105,101 @@ Config.new_autocmd('FileType', nil, f, "Proper 'formatoptions'")
 -- Neovim has built-in support for showing diagnostic messages. This configures
 -- a more conservative display while still being useful.
 -- See `:h vim.diagnostic` and `:h vim.diagnostic.config()`.
-local diagnostic_opts = {
-  -- Mark diagnostics only with a sign glyph in the gutter (E/W), on top of any
-  -- other sign, but only for warnings and errors. (For their messages type
-  -- `<Leader>ld`.) NOTE: hints/info have no visible marker since signs are
-  -- WARN+ only; surface them via `<Leader>ld` / `]d` / the `<Leader>fd` picker.
-  signs = { priority = 9999, severity = { min = 'WARN', max = 'ERROR' } },
-
-  -- No underline on the code itself; the gutter sign is the only in-buffer cue.
-  underline = false,
-
-  -- Inline message text at the end of the offending line. Full message is still
-  -- available via `<Leader>ld` (float), `]d`/`[d` (jump), or `<Leader>fd` (picker).
-  virtual_lines = false,
-  virtual_text = true,
-
-  -- Don't update diagnostics when typing
-  update_in_insert = false,
-}
-
--- Use `later()` to avoid sourcing `vim.diagnostic` on startup
-MiniDeps.later(function() vim.diagnostic.config(diagnostic_opts) end)
 -- stylua: ignore end
+
+-- Custom diagnostic display: instead of underlining the code, mark EVERY line a
+-- diagnostic spans with a gutter bar (gitsigns-style), so a multi-line error is
+-- visible on each of its lines - not just the first. The built-in `signs`
+-- handler only marks the start line, so this is a custom `vim.diagnostic`
+-- handler. Handlers are driven by `vim.diagnostic` itself (show/hide called on
+-- every change), so it stays in sync and cleans up automatically.
+MiniDeps.later(function()
+  local ns = vim.api.nvim_create_namespace("span_diagnostic_signs")
+  local hl = {
+    [vim.diagnostic.severity.ERROR] = "DiagnosticSignError",
+    [vim.diagnostic.severity.WARN] = "DiagnosticSignWarn",
+    [vim.diagnostic.severity.INFO] = "DiagnosticSignInfo",
+    [vim.diagnostic.severity.HINT] = "DiagnosticSignHint",
+  }
+
+  -- On every diagnostic update `vim.diagnostic` calls `hide` THEN `show`. If
+  -- `hide` clears the namespace, the bars vanish for a frame before `show`
+  -- redraws them - that's the flicker when editing a line in a span. Fix: never
+  -- clear eagerly in `hide`. `show` already reconciles (sets desired in place,
+  -- prunes stale), so the update path needs no clearing at all. Only a genuine
+  -- "diagnostics turned off" (`vim.diagnostic.hide()`/`reset`, which fires `hide`
+  -- with NO following `show`) must clear. Distinguish them by deferring: `hide`
+  -- schedules a clear; a `show` in the same tick cancels it. If no `show`
+  -- follows, the deferred clear runs and removes the now-stale bars.
+  local pending_clear = {}
+
+  local reconcile = function(bufnr, diagnostics)
+    local line_count = vim.api.nvim_buf_line_count(bufnr)
+    -- Track the most severe diagnostic per line so overlapping spans don't stack
+    -- signs; the worst severity wins (lower number = more severe).
+    local worst = {}
+    for _, d in ipairs(diagnostics) do
+      local last = math.min(d.end_lnum or d.lnum, line_count - 1)
+      for line = d.lnum, last do
+        if worst[line] == nil or d.severity < worst[line] then
+          worst[line] = d.severity
+        end
+      end
+    end
+    -- Stable `id = line + 1` -> re-setting an unchanged bar updates it in place
+    -- and never blinks.
+    for line, severity in pairs(worst) do
+      vim.api.nvim_buf_set_extmark(bufnr, ns, line, 0, {
+        id = line + 1, -- 0-based line -> 1-based id (extmark ids must be > 0)
+        sign_text = "▎",
+        sign_hl_group = hl[severity],
+        priority = 9999, -- sit on top of other signs (e.g. mini.diff)
+      })
+    end
+    -- Prune signs whose line is no longer diagnosed.
+    for _, m in ipairs(vim.api.nvim_buf_get_extmarks(bufnr, ns, 0, -1, {})) do
+      local id, line = m[1], m[2]
+      if worst[line] == nil then
+        vim.api.nvim_buf_del_extmark(bufnr, ns, id)
+      end
+    end
+  end
+
+  vim.diagnostic.handlers.span_signs = {
+    show = function(_, bufnr, diagnostics, _)
+      pending_clear[bufnr] = nil -- cancel any clear queued by the paired `hide`
+      reconcile(bufnr, diagnostics)
+    end,
+    hide = function(_, bufnr)
+      -- Defer; a paired `show` (the update path) will cancel this before it runs.
+      pending_clear[bufnr] = true
+      vim.schedule(function()
+        if pending_clear[bufnr] and vim.api.nvim_buf_is_valid(bufnr) then
+          pending_clear[bufnr] = nil
+          vim.api.nvim_buf_clear_namespace(bufnr, ns, 0, -1)
+        end
+      end)
+    end,
+  }
+
+  vim.diagnostic.config({
+    -- Enable the custom span-sign handler for warnings and errors only (matches
+    -- the previous WARN+ sign policy). NOTE: hints/info get no in-buffer marker;
+    -- surface them via `<Leader>ld` / `]d` / the `<Leader>fd` picker.
+    span_signs = { severity = { min = "WARN", max = "ERROR" } },
+
+    -- Built-in single-line sign handler off; the span handler above replaces it.
+    signs = false,
+
+    -- No underline on the code itself; the gutter span bar is the in-buffer cue.
+    underline = false,
+
+    -- Inline message text at the end of the offending line. Full message is still
+    -- available via `<Leader>ld` (float), `]d`/`[d` (jump), or `<Leader>fd` (picker).
+    virtual_lines = false,
+    virtual_text = true,
+
+    -- Don't update diagnostics when typing
+    update_in_insert = false,
+  })
+end)
