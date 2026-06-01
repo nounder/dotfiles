@@ -89,7 +89,9 @@ vim.o.formatlistpat = [[^\s*[0-9\-\+\*]\+[\.\)]*\s\+]]
 
 -- Built-in completion
 vim.o.complete    = '.,w,b,kspell'                  -- Use less sources
-vim.o.completeopt = 'menuone,noselect,fuzzy,nosort' -- Use custom behavior
+-- 'noinsert' (instead of 'noselect') auto-highlights the first candidate
+-- without inserting it into the buffer until accepted (`<C-l>` / `<CR>`).
+vim.o.completeopt = 'menuone,noinsert,fuzzy,nosort' -- Use custom behavior
 
 -- Autocommands ===============================================================
 
@@ -109,10 +111,26 @@ Config.new_autocmd('FileType', nil, f, "Proper 'formatoptions'")
 
 -- Custom diagnostic display: instead of underlining the code, mark EVERY line a
 -- diagnostic spans with a gutter bar (gitsigns-style), so a multi-line error is
--- visible on each of its lines - not just the first. The built-in `signs`
--- handler only marks the start line, so this is a custom `vim.diagnostic`
--- handler. Handlers are driven by `vim.diagnostic` itself (show/hide called on
--- every change), so it stays in sync and cleans up automatically.
+-- visible on each of its lines - not just the first.
+--
+-- WHY NOT a `vim.diagnostic` handler: handlers are driven by `M.show`, which
+-- ALWAYS runs `M.hide` first. In the real editor the LSP clears/re-publishes
+-- across an async server round-trip, and with `update_in_insert=false` an update
+-- landing mid-insert runs `hide` and then returns WITHOUT a paired `show`
+-- (deferred to InsertLeave). So `hide` blanks the gutter and nothing restores it
+-- until the deferred display runs - that gap is the flicker, and no same-tick
+-- cancel can close it. We therefore OWN the namespace and never register a
+-- handler: the only thing that ever mutates our bars is a real diagnostic change.
+--
+-- WHY NOT a decoration provider: ephemeral `sign_text` set in `on_line` is
+-- silently ignored (the sign column is laid out from persisted signs before
+-- per-line ephemeral drawing), so a decoration provider cannot draw a real gutter
+-- bar - only `line_hl_group`/`virt_text`. Verified on this Neovim.
+--
+-- Approach: reconcile persistent extmark signs from `DiagnosticChanged` (fires
+-- after diagnostics settle, including on genuine clear). Old bars persist
+-- untouched across the LSP gap (extmark gravity keeps them on the right lines as
+-- text shifts) and are repositioned/pruned only when new data actually arrives.
 MiniDeps.later(function()
   local ns = vim.api.nvim_create_namespace("span_diagnostic_signs")
   local hl = {
@@ -122,19 +140,14 @@ MiniDeps.later(function()
     [vim.diagnostic.severity.HINT] = "DiagnosticSignHint",
   }
 
-  -- On every diagnostic update `vim.diagnostic` calls `hide` THEN `show`. If
-  -- `hide` clears the namespace, the bars vanish for a frame before `show`
-  -- redraws them - that's the flicker when editing a line in a span. Fix: never
-  -- clear eagerly in `hide`. `show` already reconciles (sets desired in place,
-  -- prunes stale), so the update path needs no clearing at all. Only a genuine
-  -- "diagnostics turned off" (`vim.diagnostic.hide()`/`reset`, which fires `hide`
-  -- with NO following `show`) must clear. Distinguish them by deferring: `hide`
-  -- schedules a clear; a `show` in the same tick cancels it. If no `show`
-  -- follows, the deferred clear runs and removes the now-stale bars.
-  local pending_clear = {}
-
-  local reconcile = function(bufnr, diagnostics)
+  local reconcile = function(bufnr)
+    if not vim.api.nvim_buf_is_valid(bufnr) then return end
     local line_count = vim.api.nvim_buf_line_count(bufnr)
+    -- WARN..ERROR only (matches the previous sign policy). Hints/info get no
+    -- in-buffer marker; surface them via `<Leader>ld` / `]d` / `<Leader>fd`.
+    local diagnostics = vim.diagnostic.get(bufnr, {
+      severity = { min = vim.diagnostic.severity.WARN, max = vim.diagnostic.severity.ERROR },
+    })
     -- Track the most severe diagnostic per line so overlapping spans don't stack
     -- signs; the worst severity wins (lower number = more severe).
     local worst = {}
@@ -153,10 +166,11 @@ MiniDeps.later(function()
         id = line + 1, -- 0-based line -> 1-based id (extmark ids must be > 0)
         sign_text = "▎",
         sign_hl_group = hl[severity],
-        priority = 9999, -- sit on top of other signs (e.g. mini.diff)
+        priority = 9999, -- sit on top of other signs (mini.diff uses 199)
       })
     end
-    -- Prune signs whose line is no longer diagnosed.
+    -- Prune signs whose line is no longer diagnosed (also clears everything on a
+    -- genuine empty-set: DiagnosticChanged fires with no diagnostics -> worst={}).
     for _, m in ipairs(vim.api.nvim_buf_get_extmarks(bufnr, ns, 0, -1, {})) do
       local id, line = m[1], m[2]
       if worst[line] == nil then
@@ -165,30 +179,18 @@ MiniDeps.later(function()
     end
   end
 
-  vim.diagnostic.handlers.span_signs = {
-    show = function(_, bufnr, diagnostics, _)
-      pending_clear[bufnr] = nil -- cancel any clear queued by the paired `hide`
-      reconcile(bufnr, diagnostics)
-    end,
-    hide = function(_, bufnr)
-      -- Defer; a paired `show` (the update path) will cancel this before it runs.
-      pending_clear[bufnr] = true
-      vim.schedule(function()
-        if pending_clear[bufnr] and vim.api.nvim_buf_is_valid(bufnr) then
-          pending_clear[bufnr] = nil
-          vim.api.nvim_buf_clear_namespace(bufnr, ns, 0, -1)
-        end
-      end)
-    end,
-  }
+  -- `DiagnosticChanged` fires after diagnostics settle - including the genuine
+  -- clear (empty-set fires it with zero diagnostics). This is the ONLY driver, so
+  -- the async LSP clear->republish gap and the insert-mode defer can never blank
+  -- the gutter. `BufEnter` is a one-shot safety reconcile for buffers opened with
+  -- diagnostics already present (no DiagnosticChanged fires on plain open).
+  vim.api.nvim_create_autocmd({ "DiagnosticChanged", "BufEnter" }, {
+    desc = "Reconcile diagnostic span signs",
+    callback = function(args) reconcile(args.buf) end,
+  })
 
   vim.diagnostic.config({
-    -- Enable the custom span-sign handler for warnings and errors only (matches
-    -- the previous WARN+ sign policy). NOTE: hints/info get no in-buffer marker;
-    -- surface them via `<Leader>ld` / `]d` / the `<Leader>fd` picker.
-    span_signs = { severity = { min = "WARN", max = "ERROR" } },
-
-    -- Built-in single-line sign handler off; the span handler above replaces it.
+    -- Built-in single-line sign handler off; the span-sign reconcile replaces it.
     signs = false,
 
     -- No underline on the code itself; the gutter span bar is the in-buffer cue.
@@ -199,7 +201,9 @@ MiniDeps.later(function()
     virtual_lines = false,
     virtual_text = true,
 
-    -- Don't update diagnostics when typing
+    -- Don't update diagnostics when typing. Safe to keep: our signs are driven by
+    -- DiagnosticChanged, not the handler hide/show, so this no longer causes the
+    -- hide-without-show flicker it used to.
     update_in_insert = false,
   })
 end)
