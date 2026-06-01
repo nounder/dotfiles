@@ -57,7 +57,7 @@ vim.o.wrap           = false      -- Don't visually wrap lines (toggle with \w)
 vim.o.cursorlineopt  = 'screenline,number' -- Show cursor line per screen line
 
 -- Special UI symbols. More is set via 'mini.basics' later.
-vim.o.fillchars = 'eob: ,fold:╌,stl:─' -- stl:─ fills the statusline gap with a line
+vim.o.fillchars = 'eob: ,fold:╌,stl:─,stlnc:─' -- stl/stlnc:─ fill the statusline gap (active+inactive)
 vim.o.listchars = 'extends:…,nbsp:␣,precedes:…,tab:> '
 
 -- Folds (see `:h fold-commands`, `:h zM`, `:h zR`, `:h zA`, `:h zj`)

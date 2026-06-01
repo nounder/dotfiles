@@ -78,6 +78,18 @@ now(function()
     })
     :apply()
 
+  -- `add_transparency({ float })` strips `Normal/FloatBorder/FloatTitle` but not
+  -- the per-severity `DiagnosticFloating*` groups, which mini.base16 gives a solid
+  -- `bg = base01`. That shows as a dark block behind each line of the diagnostic
+  -- float (`:h vim.diagnostic.open_float`). Null the bg, keeping each group's live
+  -- fg (the severity color), same as the picker/notify strips in 'plugin/30_mini.lua'.
+  for _, g in ipairs({
+    "DiagnosticFloatingError", "DiagnosticFloatingWarn", "DiagnosticFloatingInfo",
+    "DiagnosticFloatingHint", "DiagnosticFloatingOk",
+  }) do
+    vim.api.nvim_set_hl(0, g, { fg = vim.api.nvim_get_hl(0, { name = g }).fg, bg = "NONE" })
+  end
+
   -- Highlight overrides ported from '~/dotfiles/nvim' to keep the look identical.
   -- Applied AFTER `:add_transparency()` so the explicit colors here win. Only the
   -- groups relevant to this config's plugins are carried over (Neogit, tree-sitter,

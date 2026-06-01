@@ -27,7 +27,9 @@ end
 nmap("[p", '<Cmd>exe "put! " . v:register<CR>', "Paste Above")
 nmap("]p", '<Cmd>exe "put "  . v:register<CR>', "Paste Below")
 
-nmap("Q", "<Cmd>q<CR>", "Quit window")
+-- `q` quits the window (`:q`). This overrides the built-in macro-recording
+-- prefix, so `q{reg}` no longer starts recording.
+nmap("q", "<Cmd>q<CR>", "Quit window")
 
 -- `<CR>` (Normal) saves the file, mirroring '~/dotfiles/nvim'. In special
 -- buffers (quickfix, help, prompts, Neogit, mini pickers, etc.) `<CR>` keeps its
@@ -66,12 +68,34 @@ imap(";a", "<Esc>", "Leave insert")
 -- `f` finder prefix (no Leader), ported from '~/dotfiles/nvim'. The forward
 -- `f{char}` motion is disabled in 'plugin/30_mini.lua' to free this prefix;
 -- `F`/`t`/`T` remain mini.jump motions. Uses 'mini.pick' as the picker backend.
--- - `ff` - find files            - `fr` - recent (old) files
--- - `fo` - resume last picker     - `fl` - lines in current buffer
-nmap("ff", '<Cmd>Pick files<CR>', "Find files")
-nmap("fr", '<Cmd>Pick oldfiles<CR>', "Recent files")
-nmap("fo", '<Cmd>Pick resume<CR>', "Resume picker")
-nmap("fl", '<Cmd>Pick buf_lines scope="all"<CR>', "Lines (buffer)")
+-- This mirrors the `<Leader>f*` "Find" group (defined later) onto bare `f*` for
+-- faster access. Two keys keep their original bare-`f` meaning and intentionally
+-- differ from `<Leader>f*`: `fr` (recent files, not resume) and `fo` (resume).
+nmap("f/", '<Cmd>Pick history scope="/"<CR>',          '"/" history')
+nmap("f:", '<Cmd>Pick history scope=":"<CR>',          '":" history')
+nmap("fa", '<Cmd>Pick git_hunks scope="staged"<CR>',   "Added hunks (all)")
+nmap("fA", '<Cmd>Pick git_hunks path="%" scope="staged"<CR>', "Added hunks (buf)")
+nmap("fb", '<Cmd>Pick buffers<CR>',                    "Buffers")
+nmap("fc", '<Cmd>Pick git_commits<CR>',                "Commits (all)")
+nmap("fC", '<Cmd>Pick git_commits path="%"<CR>',       "Commits (buf)")
+nmap("fd", '<Cmd>Pick diagnostic scope="all"<CR>',     "Diagnostic workspace")
+nmap("fD", '<Cmd>Pick diagnostic scope="current"<CR>', "Diagnostic buffer")
+nmap("ff", '<Cmd>Pick files<CR>',                      "Find files")
+nmap("fg", '<Cmd>Pick grep_live<CR>',                  "Grep live")
+nmap("fG", '<Cmd>Pick grep pattern="<cword>"<CR>',     "Grep current word")
+nmap("fh", '<Cmd>Pick help<CR>',                       "Help tags")
+nmap("fH", '<Cmd>Pick hl_groups<CR>',                  "Highlight groups")
+nmap("fl", '<Cmd>Pick buf_lines scope="all"<CR>',      "Lines (all)")
+nmap("fL", '<Cmd>Pick buf_lines scope="current"<CR>',  "Lines (buf)")
+nmap("fm", '<Cmd>Pick git_hunks<CR>',                  "Modified hunks (all)")
+nmap("fM", '<Cmd>Pick git_hunks path="%"<CR>',         "Modified hunks (buf)")
+nmap("fo", '<Cmd>Pick resume<CR>',                     "Resume picker")
+nmap("fr", '<Cmd>Pick oldfiles<CR>',                   "Recent files")
+nmap("fR", '<Cmd>Pick lsp scope="references"<CR>',     "References (LSP)")
+nmap("fs", '<Cmd>Pick lsp scope="workspace_symbol_live"<CR>', "Symbols workspace (live)")
+nmap("fS", '<Cmd>Pick lsp scope="document_symbol"<CR>', "Symbols document")
+nmap("fv", '<Cmd>Pick visit_paths cwd=""<CR>',         "Visit paths (all)")
+nmap("fV", '<Cmd>Pick visit_paths<CR>',                "Visit paths (cwd)")
 
 -- Delete word backward in Insert mode with Alt+Backspace.
 imap("<M-BS>", "<C-w>", "Delete word backward")
@@ -257,14 +281,33 @@ nmap_leader('gs', '<Cmd>lua MiniGit.show_at_cursor()<CR>',  'Show at cursor')
 
 xmap_leader('gs', '<Cmd>lua MiniGit.show_at_cursor()<CR>', 'Show at selection')
 
+-- g-prefixed LSP navigation. Set buffer-locally only when a language server
+-- attaches (see `:h LspAttach`), so in buffers without LSP these keys keep their
+-- built-in behavior. Same scheme as the LazyVim config in '~/dotfiles/nvim':
+-- - `gd` - definition;     `gr` - references;  `gI` - implementation
+-- - `gy` - type definition; `gD` - declaration
+-- - `K`  - hover docs;      `gK` - signature help
+Config.new_autocmd('LspAttach', nil, function(ev)
+  local buf_map = function(lhs, rhs, desc)
+    vim.keymap.set('n', lhs, rhs, { buffer = ev.buf, desc = 'LSP: ' .. desc })
+  end
+  buf_map('gd', '<Cmd>lua vim.lsp.buf.definition()<CR>',      'Definition')
+  buf_map('gr', '<Cmd>lua vim.lsp.buf.references()<CR>',      'References')
+  buf_map('gI', '<Cmd>lua vim.lsp.buf.implementation()<CR>',  'Implementation')
+  buf_map('gy', '<Cmd>lua vim.lsp.buf.type_definition()<CR>', 'Type definition')
+  buf_map('gD', '<Cmd>lua vim.lsp.buf.declaration()<CR>',     'Declaration')
+  buf_map('K',  '<Cmd>lua vim.lsp.buf.hover()<CR>',           'Hover')
+  buf_map('gK', '<Cmd>lua vim.lsp.buf.signature_help()<CR>',  'Signature help')
+end, 'Set buffer-local g-prefixed LSP mappings')
+
 -- l is for 'Language'. Common usage:
 -- - `<Leader>ld` - show more diagnostic details in a floating window
 -- - `<Leader>lr` - perform rename via LSP
 -- - `<Leader>ls` - navigate to source definition of symbol under cursor
 --
--- NOTE: most LSP mappings represent a more structured way of replacing built-in
--- LSP mappings (like `:h gra` and others). This is needed because `gr` is mapped
--- by an "replace" operator in 'mini.operators' (which is more commonly used).
+-- These `<Leader>l*` mappings duplicate the `g`-prefixed ones above as a more
+-- discoverable, always-available alternative (they no-op when no server is
+-- attached). Keep both in sync when changing actions.
 nmap_leader('la', '<Cmd>lua vim.lsp.buf.code_action()<CR>',     'Actions')
 nmap_leader('ld', '<Cmd>lua vim.diagnostic.open_float()<CR>',   'Diagnostic popup')
 nmap_leader('lf', '<Cmd>lua require("conform").format()<CR>',   'Format')

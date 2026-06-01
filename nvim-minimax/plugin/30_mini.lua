@@ -188,10 +188,11 @@ end)
 --   configure a custom statusline by setting `config.content.active` function.
 -- now(function() require('mini.statusline').setup() end)
 
--- Renders dimmed (NonText) "file [flags] ──── line,col"; the middle
--- line comes from 'fillchars' stl:─ (set in 'plugin/10_options.lua'). See `:h 'statusline'`.
+-- Renders dimmed (NonText) "file [flags] ──── line,col ──"; the middle `─` fill
+-- comes from 'fillchars' stl:─ (set in 'plugin/10_options.lua'). The literal
+-- "──" after `%l,%c` pins a short dash run on the right edge. See `:h 'statusline'`.
 now(function()
-  vim.o.statusline = "%<%#NonText#%f %h%m%r%= %l,%c"
+  vim.o.statusline = "%<%#NonText#%f %h%m%r%= %l,%c ──"
 end)
 
 -- Tabline disabled. ('mini.tabline' is not set up.) Navigate buffers with
@@ -454,6 +455,8 @@ later(function()
     clues = {
       -- This is defined in 'plugin/20_keymaps.lua' with Leader group descriptions
       Config.leader_group_clues,
+      -- Bare `f` "Find" prefix (mappings in 'plugin/20_keymaps.lua').
+      { mode = 'n', keys = 'f', desc = '+Find' },
       miniclue.gen_clues.builtin_completion(),
       miniclue.gen_clues.g(),
       miniclue.gen_clues.marks(),
@@ -476,6 +479,7 @@ later(function()
       { mode = { 'n', 'x' }, keys = ']' },
       { mode =   'i',        keys = '<C-x>' },    -- Built-in completion
       { mode = { 'n', 'x' }, keys = 'g' },        -- `g` key
+      { mode =   'n',        keys = 'f' },        -- `f` Find prefix (mini.pick)
       { mode = { 'n', 'x' }, keys = "'" },        -- Marks
       { mode = { 'n', 'x' }, keys = '`' },
       { mode = { 'n', 'x' }, keys = '"' },        -- Registers
@@ -682,37 +686,6 @@ end)
 -- - `<M-h>`/`<M-j>`/`<M-k>`/`<M-l>` - move selection left/down/up/right
 later(function()
   require("mini.move").setup()
-end)
-
--- Text edit operators. All operators have mappings for:
--- - Regular operator (waits for motion/textobject to use)
--- - Current line action (repeat second character of operator to activate)
--- - Act on visual selection (type operator in Visual mode)
---
--- Example usage:
--- - `griw` - replace (`gr`) *i*inside *w*ord
--- - `gmm` - multiple/duplicate (`gm`) current line (extra `m`)
--- - `vipgs` - *v*isually select *i*nside *p*aragraph and sort it (`gs`)
--- - `gxiww.` - exchange (`gx`) *i*nside *w*ord with next word (`w` to navigate
---   to it and `.` to repeat exchange operator)
--- - `g==` - execute current line as Lua code and replace with its output.
---   For example, typing `g==` over line `vim.lsp.get_clients()` shows
---   information about all available LSP clients.
---
--- See also:
--- - `:h MiniOperators-mappings` - overview of how mappings are created
--- - `:h MiniOperators-overview` - overview of present operators
-later(function()
-  require("mini.operators").setup()
-
-  -- Create mappings for swapping adjacent arguments. Notes:
-  -- - Relies on `a` argument textobject from 'mini.ai'.
-  -- - It is not 100% reliable, but mostly works.
-  -- - It overrides `:h (` and `:h )`.
-  -- Explanation: `gx`-`ia`-`gx`-`ila` <=> exchange current and last argument
-  -- Usage: when on `a` in `(aa, bb)` press `)` followed by `(`.
-  vim.keymap.set("n", "(", "gxiagxila", { remap = true, desc = "Swap arg left" })
-  vim.keymap.set("n", ")", "gxiagxina", { remap = true, desc = "Swap arg right" })
 end)
 
 -- Autopairs functionality. Insert pair when typing opening character and go over
