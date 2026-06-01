@@ -91,7 +91,11 @@ now(function()
     -- everything remains in history (`<Leader>en`).
     lsp_progress = { enable = false },
     -- Show only the message, dropping the default `HH:MM:SS │ ` time prefix.
-    content = { format = function(notif) return notif.msg end },
+    content = {
+      format = function(notif)
+        return notif.msg
+      end,
+    },
     window = {
       winblend = 0, -- no dimming/blend over the wallpaper (default is 25)
       config = { title = "" }, -- drop the " Notifications " header; keep the border
@@ -637,10 +641,20 @@ later(function()
   -- Navigate 'mini.completion' menu with `<Tab>` /  `<S-Tab>`
   MiniKeymap.map_multistep("i", "<Tab>", { "pmenu_next" })
   MiniKeymap.map_multistep("i", "<S-Tab>", { "pmenu_prev" })
-  -- On `<CR>` try to accept current completion item, fall back to accounting
-  -- for pairs from 'mini.pairs'
+  MiniKeymap.map_multistep("i", "<C-j>", { "pmenu_next" })
+  MiniKeymap.map_multistep("i", "<C-k>", { "pmenu_prev" })
+  local show_completion = {
+    condition = function()
+      return true
+    end,
+    action = function()
+      MiniCompletion.complete_twostage()
+      return ""
+    end,
+  }
+  MiniKeymap.map_multistep("i", "<C-l>", { "pmenu_accept", show_completion })
+
   MiniKeymap.map_multistep("i", "<CR>", { "pmenu_accept", "minipairs_cr" })
-  -- On `<BS>` just try to account for pairs from 'mini.pairs'
   MiniKeymap.map_multistep("i", "<BS>", { "minipairs_bs" })
 end)
 
@@ -809,6 +823,7 @@ later(function()
       -- Load from 'snippets/' directory of plugins, like 'friendly-snippets'
       snippets.gen_loader.from_lang({ lang_patterns = lang_patterns }),
     },
+    mappings = { expand = "<C-;>" },
   })
 
   -- By default snippets available at cursor are not shown as candidates in
