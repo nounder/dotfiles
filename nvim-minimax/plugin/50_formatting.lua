@@ -85,6 +85,23 @@ later(function()
         end,
       },
       dprint = {
+        -- `dprint` is a `#!/usr/bin/env bun` shim. A GUI-launched Neovim gets the
+        -- bare launchd PATH (no `~/.bun/bin` or `/opt/homebrew/bin`), so the shebang
+        -- can't find `bun`, dprint exits non-zero ("unknown error" in conform's log),
+        -- and conform falls back to the much slower LSP formatter. Invoke via
+        -- `bunx --no-install dprint` and inject a PATH that includes bun so it works
+        -- regardless of how nvim was launched.
+        -- Absolute path: conform's availability check runs `vim.fn.executable(command)`
+        -- against the (possibly bare) launchd PATH, so a bare "bunx" would read as
+        -- unavailable under a GUI nvim before the `env` override below ever applies.
+        command = vim.fn.executable("bunx") == 1 and "bunx" or "/opt/homebrew/bin/bunx",
+        args = { "--no-install", "dprint", "fmt", "--stdin", "$FILENAME" },
+        stdin = true,
+        env = {
+          PATH = vim.fn.expand("~/.bun/bin")
+            .. ":/opt/homebrew/bin:"
+            .. (vim.env.PATH or "/usr/bin:/bin"),
+        },
         condition = function(ctx)
           return vim.fs.find({ "dprint.json" }, { path = ctx.filename, upward = true })[1]
         end,
