@@ -106,18 +106,19 @@ Config.new_autocmd('FileType', nil, f, "Proper 'formatoptions'")
 -- a more conservative display while still being useful.
 -- See `:h vim.diagnostic` and `:h vim.diagnostic.config()`.
 local diagnostic_opts = {
-  -- Show signs on top of any other sign, but only for warnings and errors
+  -- Mark diagnostics only with a sign glyph in the gutter (E/W), on top of any
+  -- other sign, but only for warnings and errors. (For their messages type
+  -- `<Leader>ld`.) NOTE: hints/info have no visible marker since signs are
+  -- WARN+ only; surface them via `<Leader>ld` / `]d` / the `<Leader>fd` picker.
   signs = { priority = 9999, severity = { min = 'WARN', max = 'ERROR' } },
 
-  -- Show all diagnostics as underline (for their messages type `<Leader>ld`)
-  underline = { severity = { min = 'HINT', max = 'ERROR' } },
+  -- No underline on the code itself; the gutter sign is the only in-buffer cue.
+  underline = false,
 
-  -- Show more details immediately for errors on the current line
+  -- Inline message text at the end of the offending line. Full message is still
+  -- available via `<Leader>ld` (float), `]d`/`[d` (jump), or `<Leader>fd` (picker).
   virtual_lines = false,
-  virtual_text = {
-    current_line = true,
-    severity = { min = 'ERROR', max = 'ERROR' },
-  },
+  virtual_text = true,
 
   -- Don't update diagnostics when typing
   update_in_insert = false,
