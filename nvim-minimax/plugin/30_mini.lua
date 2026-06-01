@@ -305,16 +305,30 @@ now_if_args(function()
     end, scored)
   end
 
-  -- Post-processing of LSP responses. Drop noisy 'Text'/'Keyword' suggestions
-  -- (negative priority removes them) and show snippets last. The 'Keyword'
-  -- filtering mirrors the blink.cmp `transform_items` filter in '~/dotfiles/nvim'.
-  -- `kind_priority` regroups items by kind *after* `filtersort`, so the demotion
-  -- of Text/Snippet is preserved while our scoring decides order within a kind.
+  -- Post-processing of LSP responses.
+  -- Drop noisy 'Text'/'Keyword' suggestions
+  -- (negative priority removes them) and show snippets last.
   local process_items_opts = {
     filtersort = mini_completion_filtersort,
     kind_priority = { Text = -1, Keyword = -1, Snippet = 99 },
   }
+  -- Merge in namespace-import candidates for capitalized typescript project files
   local process_items = function(items, base)
+    local ok, extra = pcall(function()
+      return require("ts_imports").candidates(base)
+    end)
+    if ok and type(extra) == "table" and #extra > 0 then
+      -- Drop any synthetic item that collides with LSP item. server wins.
+      local seen = {}
+      for _, item in ipairs(items) do
+        seen[item.label] = true
+      end
+      for _, item in ipairs(extra) do
+        if not seen[item.label] then
+          items[#items + 1] = item
+        end
+      end
+    end
     return MiniCompletion.default_process_items(items, base, process_items_opts)
   end
   require("mini.completion").setup({
@@ -821,21 +835,187 @@ end)
 --   Execute one either with Lua function, `:Pick <picker-name>` command, or
 --   one of `<Leader>f` mappings defined in 'plugin/20_keymaps.lua'
 later(function()
-  require("mini.pick").setup()
+  -- Centered floating window (~78% x ~70%) instead of mini.pick's default
+  -- bottom-left strip. Computed from `vim.o` on every open so it tracks
+  -- terminal resizes (config is a callable, re-run each `MiniPick.start`).
+  local function win_config()
+    local height = math.floor(0.7 * vim.o.lines)
+    local width = math.floor(0.78 * vim.o.columns)
+    return {
+      anchor = "NW",
+      height = height,
+      width = width,
+      row = math.floor(0.5 * (vim.o.lines - height)),
+      col = math.floor(0.5 * (vim.o.columns - width)),
+      border = "rounded",
+    }
+  end
 
-  -- disable background
+  -- Custom item display for the position pickers (grep, lsp references/symbols,
+  -- buffer lines): mini.extra encodes those items' text as `path│lnum│col│ body`
+  -- (the `│` are literal `\0` separators rendered by `default_show`). That puts
+  -- two noisy numeric columns between the path and the matched line.
+  --
+  -- This rewrites each visible item's text to `path:lnum` + padding + body, so:
+  -- - the column number is dropped from the display (jumping still uses the
+  --   item's real `.lnum`/`.col` table fields, which are untouched), and
+  -- - `path:lnum` is right-padded to a common width so every body starts in the
+  --   same column (alignment is computed per frame over the visible items).
+  -- Setting a global `source.show` makes mini.extra/builtin pickers stop
+  -- defaulting to their icon-showing renderer (they do `config.source.show or
+  -- show_with_icons`), so re-enable icons here to keep devicons on files,
+  -- buffers, grep, etc. `opts` from a builtin is merged on top so an explicit
+  -- per-picker `show_icons` still wins.
+  local pick = require("mini.pick")
+
+  -- `default_show` only highlights the single match span the sorter picked per
+  -- item, which for these reformatted lines lands on the first occurrence —
+  -- usually inside the path (e.g. `core/Activity.ts`), never the body. This
+  -- adds extmarks for EVERY occurrence of the typed query in each visible line
+  -- (path and body alike), so all matches light up. Purely additive: it touches
+  -- only highlights, never matching/sorting, so streaming results are unaffected.
+  local ranges_ns = vim.api.nvim_create_namespace("MiniPickRanges")
+  local function highlight_all_occurrences(buf_id, query)
+    -- `query` is an array of typed chars/tokens; the contiguous typed string is
+    -- what grep/grep_live search for. Highlight it as a plain (case-insensitive
+    -- when 'ignorecase') substring — matches the grep feel and covers all hits.
+    local needle = table.concat(query or {})
+    if needle == "" then
+      return
+    end
+    local ignorecase = vim.o.ignorecase and not (vim.o.smartcase and needle:find("%u"))
+    local hay_needle = ignorecase and needle:lower() or needle
+    local lines = vim.api.nvim_buf_get_lines(buf_id, 0, -1, false)
+    local opts = { hl_group = "MiniPickMatchRanges", hl_mode = "combine", priority = 201 }
+    for row, line in ipairs(lines) do
+      local hay = ignorecase and line:lower() or line
+      local from = 1
+      while true do
+        -- Plain find (4th arg true) so regex specials in the query are literal.
+        local s, e = hay:find(hay_needle, from, true)
+        if not s then
+          break
+        end
+        opts.end_row, opts.end_col = row - 1, e
+        pcall(vim.api.nvim_buf_set_extmark, buf_id, ranges_ns, row - 1, s - 1, opts)
+        from = e + 1
+      end
+    end
+  end
+
+  local function show_aligned(buf_id, items, query, opts)
+    opts = vim.tbl_extend("keep", opts or {}, { show_icons = true })
+    -- Split each item into a `path:lnum` head and a body. Two source formats
+    -- carry a `path SEP lnum SEP col SEP body` shape:
+    --   - grep (ripgrep `--field-match-separator \x00`): `\0`-separated, which
+    --     `default_show` renders as `│`. The raw item text still has `\0`.
+    --   - LSP references/symbols (mini.extra): literal `│` separators in text.
+    -- Both are reformatted to `path:lnum` + padding + body. Everything else
+    -- (files, help, buffers, ...) doesn't match and is passed through.
+    local BAR = "│" -- U+2502, the literal separator mini.extra writes (3 bytes)
+    local parsed = {}
+    local head_width = 0
+    for i, item in ipairs(items) do
+      local text = type(item) == "table" and item.text or item
+      local head, body
+      if type(text) == "string" then
+        -- Try `\0`-separated (grep) first, then literal `│` (LSP). `col` is
+        -- matched and dropped; `rest` keeps the body, sans leading separator.
+        local path, lnum, rest = text:match("^(.-)%z(%d+)%z%d+%z?(.*)$")
+        if not path then
+          path, lnum, rest = text:match("^(.-)" .. BAR .. "(%d+)" .. BAR .. "%d+" .. BAR .. "?(.*)$")
+        end
+        if path then
+          head = path .. ":" .. lnum
+          -- The matched separator before the body is already consumed above;
+          -- just trim leading whitespace (LSP bodies start with a space).
+          body = (rest:gsub("^%s+", ""))
+        end
+      end
+      parsed[i] = body and { head = head, body = body } or nil
+      if body then
+        head_width = math.max(head_width, vim.fn.strchars(head))
+      end
+    end
+
+    -- If nothing parsed (non-position picker), render with the default and add
+    -- the all-occurrences highlight on top.
+    if head_width == 0 then
+      pick.default_show(buf_id, items, query, opts)
+      return highlight_all_occurrences(buf_id, query)
+    end
+
+    -- Rebuild a shallow-copied item list with reformatted text. Copy so the
+    -- picker's own items (and their `.lnum`/`.col`) are never mutated.
+    local shown = {}
+    for i, item in ipairs(items) do
+      local p = parsed[i]
+      if p then
+        local pad = string.rep(" ", head_width - vim.fn.strchars(p.head) + 2)
+        local text = p.head .. pad .. p.body
+        shown[i] = type(item) == "table" and vim.tbl_extend("force", item, { text = text }) or text
+      else
+        shown[i] = item
+      end
+    end
+
+    pick.default_show(buf_id, shown, query, opts)
+    return highlight_all_occurrences(buf_id, query)
+  end
+
+  pick.setup({
+    source = {
+      -- Applies to every picker; `show_aligned` only reformats position items
+      -- and passes everything else through to `default_show`.
+      show = show_aligned,
+    },
+    window = {
+      config = win_config,
+      -- Prettier prompt: nerd-font glyphs for the prefix and caret.
+      prompt_prefix = "  ",
+      prompt_caret = "▏",
+    },
+  })
+
+  -- Theming. `25_colorscheme.lua` loads first (alphabetical) and has already
+  -- applied base16 + transparency, so pull live accent colors from existing
+  -- groups rather than hardcoding hexes — this follows any palette swap.
+  local set_hl = vim.api.nvim_set_hl
+  local function fg_of(name)
+    return vim.api.nvim_get_hl(0, { name = name }).fg
+  end
+  local accent = fg_of("Function") -- blue   (base0D) — framing/border color
+  local query = fg_of("Type") -- yellow (base0A) — search/query accent
+  local busy = fg_of("Statement") -- red    (base08) — "processing" feedback
+  local sel_bg = vim.api.nvim_get_hl(0, { name = "Visual" }).bg -- base02 selection
+
+  -- Keep the picker body transparent (consistent with the rest of the config),
+  -- only coloring the bits that give the window structure.
   for _, g in ipairs({
     "MiniPickNormal",
-    "MiniPickBorder",
-    "MiniPickBorderText",
-    "MiniPickPrompt",
     "MiniPickPromptCaret",
-    "MiniPickPromptPrefix",
     "MiniPickHeader",
-    "MiniPickMatchRanges",
   }) do
-    vim.api.nvim_set_hl(0, g, { fg = vim.api.nvim_get_hl(0, { name = g }).fg, bg = "NONE" })
+    set_hl(0, g, { fg = fg_of(g), bg = "NONE" })
   end
+
+  -- Visible accent border + border text (query/source name live on the border).
+  set_hl(0, "MiniPickBorder", { fg = accent, bg = "NONE" })
+  set_hl(0, "MiniPickBorderText", { fg = query, bg = "NONE", bold = true })
+  set_hl(0, "MiniPickBorderBusy", { fg = busy, bg = "NONE" })
+
+  -- Prompt + caret: query in yellow so the typed text reads apart from the
+  -- blue border, prefix glyph in the framing color.
+  set_hl(0, "MiniPickPrompt", { fg = query, bg = "NONE", bold = true })
+  set_hl(0, "MiniPickPromptPrefix", { fg = accent, bg = "NONE", bold = true })
+  set_hl(0, "MiniPickPromptCaret", { fg = accent, bg = "NONE" })
+
+  -- Selected row: full-width bg tint + bold so the current item reads clearly.
+  set_hl(0, "MiniPickMatchCurrent", { bg = sel_bg, bold = true })
+  -- Marked items (toggled with <C-x>): tint toward the structure accent.
+  set_hl(0, "MiniPickMatchMarked", { fg = accent, bg = "NONE", italic = true })
+  -- Fuzzy-matched character ranges pop in the search-accent yellow.
+  set_hl(0, "MiniPickMatchRanges", { fg = query, bg = "NONE", bold = true })
 end)
 
 -- Manage and expand snippets (templates for a frequently used text).
