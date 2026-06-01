@@ -235,11 +235,85 @@ vim.o.showtabline = 0
 -- It also works with snippet candidates provided by LSP server. Best experience
 -- when paired with 'mini.snippets' (which is set up in this file).
 now_if_args(function()
-  -- Customize post-processing of LSP responses for a better user experience.
-  -- Drop noisy 'Text' and 'Keyword' suggestions (negative priority removes them)
-  -- and show snippets last. The 'Keyword' filtering mirrors the blink.cmp
-  -- `transform_items` filter used in '~/dotfiles/nvim'.
-  local process_items_opts = { kind_priority = { Text = -1, Keyword = -1, Snippet = 99 } }
+  -- A custom filter+sort that replaces the built-in 'fuzzy'/'prefix' methods
+  -- (which lean on `matchfuzzy()` and have weak scoring). It scores each item
+  -- with 'mini.fuzzy' (rewards contiguous + early matches) and layers on the
+  -- ranking bonuses blink.cmp gave us in '~/dotfiles/nvim':
+  --   - exact match (case-sensitive) > prefix match > case match > fuzzy only
+  --   - shorter labels win ties (less "scope creep" in the menu)
+  --   - LSP `sortText` is the final, stable tiebreak (servers use it to express
+  --     intent, e.g. ordering by relevance / recency)
+  -- Lower combined score = better; we sort ascending.
+  local fuzzy = require("mini.fuzzy")
+  local filterword = function(item)
+    return item.filterText or item.label or ""
+  end
+
+  local mini_completion_filtersort = function(items, base)
+    -- Empty query: keep server order (don't fuzzy-rank nothing).
+    if base == "" then
+      return vim.deepcopy(items)
+    end
+
+    local base_lower = base:lower()
+    local scored = {}
+    for original_index, item in ipairs(items) do
+      local word = filterword(item)
+      local m = fuzzy.match(base, word)
+      -- `score < 0` means no fuzzy match at all -> filter the item out.
+      if m.score >= 0 then
+        local word_lower = word:lower()
+        -- Bonuses are subtracted so a better match yields a smaller score.
+        -- Tiers are spaced far apart so a higher tier always beats a lower one
+        -- regardless of the raw fuzzy score (which is bounded by cutoff^2).
+        local bonus = 0
+        if word == base then
+          bonus = bonus + 30000 -- exact, case-sensitive
+        elseif word_lower == base_lower then
+          bonus = bonus + 20000 -- exact, case-insensitive
+        elseif vim.startswith(word_lower, base_lower) then
+          bonus = bonus + 10000 -- prefix
+          if vim.startswith(word, base) then
+            bonus = bonus + 2000 -- case-correct prefix
+          end
+        end
+        scored[#scored + 1] = {
+          item = item,
+          original_index = original_index,
+          score = m.score - bonus,
+          word_len = #word,
+          sort_text = item.sortText or item.label or "",
+        }
+      end
+    end
+
+    table.sort(scored, function(a, b)
+      if a.score ~= b.score then
+        return a.score < b.score
+      end
+      if a.word_len ~= b.word_len then
+        return a.word_len < b.word_len
+      end
+      if a.sort_text ~= b.sort_text then
+        return a.sort_text < b.sort_text
+      end
+      return a.original_index < b.original_index
+    end)
+
+    return vim.tbl_map(function(x)
+      return x.item
+    end, scored)
+  end
+
+  -- Post-processing of LSP responses. Drop noisy 'Text'/'Keyword' suggestions
+  -- (negative priority removes them) and show snippets last. The 'Keyword'
+  -- filtering mirrors the blink.cmp `transform_items` filter in '~/dotfiles/nvim'.
+  -- `kind_priority` regroups items by kind *after* `filtersort`, so the demotion
+  -- of Text/Snippet is preserved while our scoring decides order within a kind.
+  local process_items_opts = {
+    filtersort = mini_completion_filtersort,
+    kind_priority = { Text = -1, Keyword = -1, Snippet = 99 },
+  }
   local process_items = function(items, base)
     return MiniCompletion.default_process_items(items, base, process_items_opts)
   end
