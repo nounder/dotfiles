@@ -135,6 +135,28 @@ now(function()
     return MiniSessions.config.directory .. "/" .. Config.cwd_session_name()
   end
 
+  -- Read a session and re-trigger filetype detection on every loaded buffer.
+  -- `mksession` (what 'mini.sessions' wraps) restores hidden buffers via `:badd`
+  -- without firing `FileType`, so only the active window's buffer ends up with
+  -- syntax highlighting; switching to any other restored buffer shows it plain.
+  -- Re-running detection on all loaded, named, normal buffers sets 'filetype'
+  -- (which fires the `FileType`/syntax machinery) so every buffer is highlighted
+  -- regardless of when it's first viewed. Shared by the auto-restore below and
+  -- the `<Leader>ss` mapping in 'plugin/20_keymaps.lua'.
+  Config.restore_session = function(name)
+    pcall(MiniSessions.read, name, { force = true })
+    for _, buf in ipairs(vim.api.nvim_list_bufs()) do
+      local normal = vim.api.nvim_buf_is_loaded(buf)
+        and vim.bo[buf].buftype == ""
+        and vim.api.nvim_buf_get_name(buf) ~= ""
+      if normal and vim.bo[buf].filetype == "" then
+        vim.api.nvim_buf_call(buf, function()
+          vim.cmd("filetype detect")
+        end)
+      end
+    end
+  end
+
   -- Skip auto-saving "trivial" sessions: when Neovim was opened on a single file
   -- (`nvim file`) or with no real (listed, named, non-special) buffers. This
   -- avoids creating sessions for one-off file edits.
@@ -161,6 +183,20 @@ now(function()
     -- lands there rather than as a local 'Session.vim' in the repo.
     pcall(MiniSessions.write, Config.cwd_session_name(), { force = true })
   end, "Auto-save cwd session on exit")
+
+  -- Auto-restore the cwd's session on startup, but only for a "bare" `nvim`:
+  -- when no file arguments were passed (`nvim` with no `path/to/file`). Opening
+  -- a specific file (`nvim file`) or piping stdin should not blow away that
+  -- buffer with a restored session. If no session exists for the cwd, do
+  -- nothing (no picker fallback) so a bare `nvim` just lands on `[No Name]`.
+  Config.new_autocmd("VimEnter", "*", function()
+    if vim.fn.argc(-1) > 0 then
+      return
+    end
+    if vim.fn.filereadable(Config.cwd_session_path()) == 1 then
+      Config.restore_session(Config.cwd_session_name())
+    end
+  end, "Auto-restore cwd session when started with no file args")
 end)
 
 -- Start screen ('mini.starter'). Disabled: plain `nvim` opens on an empty
