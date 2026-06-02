@@ -97,6 +97,16 @@ now(function()
   -- omitted since this config uses 'mini.completion' and 'mini.pick'.
   local set_hl = vim.api.nvim_set_hl
 
+  -- 'mini.base16' gives `PmenuSel` (and the `*Sel` variants) `reverse = true`.
+  -- The LSP kind chips ('mini.completion' via `MiniIcons.tweak_lsp_kind`) are
+  -- coloured with fg-only `MiniIcons*` groups, so on the selected row `reverse`
+  -- flips their fg into a coloured *background* block (e.g. the pink "Class"
+  -- chip). Replace the reverse with an explicit selection bg (base02) so the
+  -- chips keep their fg colour and the selected row just gets a subtle block.
+  set_hl(0, "PmenuSel", { bg = p.base02 })
+  set_hl(0, "PmenuKindSel", { bg = p.base02 })
+  set_hl(0, "PmenuMatchSel", { bg = p.base02, bold = true })
+
   -- Make functions/identifiers/variables blue (base0D) instead of base16 default.
   set_hl(0, "Identifier", { fg = p.base0D })
   set_hl(0, "Function", { fg = p.base0D })

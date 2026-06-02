@@ -385,7 +385,7 @@ local session_new = 'vim.ui.input({ prompt = "Session name: " }, MiniSessions.wr
 -- `force=true` discards unsaved buffers like LazyVim does when restoring.
 Config.restore_cwd_session = function()
   if vim.fn.filereadable(Config.cwd_session_path()) == 1 then
-    MiniSessions.read(Config.cwd_session_name(), { force = true })
+    Config.restore_session(Config.cwd_session_name())
   else
     MiniSessions.select('read')
   end
