@@ -615,7 +615,7 @@ later(function()
       { mode = { 'n', 'x' }, keys = '"' },        -- Registers
       { mode = { 'i', 'c' }, keys = '<C-r>' },
       { mode =   'n',        keys = '<C-w>' },    -- Window commands
-      { mode = { 'n', 'x' }, keys = 's' },        -- `s` key (mini.surround, etc.)
+      { mode = { 'n', 'x' }, keys = 's' },        -- `s` key (flash.nvim jump)
       { mode = { 'n', 'x' }, keys = 'z' },        -- `z` key
     },
   })
@@ -1213,24 +1213,40 @@ end)
 -- a special "next" / "last" versions of actions to search forward or backward
 -- (just like 'mini.ai'). All text editing actions are dot-repeatable (see `:h .`).
 --
+-- NOTE: mappings are moved off the default `s`-prefix to `gs` so the bare `s`
+-- (and `S`) keys are free for 'flash.nvim' (installed in 'plugin/40_plugins.lua':
+-- `s` jump, `S` treesitter jump). The action keys keep their mnemonic second
+-- letter, just behind `g`: `gsa`/`gsd`/`gsr`/`gsf`/`gsh`.
+--
 -- Example usage (this may feel intimidating at first, but after practice it
 -- becomes second nature during text editing):
--- - `saiw)` - *s*urround *a*dd for *i*nside *w*ord parenthesis (`)`)
--- - `sdf`   - *s*urround *d*elete *f*unction call (like `f(var)` -> `var`)
--- - `srb[`  - *s*urround *r*eplace *b*racket (any of [], (), {}) with padded `[`
--- - `sf*`   - *s*urround *f*ind right part of `*` pair (like bold in markdown)
--- - `shf`   - *s*urround *h*ighlight current *f*unction call
--- - `srn{{` - *s*urround *r*eplace *n*ext curly bracket `{` with padded `{`
--- - `sdl'`  - *s*urround *d*elete *l*ast quote pair (`'`)
--- - `vaWsa<Space>` - *v*isually select *a*round *W*ORD and *s*urround *a*dd
---                    spaces (`<Space>`)
+-- - `gsaiw)` - *g*o *s*urround *a*dd for *i*nside *w*ord parenthesis (`)`)
+-- - `gsdf`   - *g*o *s*urround *d*elete *f*unction call (like `f(var)` -> `var`)
+-- - `gsrb[`  - *g*o *s*urround *r*eplace *b*racket (any of [], (), {}) with padded `[`
+-- - `gsf*`   - *g*o *s*urround *f*ind right part of `*` pair (like bold in markdown)
+-- - `gshf`   - *g*o *s*urround *h*ighlight current *f*unction call
+-- - `gsrn{{` - *g*o *s*urround *r*eplace *n*ext curly bracket `{` with padded `{`
+-- - `gsdl'`  - *g*o *s*urround *d*elete *l*ast quote pair (`'`)
+-- - `vaWgsa<Space>` - *v*isually select *a*round *W*ORD and *g*o *s*urround *a*dd
+--                     spaces (`<Space>`)
 --
 -- See also:
 -- - `:h MiniSurround-builtin-surroundings` - list of all supported surroundings
 -- - `:h MiniSurround-surrounding-specification` - examples of custom surroundings
 -- - `:h MiniSurround-vim-surround-config` - alternative set of action mappings
 later(function()
-  require("mini.surround").setup()
+  require("mini.surround").setup({
+    -- Moved off `s` to `gs` so `s`/`S` are free for 'flash.nvim'.
+    mappings = {
+      add = "gsa", -- Add surrounding in Normal and Visual modes
+      delete = "gsd", -- Delete surrounding
+      find = "gsf", -- Find surrounding (to the right)
+      find_left = "gsF", -- Find surrounding (to the left)
+      highlight = "gsh", -- Highlight surrounding
+      replace = "gsr", -- Replace surrounding
+      update_n_lines = "gsn", -- Update `n_lines`
+    },
+  })
 end)
 
 -- Highlight and remove trailspace. Temporarily stops highlighting in Insert mode

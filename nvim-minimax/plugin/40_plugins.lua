@@ -181,6 +181,45 @@ later(function()
   add("rafamadriz/friendly-snippets")
 end)
 
+-- Navigation (flash.nvim) ====================================================
+
+-- 'folke/flash.nvim' adds label-based motions: it shows short labels at match
+-- locations and jumps where you pick. Mirrors the LazyVim config in
+-- '~/dotfiles/nvim' (which uses LazyVim's default flash spec). Keys:
+-- - `s` (n/x/o) - Flash jump: type a couple chars, then a label, to jump anywhere
+-- - `S` (n/x/o) - Flash Treesitter: label the treesitter scopes around the cursor
+--   (node, then enclosing call/function/class…) to jump to / select one
+-- - `r` (o)     - Remote Flash (operate on a remote location, e.g. `yr` + jump)
+-- - `R` (o/x)   - Treesitter Search
+-- - `<C-s>` (c) - toggle Flash while in `/` search
+-- - `<C-Space>` (n/x/o) - Treesitter incremental selection (also bound to `<C-@>`
+--   since some terminals send Ctrl+Space as NUL)
+--
+-- NOTE: 'mini.surround' is rebound to the `gs` prefix in 'plugin/30_mini.lua'
+-- precisely so `s`/`S` are free for flash here.
+--
+-- See https://github.com/folke/flash.nvim for all options.
+later(function()
+  add("folke/flash.nvim")
+  require("flash").setup()
+
+  -- stylua: ignore start
+  vim.keymap.set({ "n", "x", "o" }, "s", function() require("flash").jump() end, { desc = "Flash" })
+  vim.keymap.set({ "n", "x", "o" }, "S", function() require("flash").treesitter() end, { desc = "Flash Treesitter" })
+  vim.keymap.set("o",               "r", function() require("flash").remote() end, { desc = "Remote Flash" })
+  vim.keymap.set({ "o", "x" },      "R", function() require("flash").treesitter_search() end, { desc = "Treesitter Search" })
+  vim.keymap.set("c",               "<C-s>", function() require("flash").toggle() end, { desc = "Toggle Flash Search" })
+  -- Simulate nvim-treesitter incremental selection.
+  local ts_incremental = function()
+    require("flash").treesitter({
+      actions = { ["<C-Space>"] = "next", ["<BS>"] = "prev", ["<C-@>"] = "next" },
+    })
+  end
+  vim.keymap.set({ "n", "x", "o" }, "<C-Space>", ts_incremental, { desc = "Treesitter Incremental Selection" })
+  vim.keymap.set({ "n", "x", "o" }, "<C-@>", ts_incremental, { desc = "Treesitter Incremental Selection" })
+  -- stylua: ignore end
+end)
+
 -- Git client =================================================================
 
 later(function()
