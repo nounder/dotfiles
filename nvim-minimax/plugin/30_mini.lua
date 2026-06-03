@@ -999,11 +999,79 @@ later(function()
     return highlight_all_occurrences(buf_id, query)
   end
 
+  -- Custom matcher (filter+sort) that delegates to the `fzf` binary so the
+  -- in-memory pickers (files, buffers, oldfiles, document_symbol, references,
+  -- buf_lines, ...) rank with fzf's algorithm instead of mini's built-in fuzzy
+  -- scorer
+  local has_fzf = vim.fn.executable("fzf") == 1
+  local fzf_match = function(stritems, inds, query)
+    -- Empty query: keep current order (mirrors default_match's fast path).
+    if #query == 0 then
+      return vim.deepcopy(inds)
+    end
+
+    -- Map each stritem back to its index. Items can repeat (e.g. duplicate
+    -- buffer lines), so keep a stack of indices per text and pop in fzf's
+    -- returned order, preserving fzf's ranking for distinct lines.
+    local by_text = {}
+    local input = {}
+    for _, ind in ipairs(inds) do
+      local text = stritems[ind]
+      local bucket = by_text[text]
+      if bucket == nil then
+        bucket = {}
+        by_text[text] = bucket
+      end
+      bucket[#bucket + 1] = ind
+      input[#input + 1] = text
+    end
+
+    -- `--filter` runs fzf non-interactively: read stdin, print matching lines
+    -- in score order. `--no-sort` would keep input order, so we omit it.
+    local needle = table.concat(query)
+    local out = vim.fn.systemlist({ "fzf", "--filter=" .. needle }, input)
+    if vim.v.shell_error ~= 0 and #out == 0 then
+      -- No matches (fzf exits 1) -> empty result
+      return {}
+    end
+
+    local result = {}
+    for _, line in ipairs(out) do
+      local bucket = by_text[line]
+      if bucket and #bucket > 0 then
+        result[#result + 1] = table.remove(bucket, 1)
+      end
+    end
+    return result
+  end
+
+  -- Wrap with the async contract MiniPick expects when a picker is active:
+  -- return synchronously when possible, else hand results to
+  -- `set_picker_match_inds`. Falls back to `default_match` without fzf.
+  local mini_match = function(stritems, inds, query, opts)
+    if not has_fzf then
+      return MiniPick.default_match(stritems, inds, query, opts)
+    end
+    opts = opts or {}
+    local is_sync = opts.sync or not MiniPick.is_picker_active()
+    local ok, res = pcall(fzf_match, stritems, inds, query)
+    if not ok then
+      -- Any unexpected error: degrade to the built-in matcher.
+      return MiniPick.default_match(stritems, inds, query, opts)
+    end
+    if is_sync then
+      return res
+    end
+    return MiniPick.set_picker_match_inds(res)
+  end
+
   pick.setup({
     source = {
       -- Applies to every picker; `show_aligned` only reformats position items
       -- and passes everything else through to `default_show`.
       show = show_aligned,
+      -- fzf-backed ranking for in-memory pickers; falls back to built-in.
+      match = mini_match,
     },
     window = {
       config = win_config,
