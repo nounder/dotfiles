@@ -90,6 +90,19 @@ now(function()
     vim.api.nvim_set_hl(0, g, { fg = vim.api.nvim_get_hl(0, { name = g }).fg, bg = "NONE" })
   end
 
+  -- Same story for the 'mini.clue' window (keybinding hints): mini.base16 gives
+  -- every `MiniClue*` group a solid `bg = base01` that `add_transparency` doesn't
+  -- touch, showing as a dark block behind the clue popup. Null the bg on each,
+  -- preserving its live fg and any other attributes (e.g. MiniClueTitle's bold).
+  for _, g in ipairs({
+    "MiniClueBorder", "MiniClueDescGroup", "MiniClueDescSingle", "MiniClueNextKey",
+    "MiniClueNextKeyWithPostkeys", "MiniClueSeparator", "MiniClueTitle",
+  }) do
+    local h = vim.api.nvim_get_hl(0, { name = g })
+    h.bg, h.ctermbg = "NONE", "NONE"
+    vim.api.nvim_set_hl(0, g, h)
+  end
+
   -- Highlight overrides ported from '~/dotfiles/nvim' to keep the look identical.
   -- Applied AFTER `:add_transparency()` so the explicit colors here win. Only the
   -- groups relevant to this config's plugins are carried over (Neogit, tree-sitter,
@@ -97,15 +110,19 @@ now(function()
   -- omitted since this config uses 'mini.completion' and 'mini.pick'.
   local set_hl = vim.api.nvim_set_hl
 
-  -- 'mini.base16' gives `PmenuSel` (and the `*Sel` variants) `reverse = true`.
-  -- The LSP kind chips ('mini.completion' via `MiniIcons.tweak_lsp_kind`) are
-  -- coloured with fg-only `MiniIcons*` groups, so on the selected row `reverse`
-  -- flips their fg into a coloured *background* block (e.g. the pink "Class"
-  -- chip). Replace the reverse with an explicit selection bg (base02) so the
-  -- chips keep their fg colour and the selected row just gets a subtle block.
-  set_hl(0, "PmenuSel", { bg = p.base02 })
-  set_hl(0, "PmenuKindSel", { bg = p.base02 })
-  set_hl(0, "PmenuMatchSel", { bg = p.base02, bold = true })
+  -- Selected completion row: a uniform cream bar with dark text across all
+  -- columns (candidate, kind chip, source/extra).
+  --
+  -- 'mini.base16' ships the `*Sel` groups with `reverse = true`, which flips
+  -- `Pmenu`'s cream fg into the selection bg (the look we want) but ALSO inverts
+  -- the LSP kind chip's coloured fg ('mini.completion' via
+  -- `MiniIcons.tweak_lsp_kind`) into a coloured background block. So instead of
+  -- `reverse`, set an explicit cream bg (base05) + dark fg (base00): this forces
+  -- every column's text dark regardless of its own colour, kind chip included.
+  set_hl(0, "PmenuSel", { bg = p.base05, fg = p.base00 })
+  set_hl(0, "PmenuKindSel", { bg = p.base05, fg = p.base00 })
+  set_hl(0, "PmenuExtraSel", { bg = p.base05, fg = p.base00 })
+  set_hl(0, "PmenuMatchSel", { bg = p.base05, fg = p.base00, bold = true })
 
   -- Make functions/identifiers/variables blue (base0D) instead of base16 default.
   set_hl(0, "Identifier", { fg = p.base0D })
