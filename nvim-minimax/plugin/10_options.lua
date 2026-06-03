@@ -141,7 +141,9 @@ MiniDeps.later(function()
   }
 
   local reconcile = function(bufnr)
-    if not vim.api.nvim_buf_is_valid(bufnr) then return end
+    if not vim.api.nvim_buf_is_valid(bufnr) then
+      return
+    end
     local line_count = vim.api.nvim_buf_line_count(bufnr)
     -- WARN..ERROR only (matches the previous sign policy). Hints/info get no
     -- in-buffer marker; surface them via `<Leader>ld` / `]d` / `<Leader>fd`.
@@ -186,7 +188,9 @@ MiniDeps.later(function()
   -- diagnostics already present (no DiagnosticChanged fires on plain open).
   vim.api.nvim_create_autocmd({ "DiagnosticChanged", "BufEnter" }, {
     desc = "Reconcile diagnostic span signs",
-    callback = function(args) reconcile(args.buf) end,
+    callback = function(args)
+      reconcile(args.buf)
+    end,
   })
 
   vim.diagnostic.config({

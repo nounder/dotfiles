@@ -98,9 +98,7 @@ later(function()
         args = { "--no-install", "dprint", "fmt", "--stdin", "$FILENAME" },
         stdin = true,
         env = {
-          PATH = vim.fn.expand("~/.bun/bin")
-            .. ":/opt/homebrew/bin:"
-            .. (vim.env.PATH or "/usr/bin:/bin"),
+          PATH = vim.fn.expand("~/.bun/bin") .. ":/opt/homebrew/bin:" .. (vim.env.PATH or "/usr/bin:/bin"),
         },
         condition = function(ctx)
           return vim.fs.find({ "dprint.json" }, { path = ctx.filename, upward = true })[1]

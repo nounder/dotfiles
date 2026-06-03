@@ -78,41 +78,32 @@ now(function()
     })
     :apply()
 
-  -- `add_transparency({ float })` strips `Normal/FloatBorder/FloatTitle` but not
-  -- the per-severity `DiagnosticFloating*` groups, which mini.base16 gives a solid
-  -- `bg = base01`. That shows as a dark block behind each line of the diagnostic
-  -- float (`:h vim.diagnostic.open_float`). Null the bg, keeping each group's live
-  -- fg (the severity color), same as the picker/notify strips in 'plugin/30_mini.lua'.
+  local set_hl = vim.api.nvim_set_hl
+
   for _, g in ipairs({
-    "DiagnosticFloatingError", "DiagnosticFloatingWarn", "DiagnosticFloatingInfo",
-    "DiagnosticFloatingHint", "DiagnosticFloatingOk",
+    "DiagnosticFloatingError",
+    "DiagnosticFloatingWarn",
+    "DiagnosticFloatingInfo",
+    "DiagnosticFloatingHint",
+    "DiagnosticFloatingOk",
   }) do
-    vim.api.nvim_set_hl(0, g, { fg = vim.api.nvim_get_hl(0, { name = g }).fg, bg = "NONE" })
+    set_hl(0, g, { fg = vim.api.nvim_get_hl(0, { name = g }).fg, bg = "NONE" })
   end
 
-  -- Same story for the 'mini.clue' window (keybinding hints): mini.base16 gives
-  -- every `MiniClue*` group a solid `bg = base01` that `add_transparency` doesn't
-  -- touch, showing as a dark block behind the clue popup. Null the bg on each,
-  -- preserving its live fg and any other attributes (e.g. MiniClueTitle's bold).
   for _, g in ipairs({
-    "MiniClueBorder", "MiniClueDescGroup", "MiniClueDescSingle", "MiniClueNextKey",
-    "MiniClueNextKeyWithPostkeys", "MiniClueSeparator", "MiniClueTitle",
+    "MiniClueBorder",
+    "MiniClueDescGroup",
+    "MiniClueDescSingle",
+    "MiniClueNextKey",
+    "MiniClueNextKeyWithPostkeys",
+    "MiniClueSeparator",
+    "MiniClueTitle",
   }) do
     local h = vim.api.nvim_get_hl(0, { name = g })
     h.bg, h.ctermbg = "NONE", "NONE"
-    vim.api.nvim_set_hl(0, g, h)
+    set_hl(0, g, h)
   end
 
-  -- Highlight overrides ported from '~/dotfiles/nvim' to keep the look identical.
-  -- Applied AFTER `:add_transparency()` so the explicit colors here win. Only the
-  -- groups relevant to this config's plugins are carried over (Neogit, tree-sitter,
-  -- diff signs); the dotfiles blink.cmp/snacks-specific groups are intentionally
-  -- omitted since this config uses 'mini.completion' and 'mini.pick'.
-  local set_hl = vim.api.nvim_set_hl
-
-  -- Selected completion row: a uniform cream bar with dark text across all
-  -- columns (candidate, kind chip, source/extra).
-  --
   -- 'mini.base16' ships the `*Sel` groups with `reverse = true`, which flips
   -- `Pmenu`'s cream fg into the selection bg (the look we want) but ALSO inverts
   -- the LSP kind chip's coloured fg ('mini.completion' via
