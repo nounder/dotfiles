@@ -35,28 +35,17 @@
 -- - "See 'path/to/file'" means see open file at described path and read it.
 -- - `:SomeCommand ...` or `:lua ...` means execute mentioned command.
 
--- Bootstrap 'mini.nvim' manually in a way that it gets managed by 'mini.deps'
-local mini_path = vim.fn.stdpath("data") .. "/site/pack/deps/start/mini.nvim"
-if not vim.loop.fs_stat(mini_path) then
-  vim.cmd('echo "Installing `mini.nvim`" | redraw')
-  local origin = "https://github.com/nvim-mini/mini.nvim"
-  local clone_cmd = { "git", "clone", "--filter=blob:none", origin, mini_path }
-  vim.fn.system(clone_cmd)
-  vim.cmd("packadd mini.nvim | helptags ALL")
-  vim.cmd('echo "Installed `mini.nvim`" | redraw')
-end
-
--- Plugin manager. Set up immediately for `now()`/`later()` helpers.
--- Example usage:
--- - `MiniDeps.add('...')` - use inside config to add a plugin
--- - `:DepsUpdate` - update all plugins
--- - `:DepsSnapSave` - save a snapshot of currently active plugins
+-- Plugin manager:
+-- - `vim.pack.add({ ... })` - use inside config to add one or more plugins.
+-- - `:lua vim.pack.update()` - update all plugins; execute `:write` to confirm.
+-- - `:lua vim.pack.del({ ... })` - delete specific plugins.
 --
 -- See also:
--- - `:h MiniDeps-overview` - how to use it
--- - `:h MiniDeps-commands` - all available commands
+-- - `:h vim.pack-examples` - how to use it
+-- - `:h vim.pack-lockfile` - lockfile info
+-- - `:h vim.pack-events` - available events and plugin hooks examples
+-- - `:h vim.pack.update()` - more details about confirmation step
 -- - 'plugin/30_mini.lua' - more details about 'mini.nvim' in general
-require("mini.deps").setup()
 
 -- Define config table to be able to pass data between scripts
 -- It is a global variable which can be use both as `_G.Config` and `Config`
@@ -76,6 +65,58 @@ Config.new_autocmd = function(event, pattern, callback, desc)
   vim.api.nvim_create_autocmd(event, opts)
 end
 
--- Some plugins and 'mini.nvim' modules only need setup during startup if Neovim
--- is started like `nvim -- path/to/file`, otherwise delaying setup is fine
-Config.now_if_args = vim.fn.argc(-1) > 0 and MiniDeps.now or MiniDeps.later
+-- Define custom `vim.pack.add()` hook helper.
+-- If any plugin requires installation hooks, register them with this function
+-- *before* the matching `vim.pack.add()` call.
+Config.on_packchanged = function(plugin_name, kinds, callback, desc)
+  local f = function(ev)
+    local name, kind = ev.data.spec.name, ev.data.kind
+    if not (name == plugin_name and vim.tbl_contains(kinds, kind)) then
+      return
+    end
+    if not ev.data.active then
+      vim.cmd.packadd(plugin_name)
+    end
+    callback(ev.data)
+  end
+  Config.new_autocmd("PackChanged", "*", f, desc)
+end
+
+-- 'mini.nvim' - all-in-one plugin powering most of this config's features.
+-- See 'plugin/30_mini.lua' for how it is used. Installed via `vim.pack` (no
+-- manual git clone). Load now so 'mini.misc' is available for the loading
+-- helpers below.
+--
+-- `confirm = false` auto-downloads on first launch without the confirmation
+-- buffer (default would ask before the initial install). Updates are separate:
+-- `:lua vim.pack.update()` still shows a review buffer unless called with
+-- `{ force = true }`.
+vim.pack.add({ "https://github.com/nvim-mini/mini.nvim" }, { confirm = false })
+
+-- Loading helpers used to organize the config into fail-safe parts. They wrap
+-- each step in `MiniMisc.safely()` so a single error doesn't abort startup.
+-- These replace 'mini.deps' `MiniDeps.now`/`MiniDeps.later`. Example usage:
+-- - `now` - execute immediately. Use for what must run during startup: color
+--   scheme, statusline, tabline, dashboard, etc.
+-- - `later` - execute a bit later. Use for things not needed during startup.
+-- - `now_if_args` - run `now` only if Neovim is started like `nvim -- file`,
+--   otherwise delay (file opened during startup needs correct behavior).
+-- - `on_event` / `on_filetype` - finer-grained lazy loading; run once on the
+--   first matched event/filetype. Use only if the above isn't enough.
+--
+-- See also:
+-- - `:h MiniMisc.safely()`
+local misc = require("mini.misc")
+Config.now = function(f)
+  misc.safely("now", f)
+end
+Config.later = function(f)
+  misc.safely("later", f)
+end
+Config.now_if_args = vim.fn.argc(-1) > 0 and Config.now or Config.later
+Config.on_event = function(ev, f)
+  misc.safely("event:" .. ev, f)
+end
+Config.on_filetype = function(ft, f)
+  misc.safely("filetype:" .. ft, f)
+end

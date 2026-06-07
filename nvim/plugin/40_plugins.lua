@@ -1,21 +1,17 @@
-local add, later = MiniDeps.add, MiniDeps.later
-local now_if_args = Config.now_if_args
+local add = function(specs)
+  vim.pack.add(specs, { confirm = false })
+end
+local now_if_args, later = Config.now_if_args, Config.later
 
 now_if_args(function()
-  add({
-    source = "nvim-treesitter/nvim-treesitter",
-    hooks = {
+  local ts_update = function()
+    vim.cmd("TSUpdate")
+  end
+  Config.on_packchanged("nvim-treesitter", { "update" }, ts_update, ":TSUpdate")
 
-      -- Update tree-sitter parser after plugin is updated
-      post_checkout = function()
-        vim.cmd("TSUpdate")
-      end,
-    },
-    checkout = "90cd6580e720caedacb91fdd587b747a6e77d61f",
-  })
   add({
-    source = "nvim-treesitter/nvim-treesitter-textobjects",
-    checkout = "93d60a475f0b08a8eceb99255863977d3a25f310",
+    { src = "https://github.com/nvim-treesitter/nvim-treesitter", version = "90cd6580e720caedacb91fdd587b747a6e77d61f" },
+    { src = "https://github.com/nvim-treesitter/nvim-treesitter-textobjects", version = "93d60a475f0b08a8eceb99255863977d3a25f310" },
   })
 
   local languages = {
@@ -67,7 +63,7 @@ now_if_args(function()
 end)
 
 now_if_args(function()
-  add("neovim/nvim-lspconfig")
+  add({ "https://github.com/neovim/nvim-lspconfig" })
 
   vim.lsp.enable({
     "lua_ls",
@@ -83,7 +79,7 @@ end)
 -- 'folke/flash.nvim' adds label-based motions: it shows short labels at match
 -- locations and jumps where you pick.
 later(function()
-  add("folke/flash.nvim")
+  add({ "https://github.com/folke/flash.nvim" })
   require("flash").setup()
 
   vim.keymap.set({ "n", "x", "o" }, "s", function()
@@ -114,8 +110,8 @@ end)
 -- Git client a'la magit
 local function load_neogit()
   add({
-    source = "NeogitOrg/neogit",
-    depends = { "nvim-lua/plenary.nvim" },
+    "https://github.com/nvim-lua/plenary.nvim",
+    "https://github.com/NeogitOrg/neogit",
   })
 
   -- See `:h neogit` and https://github.com/NeogitOrg/neogit for all options.
@@ -166,7 +162,7 @@ end, {
 -- formatting setup. This config mirrors the LazyVim setup in
 -- '~/dotfiles/nvim/lua/plugins/formatting.lua'.
 later(function()
-  add("stevearc/conform.nvim")
+  add({ "https://github.com/stevearc/conform.nvim" })
 
   -- Filetypes handled by 'oxfmt' (preferred) then 'dprint' as fallback.
   local oxfmt_supported = {

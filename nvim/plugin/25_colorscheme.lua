@@ -1,4 +1,4 @@
-local now = MiniDeps.now
+local now = Config.now
 
 -- Build a base16 color scheme from a fixed 16-color palette. 'mini.base16' comes
 -- with 'mini.nvim' and turns the 16 colors (base00 darkest bg .. base07 lightest

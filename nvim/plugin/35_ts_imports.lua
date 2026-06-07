@@ -8,7 +8,7 @@
 --
 -- See 'lua/ts_imports.lua' for the full design and rationale.
 
-local later = MiniDeps.later
+local later = Config.later
 
 later(function()
   -- Invalidate the per-cwd file cache whenever a source file is written, so the

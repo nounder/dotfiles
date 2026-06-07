@@ -127,7 +127,7 @@ Config.new_autocmd('FileType', nil, f, "Proper 'formatoptions'")
 -- after diagnostics settle, including on genuine clear). Old bars persist
 -- untouched across the LSP gap (extmark gravity keeps them on the right lines as
 -- text shifts) and are repositioned/pruned only when new data actually arrives.
-MiniDeps.later(function()
+Config.later(function()
   local ns = vim.api.nvim_create_namespace("span_diagnostic_signs")
   local hl = {
     [vim.diagnostic.severity.ERROR] = "DiagnosticSignError",
