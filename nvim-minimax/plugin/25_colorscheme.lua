@@ -98,6 +98,14 @@ now(function()
     "MiniClueNextKeyWithPostkeys",
     "MiniClueSeparator",
     "MiniClueTitle",
+    "MiniFilesBorder",
+    "MiniFilesBorderModified",
+    "MiniFilesCursorLine",
+    "MiniFilesDirectory",
+    "MiniFilesFile",
+    "MiniFilesNormal",
+    "MiniFilesTitle",
+    "MiniFilesTitleFocused",
   }) do
     local h = vim.api.nvim_get_hl(0, { name = g })
     h.bg, h.ctermbg = "NONE", "NONE"
@@ -124,6 +132,10 @@ now(function()
   set_hl(0, "@variable.member", { fg = p.base05 })
   set_hl(0, "@lsp.type.property", { fg = p.base05 })
   set_hl(0, "NonText", { fg = p.base03 })
+
+  -- Don't underline the "should be capitalized" spell warning (SpellCap). This is
+  -- mostly noise in gitcommit buffers, which flag a lowercase first word.
+  set_hl(0, "SpellCap", {})
 
   -- mini.diff sign colors (analogous to dotfiles' GitSigns overrides).
   set_hl(0, "MiniDiffSignAdd", { bg = "NONE", fg = p.base0B })
