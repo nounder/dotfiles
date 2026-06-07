@@ -1,17 +1,3 @@
--- ┌─────────────┐
--- │ Color scheme │
--- └─────────────┘
---
--- This file builds and applies the active color scheme. It is sourced before
--- 'plugin/30_mini.lua' (file names in 'plugin/' are loaded alphabetically) so
--- colors are set as early as possible, before the first screen draw.
---
--- It uses 'mini.base16' (part of 'mini.nvim', already bootstrapped in 'init.lua')
--- to turn a fixed 16-color palette into a full colorscheme, then strips
--- backgrounds for terminal transparency and applies a few highlight overrides.
-
--- 'MiniDeps' is set up in 'init.lua'; `now()` runs immediately (needed so colors
--- are correct on the first draw, including `nvim -- path/to/file` startup).
 local now = MiniDeps.now
 
 -- Build a base16 color scheme from a fixed 16-color palette. 'mini.base16' comes

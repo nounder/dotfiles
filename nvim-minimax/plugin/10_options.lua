@@ -1,7 +1,3 @@
--- ┌──────────────────────────┐
--- │ Built-in Neovim behavior │
--- └──────────────────────────┘
---
 -- This file defines Neovim's built-in behavior. The goal is to improve overall
 -- usability in a way that works best with MINI.
 --

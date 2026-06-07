@@ -1,7 +1,3 @@
--- ┌────────────────────────────────┐
--- │ TS namespace-import completion │
--- └────────────────────────────────┘
---
 -- Wires up 'lua/ts_imports.lua', which adds completion candidates for project
 -- files with a capitalized filename (e.g. 'Orb.tsx'). Typing "Or" offers `Orb`
 -- and accepting it inserts `import * as Orb from "..."`.

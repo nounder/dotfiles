@@ -1,9 +1,3 @@
--- ┌─────────────────┐
--- │ Custom mappings │
--- └─────────────────┘
---
--- This file contains definitions of custom general and Leader mappings.
-
 -- General mappings ===========================================================
 
 -- Use this section to add custom general mappings. See `:h vim.keymap.set()`.

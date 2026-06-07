@@ -1,7 +1,3 @@
--- ┌────────────────────┐
--- │ MINI configuration │
--- └────────────────────┘
---
 -- This file contains configuration of the MINI parts of the config.
 -- It contains only configs for the 'mini.nvim' plugin (installed in 'init.lua').
 --
