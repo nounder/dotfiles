@@ -7,3 +7,4 @@ nushell/history.txt
 .zig-cache/
 zig-out/
 .env
+pi/agent/settings.json
