@@ -277,14 +277,14 @@ xmap_leader('gs', '<Cmd>lua MiniGit.show_at_cursor()<CR>', 'Show at selection')
 
 -- References with a single-result shortcut: when there's exactly one reference
 -- other than the symbol under the cursor, jump straight to it instead of opening
--- the quickfix list. Servers include the cursor location itself in the results,
--- so we filter it out first ("definition + one use" → a single jump target).
--- Otherwise fall back to the default behavior (populate quickfix + open it). The
--- `on_list` callback replaces the default handler; see `:h on_list`.
+-- a picker. Servers include the cursor location itself in the results, so we
+-- filter it out first ("definition + one use" → a single jump target).
+-- Otherwise hand off to 'mini.extra's LSP picker ('mini.pick' backend), which is
+-- much faster to navigate than the quickfix list. The `on_list` callback replaces
+-- the default handler; see `:h on_list` and `:h MiniExtra.pickers.lsp`.
 local function lsp_references()
   local cur_buf = vim.api.nvim_get_current_buf()
-  local cur_pos = vim.api.nvim_win_get_cursor(0)
-  local cur_lnum = cur_pos[1]
+  local cur_lnum = vim.api.nvim_win_get_cursor(0)[1]
   vim.lsp.buf.references(nil, {
     on_list = function(opts)
       -- Drop the entry pointing at the cursor position itself.
@@ -302,8 +302,12 @@ local function lsp_references()
         vim.api.nvim_win_set_cursor(0, { item.lnum, math.max(item.col - 1, 0) })
         vim.cmd('normal! zz')
       else
-        vim.fn.setqflist({}, ' ', opts)
-        vim.cmd('botright copen')
+        -- Re-query through the picker (it runs its own LSP request from the
+        -- cursor) rather than reusing `opts.items`, so it owns the full flow.
+        -- Press <Tab> in the picker to reveal 'mini.pick's built-in preview,
+        -- which shows the candidate's source and highlights the target line
+        -- (`MiniPickPreviewLine`) and match region (`MiniPickPreviewRegion`).
+        MiniExtra.pickers.lsp({ scope = 'references' })
       end
     end,
   })
@@ -320,7 +324,10 @@ Config.new_autocmd('LspAttach', nil, function(ev)
     vim.keymap.set('n', lhs, rhs, { buffer = ev.buf, desc = 'LSP: ' .. desc })
   end
   buf_map('gd', '<Cmd>lua vim.lsp.buf.definition()<CR>',      'Definition')
-  buf_map('gr', lsp_references,                              'References')
+  -- `grr` (not `gr`): Neovim 0.12 ships built-in `gr{r,i,n,a,t}` LSP defaults, so
+  -- a bare `gr` is only their prefix — pressing it just waits/shows a clue group.
+  -- Override the built-in `grr` (references) with our follow-picker version.
+  buf_map('grr', lsp_references,                             'References')
   buf_map('gI', '<Cmd>lua vim.lsp.buf.implementation()<CR>',  'Implementation')
   buf_map('gy', '<Cmd>lua vim.lsp.buf.type_definition()<CR>', 'Type definition')
   buf_map('gD', '<Cmd>lua vim.lsp.buf.declaration()<CR>',     'Declaration')
