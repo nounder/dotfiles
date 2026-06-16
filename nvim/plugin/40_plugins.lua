@@ -107,6 +107,33 @@ later(function()
   vim.keymap.set({ "n", "x", "o" }, "<C-@>", ts_incremental, { desc = "Treesitter Incremental Selection" })
 end)
 
+-- 'dmtrKovalenko/fff.nvim' - a frecency-aware, Rust-backed fuzzy file finder.
+-- We don't use its own picker UI; instead a custom 'mini.pick' live source in
+-- 'plugin/30_mini.lua' (`Config.pick_fff_files`) queries `fff.file_search` on
+-- every keystroke and renders the frecency-ranked results inside the themed
+-- mini.pick window. The file-finder keymaps (`ff`/`<Leader>ff`/`<Leader><Space>`
+-- and `fr`/`<Leader>fr`) point at that picker; see 'plugin/20_keymaps.lua'.
+--
+-- fff ships a native Rust core. `download_or_build_binary()` fetches a prebuilt
+-- binary for the platform (falling back to `cargo build`), so register it as a
+-- post-change hook the same way nvim-treesitter wires up `:TSUpdate` above. It
+-- runs on first install and on every `vim.pack.update()` that changes the plugin.
+later(function()
+  Config.on_packchanged("fff.nvim", { "install", "update" }, function()
+    require("fff.download").download_or_build_binary()
+  end, "Build fff.nvim binary")
+
+  add({ "https://github.com/dmtrKovalenko/fff.nvim" })
+
+  -- `setup()` only stashes config into `vim.g.fff`; the file index initializes
+  -- lazily on the first search. `base_path` defaults to the cwd, and the picker
+  -- passes the live cwd on each query so fff re-indexes when 'mini.misc'
+  -- auto-root switches projects (see `setup_auto_root` in 'plugin/30_mini.lua').
+  require("fff").setup({
+    max_results = 100,
+  })
+end)
+
 -- Git client a'la magit
 local function load_neogit()
   add({
