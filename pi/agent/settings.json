@@ -1,16 +1,22 @@
 {
   "lastChangelogVersion": "0.75.5",
-  "defaultProvider": "openai-codex",
-  "defaultModel": "gpt-5.5",
+  "defaultProvider": "grok-cli",
+  "defaultModel": "grok-composer-2.5-fast",
   "quietStartup": true,
-  "packages": [
-    "git:github.com/ivanrvpereira/pi-perplexity@4e77f38"
+  "extensions": [
+    "extensions/grok-fff-search/index.ts"
   ],
-  "defaultThinkingLevel": "low",
+  "packages": [
+    "git:github.com/ivanrvpereira/pi-perplexity@4e77f38",
+    "git:github.com/jonjonrankin/pi-caveman@0d4c639d672b0b80afaa035f582152dcab9c6a8f",
+    "npm:@ff-labs/pi-fff@0.9.4",
+    "npm:pi-grok-cli@0.1.6"
+  ],
+  "defaultThinkingLevel": "xhigh",
   "enabledModels": [
-    "claude-agent-sdk/claude-sonnet-4-6",
-    "claude-agent-sdk/claude-opus-4-7",
     "openai-codex/gpt-5.5",
-    "openai-codex/gpt-5.4-mini"
+    "openai-codex/gpt-5.4-mini",
+    "grok-cli/grok-composer-2.5-fast",
+    "grok-cli/grok-4.3"
   ]
 }
