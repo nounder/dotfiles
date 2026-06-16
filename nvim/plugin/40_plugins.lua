@@ -150,6 +150,9 @@ local function load_neogit()
     -- Commit graph style. "kitty" uses the Kitty terminal graphics protocol
     -- (renders best in Kitty/Ghostty); switch to "unicode" for other terminals.
     graph_style = "kitty",
+    -- Show shortened ISO-8601-ish absolute commit dates in Neogit's log buffers
+    -- (e.g. "26-06-10 16:14") instead of relative dates like "2 hours ago".
+    log_date_format = "%y-%m-%d %H:%M",
     commit_editor = {
       -- Open the commit message editor in its own tab page.
       kind = "tab",
