@@ -6,15 +6,18 @@
  * delegates to @ff-labs/pi-fff (FFF) so grok-cli tool scope still activates
  * Grep/Glob while execution uses ffgrep/fffind.
  *
- * Requires npm:@ff-labs/pi-fff in settings packages (registers fffind/ffgrep too).
+ * This extension also loads pi-grok-cli itself so Grep/Glob can be replaced
+ * inside one extension without tripping pi's cross-extension tool conflict check.
+ * Keep npm:pi-grok-cli out of settings packages; install this directory's npm deps.
  */
 
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
+import registerGrokCli from "pi-grok-cli";
 import { Text } from "@earendil-works/pi-tui";
 import type { GrepMode, GrepResult, SearchResult } from "@ff-labs/fff-node";
 import { FileFinder } from "@ff-labs/fff-node";
 import { Type } from "@sinclair/typebox";
-import { buildQuery } from "@ff-labs/pi-fff/src/query.js";
+import nodePath from "node:path";
 
 interface FormattedFind {
   output: string;
@@ -42,6 +45,76 @@ const DEFAULT_GREP_LIMIT = 20;
 const DEFAULT_FIND_LIMIT = 30;
 const GREP_MAX_LINE_LENGTH = 500;
 const FIND_WEAK_SAMPLE_SIZE = 5;
+
+// Vendored from @ff-labs/pi-fff/src/query.ts so this bridge does not rely on
+// that package's private source path for module resolution.
+function normalizePathConstraint(pathConstraint: string, cwd = process.cwd()): string | null {
+  let trimmed = pathConstraint.trim();
+  if (!trimmed) return trimmed;
+
+  if (nodePath.isAbsolute(trimmed)) {
+    const relative = nodePath.relative(cwd, trimmed).replaceAll(nodePath.sep, "/");
+    if (relative === "") return null;
+    if (relative.startsWith("../") || relative === ".." || nodePath.isAbsolute(relative)) {
+      throw new Error(`Path constraint must be relative to the workspace: ${pathConstraint}`);
+    }
+    trimmed = relative;
+  }
+
+  if (trimmed === "." || trimmed === "./") return null;
+  if (trimmed.startsWith("./")) trimmed = trimmed.slice(2);
+
+  const recursiveDir = trimmed.match(/^(.*)\/\*\*(?:\/\*)?$/);
+  if (recursiveDir) {
+    const dir = recursiveDir[1];
+    if (dir && !/[*?[{]/.test(dir)) return `${dir}/`;
+  }
+
+  if (trimmed.startsWith("/") || trimmed.endsWith("/")) return trimmed;
+  if (/[*?[{]/.test(trimmed)) return trimmed;
+
+  const lastSegment = trimmed.split("/").pop() ?? "";
+  if (/\.[a-zA-Z][a-zA-Z0-9]{0,9}$/.test(lastSegment)) return trimmed;
+
+  return `${trimmed}/`;
+}
+
+function normalizeExcludes(
+  exclude: string | string[] | undefined,
+  cwd = process.cwd(),
+): string[] {
+  if (!exclude) return [];
+  const list = Array.isArray(exclude) ? exclude : [exclude];
+  const out: string[] = [];
+  for (const raw of list) {
+    const parts = raw
+      .split(/[,\s]+/)
+      .map((s) => s.trim())
+      .filter(Boolean);
+    for (const p of parts) {
+      const stripped = p.startsWith("!") ? p.slice(1) : p;
+      const normalized = normalizePathConstraint(stripped, cwd);
+      if (normalized) out.push(`!${normalized}`);
+    }
+  }
+  return out;
+}
+
+function buildQuery(
+  path: string | undefined,
+  pattern: string,
+  exclude?: string | string[],
+  cwd = process.cwd(),
+): string {
+  const parts: string[] = [];
+  if (path) {
+    const pathConstraint = normalizePathConstraint(path, cwd);
+    if (pathConstraint) parts.push(pathConstraint);
+  }
+  parts.push(...normalizeExcludes(exclude, cwd));
+  parts.push(pattern);
+  return parts.join(" ");
+}
 
 function truncateLine(line: string, max = GREP_MAX_LINE_LENGTH): string {
   const trimmed = line.trim();
@@ -157,6 +230,8 @@ function globPatternFromGrok(pattern: string, glob_pattern?: string): string {
 }
 
 export default function grokFffSearchBridge(pi: ExtensionAPI) {
+  registerGrokCli(pi);
+
   let finder: FileFinder | null = null;
   let finderCwd: string | null = null;
   let finderPromise: Promise<FileFinder> | null = null;

@@ -9,8 +9,7 @@
   "packages": [
     "git:github.com/ivanrvpereira/pi-perplexity@4e77f38",
     "git:github.com/jonjonrankin/pi-caveman@0d4c639d672b0b80afaa035f582152dcab9c6a8f",
-    "npm:@ff-labs/pi-fff@0.9.4",
-    "npm:pi-grok-cli@0.1.6"
+    "npm:@ff-labs/pi-fff@0.9.4"
   ],
   "defaultThinkingLevel": "xhigh",
   "enabledModels": [
