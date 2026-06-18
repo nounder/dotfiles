@@ -229,8 +229,64 @@ function globPatternFromGrok(pattern: string, glob_pattern?: string): string {
   return (pattern?.trim() || glob_pattern?.trim() || "**/*") as string;
 }
 
+const SEARCH_TOOLS_SUPPRESSED_FOR_GROK = [
+  "grep",
+  "find",
+  "multi_grep",
+  "ffgrep",
+  "fffind",
+  "fff-multi-grep",
+] as const;
+
 export default function grokFffSearchBridge(pi: ExtensionAPI) {
   registerGrokCli(pi);
+
+  let suppressedSearchTools: string[] = [];
+
+  function syncSearchToolsForGrok(provider: string | undefined): void {
+    const current = pi.getActiveTools();
+    const suppress = (toolName: string) =>
+      SEARCH_TOOLS_SUPPRESSED_FOR_GROK.includes(
+        toolName as (typeof SEARCH_TOOLS_SUPPRESSED_FOR_GROK)[number],
+      );
+
+    if (provider === "grok-cli") {
+      const next = current.filter((toolName) => !suppress(toolName));
+      const removed = current.filter(suppress);
+      if (removed.length > 0) {
+        suppressedSearchTools = [...new Set([...suppressedSearchTools, ...removed])];
+      }
+      if (!next.includes("Grep")) next.push("Grep");
+      if (!next.includes("Glob")) next.push("Glob");
+      if (
+        current.length !== next.length ||
+        current.some((toolName, index) => toolName !== next[index])
+      ) {
+        pi.setActiveTools(next);
+      }
+      return;
+    }
+
+    if (suppressedSearchTools.length === 0) return;
+    const next = [
+      ...current,
+      ...suppressedSearchTools.filter((toolName) => !current.includes(toolName)),
+    ];
+    suppressedSearchTools = [];
+    if (next.length !== current.length) pi.setActiveTools(next);
+  }
+
+  pi.on("model_select", (event) => {
+    syncSearchToolsForGrok(event.model.provider);
+  });
+
+  pi.on("before_agent_start", (_event, ctx) => {
+    syncSearchToolsForGrok(ctx.model?.provider);
+  });
+
+  pi.on("session_start", (_event, ctx) => {
+    syncSearchToolsForGrok(ctx.model?.provider);
+  });
 
   let finder: FileFinder | null = null;
   let finderCwd: string | null = null;
