@@ -170,10 +170,22 @@ now(function()
     return false
   end
 
+  local unlist_node_modules = function()
+    for _, buf in ipairs(vim.api.nvim_list_bufs()) do
+      if vim.bo[buf].buflisted then
+        local name = vim.api.nvim_buf_get_name(buf)
+        if name:find("/node_modules/", 1, true) then
+          vim.bo[buf].buflisted = false
+        end
+      end
+    end
+  end
+
   Config.new_autocmd("VimLeavePre", "*", function()
     if not should_autosave() then
       return
     end
+    unlist_node_modules()
     -- `force = true` overwrites the existing session without prompting. The name
     -- resolves to the global sessions directory (keyed by cwd), so the file
     -- lands there rather than as a local 'Session.vim' in the repo.
