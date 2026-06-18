@@ -191,20 +191,6 @@ now(function()
     -- lands there rather than as a local 'Session.vim' in the repo.
     pcall(MiniSessions.write, Config.cwd_session_name(), { force = true })
   end, "Auto-save cwd session on exit")
-
-  -- Auto-restore the cwd's session on startup, but only for a "bare" `nvim`:
-  -- when no file arguments were passed (`nvim` with no `path/to/file`). Opening
-  -- a specific file (`nvim file`) or piping stdin should not blow away that
-  -- buffer with a restored session. If no session exists for the cwd, do
-  -- nothing (no picker fallback) so a bare `nvim` just lands on `[No Name]`.
-  Config.new_autocmd("VimEnter", "*", function()
-    if vim.fn.argc(-1) > 0 then
-      return
-    end
-    if vim.fn.filereadable(Config.cwd_session_path()) == 1 then
-      Config.restore_session(Config.cwd_session_name())
-    end
-  end, "Auto-restore cwd session when started with no file args")
 end)
 
 -- Start screen ('mini.starter'). Disabled: plain `nvim` opens on an empty
