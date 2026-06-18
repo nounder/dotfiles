@@ -846,7 +846,25 @@ end)
 --   'mini.pairs' doesn't provide particularly smart behavior, like auto balancing
 later(function()
   -- Create pairs not only in Insert, but also in Command line mode
-  require("mini.pairs").setup({ modes = { command = true } })
+  local pairs = require("mini.pairs")
+  pairs.setup({ modes = { command = true } })
+
+  -- Don't auto-close an opening bracket when a non-whitespace character
+  -- immediately follows the cursor. `neigh_pattern` matches two neighbor
+  -- chars (left of cursor, right of cursor); "\n" indicates line end. The
+  -- left char keeps the default "not a backslash" guard; the right char is
+  -- restricted to whitespace or line end.
+  for _, info in ipairs({
+    { open = "(", pair = "()" },
+    { open = "[", pair = "[]" },
+    { open = "{", pair = "{}" },
+  }) do
+    pairs.map("i", info.open, {
+      action = "open",
+      pair = info.pair,
+      neigh_pattern = "[^\\][%s\n]",
+    })
+  end
 end)
 
 -- Pick anything with single window layout and fast matching. This is one of
