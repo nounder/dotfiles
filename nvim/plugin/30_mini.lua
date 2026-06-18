@@ -1146,6 +1146,99 @@ later(function()
   set_hl(0, "MiniPickMatchMarked", { fg = accent, bg = "NONE", italic = true })
   -- Fuzzy-matched character ranges pop in the search-accent yellow.
   set_hl(0, "MiniPickMatchRanges", { fg = query, bg = "NONE", bold = true })
+
+  -- fff-backed file finder. 'fff.nvim' (installed in 'plugin/40_plugins.lua') is
+  -- a Rust file finder whose `file_search` ranks by fuzzy match *and* frecency
+  -- (how often/recently each file was opened). We don't use its own UI: this is
+  -- a 'mini.pick' *live* source (same shape as `:Pick grep_live`) whose `match`
+  -- callback re-queries fff on every keystroke and feeds the ranked results back
+  -- into the themed mini.pick window via `set_picker_items`.
+  --
+  -- Because fff already orders the results, items are set with `do_match = false`
+  -- so the global `source.match` (the fzf matcher) doesn't re-rank them. An empty
+  -- query is still sent to fff, which returns the frecency-ordered file list — so
+  -- opening the picker immediately surfaces recent files (this is why it also
+  -- backs the bare `fr` "recent files" map, replacing `:Pick oldfiles`).
+  --
+  -- Each item carries `text` (cwd-relative path, shown by `show_aligned`'s
+  -- icon+path renderer) and `path` (absolute), so mini.pick's `default_choose`
+  -- opens the file natively and `<Tab>` preview works. `query` is the array of
+  -- typed characters; `table.concat` joins it into fff's search string.
+  Config.pick_fff_files = function(local_opts, opts)
+    local_opts = local_opts or {}
+    local has_fff = pcall(require, "fff")
+    -- Without the plugin/binary, fall back to mini.pick's own files picker so the
+    -- keymaps keep working (e.g. before the first `download_or_build_binary`).
+    if not has_fff then
+      return MiniPick.builtin.files(local_opts, opts)
+    end
+
+    local fff = require("fff")
+    local cwd = local_opts.cwd or vim.fn.getcwd()
+
+    -- Resolve a result item to an absolute path. fff returns `relative_path`
+    -- (relative to its `base_path`/cwd) and sometimes `absolute_path`; prefer the
+    -- latter and otherwise join against the picker cwd.
+    local to_abs = function(item)
+      if item.absolute_path and item.absolute_path ~= "" then
+        return item.absolute_path
+      end
+      return vim.fs.normalize(cwd .. "/" .. item.relative_path)
+    end
+
+    -- Set items from an fff search for the given query string. `set_items_opts`
+    -- mirrors grep_live: `do_match = false` keeps fff's ranking; `querytick`
+    -- lets mini.pick drop stale async writes (here writes are synchronous, but
+    -- it's harmless and matches the documented contract).
+    local set_items_opts = { do_match = false, querytick = nil }
+    local search = function(needle)
+      set_items_opts.querytick = MiniPick.get_querytick()
+      local ok, res = pcall(fff.file_search, needle, { cwd = cwd, max_results = 100 })
+      if not ok or type(res) ~= "table" then
+        return MiniPick.set_picker_items({}, set_items_opts)
+      end
+      local items = {}
+      for _, item in ipairs(res.items or {}) do
+        items[#items + 1] = {
+          text = item.relative_path,
+          path = to_abs(item),
+        }
+      end
+      MiniPick.set_picker_items(items, set_items_opts)
+    end
+
+    local match = function(_, _, q)
+      -- Re-run only when the query actually changed since the last write.
+      if MiniPick.get_querytick() == set_items_opts.querytick then
+        return
+      end
+      search(table.concat(q))
+    end
+
+    -- Seed the initial item list (empty query → fff's frecency-ordered files) so
+    -- recent files show the instant the picker opens, before any keystroke. The
+    -- `match` callback only fires once the query changes (mini.pick skips the
+    -- match on the first render), so without this seed the window would open
+    -- empty. Synchronous fff call here is fine: this is the initial paint.
+    local initial = {}
+    local ok, res = pcall(fff.file_search, "", { cwd = cwd, max_results = 100 })
+    if ok and type(res) == "table" then
+      for _, item in ipairs(res.items or {}) do
+        initial[#initial + 1] = { text = item.relative_path, path = to_abs(item) }
+      end
+    end
+
+    local default_source = {
+      name = "Files (fff)",
+      cwd = cwd,
+      items = initial,
+      match = match,
+      -- Inherit the global `show` (`show_aligned`, with icons) unless overridden.
+      show = MiniPick.config.source.show,
+    }
+    opts = vim.tbl_deep_extend("force", { source = default_source }, opts or {})
+    return MiniPick.start(opts)
+  end
 end)
 
 -- Manage and expand snippets (templates for a frequently used text).
