@@ -290,6 +290,7 @@ alias claude="claude --dangerously-skip-permissions"
 alias sonnet="claude --model sonnet"
 alias opus="claude --model opus"
 alias haiku="claude --model haiku"
+alias fable="claude --model fable"
 alias co=dotfiles-edit
 alias eg="nvim -c ':Neogit kind=replace'"
 alias oc=opencode
