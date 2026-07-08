@@ -19,10 +19,10 @@ selection-invert-fg-bg = true
 #auto-update-channel = tip
 mouse-shift-capture = false
 
-background-blur = macos-glass-clear
-#background-blur = macos-glass-regular
-#background-blur = true
-#background-opacity = 0.9
+#background-blur = macos-glass-clear
+background-blur = macos-glass-regular
+background-blur = true
+background-opacity = 0.8
 background-opacity-cells = true
 
 command = /opt/homebrew/bin/bash
