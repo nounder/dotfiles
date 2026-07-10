@@ -2,13 +2,17 @@
 
 # Install extra tools interactively
 # Usage: install-extra.sh [-f]   (-f prompts even if already installed)
+# First collects all answers, then installs selected tools.
 
 force=0
 if [ "$1" = "-f" ]; then
   force=1
 fi
 
-ask_install() {
+# Pending installs: space-separated "name|cmd" pairs (cmd may contain spaces)
+pending=""
+
+queue_install() {
   local name="$1"
   local bin="$2"
   local cmd="$3"
@@ -19,7 +23,10 @@ ask_install() {
   printf "Install %s? [y/N] " "$name"
   read -r answer
   case "$answer" in
-    [yY]*) eval "$cmd" ;;
+    [yY]*)
+      pending="$pending
+$name|$cmd"
+      ;;
     *) echo "Skipping $name" ;;
   esac
 }
@@ -38,9 +45,26 @@ install_neovim_appimage() {
   chmod u+x "$HOME/.local/bin/nvim"
 }
 
-ask_install "Claude Code" "claude" "bun install --global @anthropic-ai/claude-code"
-ask_install "Codex" "codex" "bun install --global @openai/codex"
+# --- prompts ---
+queue_install "Claude Code" "claude" "bun install --global @anthropic-ai/claude-code"
+queue_install "Codex" "codex" "bun install --global @openai/codex"
 
 if [ "$(uname -s)" = "Linux" ]; then
-  ask_install "Neovim (AppImage)" "nvim" "install_neovim_appimage"
+  queue_install "Neovim (AppImage)" "nvim" "install_neovim_appimage"
 fi
+
+# --- install ---
+if [ -z "$(printf '%s' "$pending" | tr -d '\n')" ]; then
+  echo "Nothing to install."
+  exit 0
+fi
+
+echo
+echo "Installing..."
+printf '%s\n' "$pending" | while IFS= read -r line; do
+  [ -z "$line" ] && continue
+  name="${line%%|*}"
+  cmd="${line#*|}"
+  echo "==> $name"
+  eval "$cmd" || echo "Failed: $name"
+done
