@@ -214,9 +214,17 @@ fi
 export PATH="$HOME/.local/bin:$HOME/dotfiles/bin:$HOME/.bun/bin:$HOME/.cargo/bin:$HOME/bin:$HOME/.npm/bin:/usr/local/bin:/opt/homebrew/bin:/opt/homebrew/sbin:$HOME/go/bin:$PATH:node_modules/.bin:../node_modules/.bin"
 
 # Per-directory history using nohi
-if [[ -n "$BASH_VERSION" ]] && command -v nohi &>/dev/null && command -v tac &>/dev/null; then
+if [[ -n "$BASH_VERSION" ]] && command -v nohi &>/dev/null; then
   unset HISTFILE
   _NOHI_DIR="$PWD"
+  _nohi_recent() {
+    if command -v tac &>/dev/null; then
+      nohi --get --recent "$1" 2>/dev/null | tac
+    else
+      # macOS does not provide tac; BSD tail -r is its equivalent.
+      nohi --get --recent "$1" 2>/dev/null | tail -r
+    fi
+  }
   _nohi_sync() {
     local _nohi_exit=$?
     local cmd
@@ -228,11 +236,11 @@ if [[ -n "$BASH_VERSION" ]] && command -v nohi &>/dev/null && command -v tac &>/
     if [[ "$PWD" != "$_NOHI_DIR" ]]; then
       _NOHI_DIR="$PWD"
       history -c
-      while IFS= read -r c; do history -s -- "$c"; done < <(nohi --get --recent "$PWD" 2>/dev/null | tac 2>/dev/null)
+      while IFS= read -r c; do history -s -- "$c"; done < <(_nohi_recent "$PWD")
     fi
   }
   PROMPT_COMMAND="_nohi_sync${PROMPT_COMMAND:+;$PROMPT_COMMAND}"
-  while IFS= read -r cmd; do history -s -- "$cmd"; done < <(nohi --get --recent "$PWD" 2>/dev/null | tac 2>/dev/null)
+  while IFS= read -r cmd; do history -s -- "$cmd"; done < <(_nohi_recent "$PWD")
 fi
 
 # Environment variables
@@ -325,13 +333,16 @@ fi
 
 # Nom Functions
 _nom_search_history() {
-  local selected
-  # Use nohi with frecency ordering if available, otherwise fall back to bash history
+  local selected candidates
+  # Prefer nohi's frecency ordering, but retain Bash history when nohi has no
+  # entries for this directory (for example in a newly initialized database).
   if command -v nohi &>/dev/null; then
-    selected=$(nohi --get "$PWD" 2>/dev/null | $NOM_CMD --scheme=history --prompt="History> " --query="$READLINE_LINE")
-  else
-    selected=$(history | sed 's/^ *[0-9]* *//' | awk '!seen[$0]++' | $NOM_CMD --scheme=history --prompt="History> " --query="$READLINE_LINE")
+    candidates=$(nohi --get "$PWD" 2>/dev/null)
   fi
+  if [[ -z "$candidates" ]]; then
+    candidates=$(history | sed 's/^ *[0-9]* *//' | awk '!seen[$0]++')
+  fi
+  selected=$(printf '%s\n' "$candidates" | $NOM_CMD --scheme=history --prompt="History> " --query="$READLINE_LINE")
   printf '%s' "$_TERM_RESET"
   if [[ -n "$selected" ]]; then
     READLINE_LINE="$selected"
