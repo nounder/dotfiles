@@ -590,19 +590,29 @@ _nom_tab_complete() {
   fi
 
   if [[ -n "$completions" ]]; then
-    # Append / to directory entries
-    local _comp_with_slash="" _comp_entry
+    # Append / to directory entries, dedup on path identity (foo, ./foo, ./foo/)
+    local _comp_deduped="" _comp_entry _comp_key
+    declare -A _comp_seen=()
     while IFS= read -r _comp_entry; do
+      [[ -z "$_comp_entry" ]] && continue
       if [[ -d "$_comp_entry" && "$_comp_entry" != */ ]]; then
-        _comp_with_slash+="${_comp_entry}/"$'\n'
-      else
-        _comp_with_slash+="${_comp_entry}"$'\n'
+        _comp_entry="${_comp_entry}/"
       fi
+      _comp_key="${_comp_entry#./}"
+      _comp_key="${_comp_key%/}"
+      if [[ -e "$_comp_key" ]]; then
+        [[ -n "${_comp_seen[$_comp_key]+x}" ]] && continue
+        _comp_seen[$_comp_key]=1
+      else
+        [[ -n "${_comp_seen[$_comp_entry]+x}" ]] && continue
+        _comp_seen[$_comp_entry]=1
+      fi
+      _comp_deduped+="${_comp_entry}"$'\n'
     done <<< "$completions"
-    completions="${_comp_with_slash%$'\n'}"
+    completions="${_comp_deduped%$'\n'}"
 
     local selected nom_key unique_completions nom_query
-    unique_completions=$(echo "$completions" | awk '!seen[$0]++')
+    unique_completions="$completions"
     # For fuzzy path matches, don't pre-filter; otherwise use last segment
     if [[ "$word" == */* ]]; then
       nom_query=""
