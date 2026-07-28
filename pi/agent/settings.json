@@ -1,10 +1,12 @@
 {
-  "lastChangelogVersion": "0.84.1",
-  "defaultProvider": "grok-cli",
-  "defaultModel": "grok-composer-2.5-fast",
+  "lastChangelogVersion": "0.80.6",
+  "defaultProvider": "openai-codex",
+  "defaultModel": "gpt-5.6-sol",
   "quietStartup": true,
   "packages": [
-    "npm:pi-grok-cli@0.7.0"
+    "git:github.com/ivanrvpereira/pi-perplexity@4e77f38",
+    "git:github.com/jonjonrankin/pi-caveman@0d4c639d672b0b80afaa035f582152dcab9c6a8f",
+    "npm:pi-grok-cli@0.3.2"
   ],
   "defaultThinkingLevel": "high",
   "enabledModels": [
@@ -17,7 +19,8 @@
   ],
   "hideThinkingBlock": false,
   "pi-codex-fast": {
-    "enabled": false
+    "enabled": true
   },
-  "theme": "dark"
+  "theme": "dark",
+  "editorPaddingX": 0
 }

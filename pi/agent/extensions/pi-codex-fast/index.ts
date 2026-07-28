@@ -11,8 +11,14 @@ import { truncateToWidth, visibleWidth } from "@earendil-works/pi-tui";
 
 const STATUS_KEY = "fast-priority";
 const SETTINGS_KEY = "pi-codex-fast";
-const PRIORITY_MODELS = ["openai-codex/gpt-5.4", "openai-codex/gpt-5.5"];
-const PRIORITY_MODEL_LABEL = PRIORITY_MODELS.join(" or ");
+const PRIORITY_MODELS = [
+    "openai-codex/gpt-5.4",
+    "openai-codex/gpt-5.5",
+    "openai-codex/gpt-5.6-luna",
+    "openai-codex/gpt-5.6-sol",
+    "openai-codex/gpt-5.6-terra",
+];
+const PRIORITY_MODEL_LABEL = "Codex";
 const FAST_LABEL = "(fast)";
 
 function isRecord(value: unknown): value is Record<string, unknown> {

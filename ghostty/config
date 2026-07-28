@@ -3,8 +3,8 @@
 # https://ghostty.org/docs/config/reference
 
 
-theme = dark:Gruvbox Dark Hard,light:Catppuccin Latte
-#theme = Gruvbox Dark Hark
+#theme = dark:Gruvbox Dark Hard,light:Catppuccin Latte
+theme = Gruvbox Dark Hard
 #theme = 3024 Night
 font-size = 15
 font-family = "JetBrainsMono Nerd Font"
@@ -20,9 +20,9 @@ selection-invert-fg-bg = true
 mouse-shift-capture = false
 
 #background-blur = macos-glass-clear
-background-blur = macos-glass-regular
+#background-blur = macos-glass-regular
 background-blur = true
-background-opacity = 0.8
+background-opacity = 0.95
 background-opacity-cells = true
 
 command = ~/dotfiles/bin/terminal-bash
