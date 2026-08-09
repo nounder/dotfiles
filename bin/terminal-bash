@@ -1,0 +1,19 @@
+#!/bin/sh
+
+# Prefer a newer Bash installed through Nix, but remain portable to machines
+# where Nix is not installed.
+for candidate in \
+  "$HOME/.nix-profile/bin/bash" \
+  "$HOME/.local/state/nix/profile/bin/bash" \
+  /nix/var/nix/profiles/default/bin/bash \
+  /opt/homebrew/bin/bash \
+  /usr/local/bin/bash \
+  /bin/bash
+do
+  if [ -x "$candidate" ]; then
+    exec "$candidate" "$@"
+  fi
+done
+
+printf 'Ghostty: no Bash executable found\n' >&2
+exit 127
