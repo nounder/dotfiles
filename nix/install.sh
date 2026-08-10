@@ -3,6 +3,7 @@
 set -eu
 
 NIX_DIR=$(CDPATH= cd -- "$(dirname "$0")" && pwd)
+AMP_FLAKE="path:$NIX_DIR/amp"
 CHROMIUM_FLAKE="path:$NIX_DIR/ungoogled-chromium"
 PROFILE_APP="$HOME/.nix-profile/Applications/Chromium.app"
 USER_APP="$HOME/Applications/Ungoogled Chromium.app"
@@ -12,6 +13,14 @@ LAUNCHER_ID="org.ungoogled-software.chromium.nix-launcher"
 if ! command -v nix >/dev/null 2>&1; then
   echo "Nix is not installed; skipping Nix profile."
   exit 0
+fi
+
+if nix profile list --json 2>/dev/null | grep -q '"amp"[[:space:]]*:'; then
+  echo "Updating Amp in the Nix profile..."
+  nix profile upgrade amp
+else
+  echo "Adding Amp to the Nix profile..."
+  nix profile add "$AMP_FLAKE#amp"
 fi
 
 if [ "$(uname -s)" != "Darwin" ]; then
@@ -24,7 +33,7 @@ if nix profile list --json 2>/dev/null | grep -q '"ungoogled-chromium"[[:space:]
   nix profile upgrade ungoogled-chromium
 else
   echo "Adding Ungoogled Chromium to the Nix profile..."
-  nix profile install "$CHROMIUM_FLAKE#ungoogled-chromium"
+  nix profile add "$CHROMIUM_FLAKE#ungoogled-chromium"
 fi
 
 if [ ! -d "$PROFILE_APP" ]; then

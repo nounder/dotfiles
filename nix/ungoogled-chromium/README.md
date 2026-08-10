@@ -10,7 +10,7 @@ It is installed automatically by the dotfiles `install.sh` when Nix is available
 To install or update the profile directly:
 
 ```sh
-~/dotfiles/nix/install-profile.sh
+~/dotfiles/nix/install.sh
 ```
 
 Launch it from the terminal:

@@ -94,8 +94,8 @@ safe_link "$DOTFILES_DIR/shell.sh" "$HOME/.bash_profile"
 safe_link "$DOTFILES_DIR/shell.sh" "$HOME/.zshrc"
 
 # Install dotfile-managed Nix packages when Nix is available.
-if command -v nix >/dev/null 2>&1 && [ -x "$DOTFILES_DIR/nix/install-profile.sh" ]; then
-  "$DOTFILES_DIR/nix/install-profile.sh" || echo "⚠ Failed to install Nix profile packages"
+if command -v nix >/dev/null 2>&1 && [ -x "$DOTFILES_DIR/nix/install.sh" ]; then
+  "$DOTFILES_DIR/nix/install.sh" || echo "⚠ Failed to install Nix profile packages"
 fi
 
 if [ -z "$LN_OPTS" ] && [ -n "$(git config --global core.attributesfile)" ]; then
