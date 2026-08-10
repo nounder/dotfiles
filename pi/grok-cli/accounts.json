@@ -1,0 +1,31 @@
+{
+  "version": 1,
+  "migration": {
+    "legacyCredentialCopyComplete": true,
+    "markerInstallPending": false
+  },
+  "nextSlot": 2,
+  "activeAccountId": "account-1",
+  "accounts": [
+    {
+      "id": "account-1",
+      "slot": 1,
+      "label": "Account 1",
+      "credential": {
+        "access": "eyJ0eXAiOiJhdCtqd3QiLCJhbGciOiJFUzI1NiIsImtpZCI6Im9hdXRoMi1wcm9kdWN0aW9uLTIwMjYtMDItMTkifQ.eyJpc3MiOiJodHRwczovL2F1dGgueC5haSIsInN1YiI6IjJjZGZlYjM3LTNkMDYtNGFlMS05NjAyLTkwYmQ4YWYwZTYzMiIsImF1ZCI6ImIxYTAwNDkyLTA3M2EtNDdlYS04MTZmLTRjMzI5MjY0YTgyOCIsImV4cCI6MTc4NjM4NDc0NywiaWF0IjoxNzg2MzYzMTQ3LCJzY29wZSI6Im9wZW5pZCBwcm9maWxlIGVtYWlsIG9mZmxpbmVfYWNjZXNzIGdyb2stY2xpOmFjY2VzcyBhcGk6YWNjZXNzIiwicHJpbmNpcGFsX3R5cGUiOiJVc2VyIiwicHJpbmNpcGFsX2lkIjoiMmNkZmViMzctM2QwNi00YWUxLTk2MDItOTBiZDhhZjBlNjMyIiwiY2xpZW50X2lkIjoiYjFhMDA0OTItMDczYS00N2VhLTgxNmYtNGMzMjkyNjRhODI4IiwianRpIjoiYmU0MjA3NjUtMmRmNS00YzQ1LWJiNDgtMjJlNzU5ZjA4MTU2IiwidGllciI6NCwidGVhbV9pZCI6IjQ3OTQ2N2RjLTU2NmMtNGJjYy1iYTYwLWFmOGM0NDZkMWFmNCIsInJlZmVycmVyIjoicGktZ3Jvay1jbGkifQ.6tcDhUDZZIeiaNp0DQlbFlm_Dgvvsnqd1cCqUyzAHY9z650EhGMnQK8zf21bLLdXKwqAEurxo6hpQSS1-QjKbA",
+        "refresh": "G7ZXY5kb39RVbBKdQi9EL0bQBnHlSN2YCSrHZPFgwzBAqPfAEymrID5Scmj_Od259H-bP3OZSW36mT9yLDQx-Q",
+        "expires": 1786384627184,
+        "tokenEndpoint": "https://auth.x.ai/oauth2/token",
+        "discovery": {
+          "authorization_endpoint": "https://auth.x.ai/oauth2/authorize",
+          "token_endpoint": "https://auth.x.ai/oauth2/token",
+          "device_authorization_endpoint": "https://auth.x.ai/oauth2/device/code"
+        },
+        "idToken": "eyJ0eXAiOiJKV1QiLCJhbGciOiJFUzI1NiIsImtpZCI6Im9hdXRoMi1wcm9kdWN0aW9uLTIwMjYtMDItMTkifQ.eyJpc3MiOiJodHRwczovL2F1dGgueC5haSIsInN1YiI6IjJjZGZlYjM3LTNkMDYtNGFlMS05NjAyLTkwYmQ4YWYwZTYzMiIsImF1ZCI6ImIxYTAwNDkyLTA3M2EtNDdlYS04MTZmLTRjMzI5MjY0YTgyOCIsImV4cCI6MTc4NjM4NDc0NywiaWF0IjoxNzg2MzYzMTQ3LCJub25jZSI6ImpVdE5pS1FUTlBlNDlkNnFIQWRYclEiLCJnaXZlbl9uYW1lIjoiUmFmaSBHdXRrb3dza2kiLCJmYW1pbHlfbmFtZSI6IiIsImVtYWlsIjoiYWRzaGlAbGlicmVkLm9yZyIsImVtYWlsX3ZlcmlmaWVkIjp0cnVlfQ.3bBsaGg9NNhUE9LKb5YGUjbrKq0tuRxMqWid0C0DWWIGr8c7iL8y_dr_wge_9Mghrof-Yg3bABHw2LC4pzhN3g",
+        "tokenType": "Bearer",
+        "baseUrl": "https://cli-chat-proxy.grok.com/v1"
+      },
+      "revision": 1
+    }
+  ]
+}
