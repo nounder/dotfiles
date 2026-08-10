@@ -1,12 +1,10 @@
 {
-  "lastChangelogVersion": "0.80.6",
+  "lastChangelogVersion": "0.84.1",
   "defaultProvider": "grok-cli",
-  "defaultModel": "grok-4.5",
+  "defaultModel": "grok-composer-2.5-fast",
   "quietStartup": true,
   "packages": [
-    "git:github.com/ivanrvpereira/pi-perplexity@4e77f38",
-    "git:github.com/jonjonrankin/pi-caveman@0d4c639d672b0b80afaa035f582152dcab9c6a8f",
-    "npm:pi-grok-cli@0.1.6"
+    "npm:pi-grok-cli@0.7.0"
   ],
   "defaultThinkingLevel": "high",
   "enabledModels": [
@@ -19,7 +17,7 @@
   ],
   "hideThinkingBlock": false,
   "pi-codex-fast": {
-    "enabled": true
+    "enabled": false
   },
   "theme": "dark"
 }

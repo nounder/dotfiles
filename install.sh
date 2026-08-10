@@ -50,6 +50,7 @@ safe_link "$DOTFILES_DIR/lazygit" "$CONFIG/lazygit"
 
 safe_link "$DOTFILES_DIR/tmux.conf" "$HOME/.tmux.conf"
 safe_link "$DOTFILES_DIR/pi" "$HOME/.pi"
+safe_link "$DOTFILES_DIR/agents" "$HOME/.agents"
 
 mkdir -p "$CONFIG/direnv"
 safe_link "$DOTFILES_DIR/direnv.toml" "$CONFIG/direnv/direnv.toml"
@@ -58,15 +59,17 @@ safe_link "$DOTFILES_DIR/direnv.toml" "$CONFIG/direnv/direnv.toml"
 if [ -d "$HOME/.claude" ]; then
   safe_link "$DOTFILES_DIR/claude/settings.json" "$HOME/.claude/settings.json"
   safe_link "$DOTFILES_DIR/claude/commands" "$HOME/.claude/commands"
-  safe_link "$DOTFILES_DIR/claude/skills" "$HOME/.claude/skills"
+  safe_link "$DOTFILES_DIR/agents/skills" "$HOME/.claude/skills"
   safe_link "$DOTFILES_DIR/claude/agents" "$HOME/.claude/agents"
 fi
 
 # Codex
 mkdir -p "$HOME/.codex"
-safe_link "$DOTFILES_DIR/claude/skills" "$HOME/.codex/skills"
+safe_link "$DOTFILES_DIR/agents/skills" "$HOME/.codex/skills"
+safe_link "$DOTFILES_DIR/agents/AGENTS.md" "$HOME/.codex/AGENTS.md"
 
-# OpenCode (uses ~/.config/opencode which is already linked, but also supports ~/.claude/skills)
+# Pi and OpenCode receive the shared AGENTS.md and skills through the
+# symlinks tracked inside their linked configuration directories.
 
 # Install launch agent only if LaunchAgents directory exists
 if [ -d "$HOME/Library/LaunchAgents" ]; then
