@@ -26,6 +26,10 @@ background-opacity = 0.95
 background-opacity-cells = true
 
 command = ~/dotfiles/bin/terminal-bash
+# The command is a wrapper, so Ghostty cannot reliably detect Bash itself.
+# Shell integration reports $PWD, allowing new tabs to inherit it.
+shell-integration = bash
+tab-inherit-working-directory = true
 # window-decoration = false
 # macos-titlebar-style = hidden
 macos-non-native-fullscreen = true

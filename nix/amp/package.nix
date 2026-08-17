@@ -36,7 +36,25 @@ stdenvNoCC.mkDerivation {
     # the artifact was signed by Amp's pinned release key.
     minisign -Vm ${binary} -x ${signature} -p ${./signing-key.pub}
 
-    install -Dm755 ${binary} "$out/bin/amp"
+    # Keep the verified binary out of $out/bin. Amp's self-updater writes a
+    # fresh executable to $AMP_HOME/bin (default ~/.amp/bin) because it cannot
+    # mutate the Nix store. A trampoline on PATH prefers that copy so
+    # `amp update` actually changes the `amp` you run.
+    install -Dm755 ${binary} "$out/libexec/amp"
+
+    mkdir -p "$out/bin"
+    cat > "$out/bin/amp" <<'WRAP'
+#!/bin/sh
+set -eu
+amp_home="''${AMP_HOME:-$HOME/.amp}"
+user_amp="$amp_home/bin/amp"
+if [ -x "$user_amp" ]; then
+  exec "$user_amp" "$@"
+fi
+exec "@libexec@" "$@"
+WRAP
+    substituteInPlace "$out/bin/amp" --replace-fail "@libexec@" "$out/libexec/amp"
+    chmod +x "$out/bin/amp"
 
     runHook postInstall
   '';

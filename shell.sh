@@ -215,7 +215,7 @@ else
   PS1='\[\e[0m\]\n\[\e[90m\]\w\[\e[0m\]\n\[\e[1;31m\]\$ \[\e[0m\]'
 fi
 
-export PATH="$HOME/.nix-profile/bin:$HOME/.local/bin:$HOME/dotfiles/bin:$HOME/.bun/bin:$HOME/.cargo/bin:$HOME/bin:$HOME/.npm/bin:/usr/local/bin:/opt/homebrew/bin:/opt/homebrew/sbin:$HOME/go/bin:$PATH:node_modules/.bin:../node_modules/.bin"
+export PATH="$HOME/.amp/bin:$HOME/.nix-profile/bin:$HOME/.local/bin:$HOME/dotfiles/bin:$HOME/.bun/bin:$HOME/.cargo/bin:$HOME/bin:$HOME/.npm/bin:/usr/local/bin:$HOME/go/bin:$PATH:node_modules/.bin:../node_modules/.bin"
 
 # Per-directory history using nohi
 if [[ -n "$BASH_VERSION" ]] && command -v nohi &>/dev/null; then
@@ -248,7 +248,6 @@ if [[ -n "$BASH_VERSION" ]] && command -v nohi &>/dev/null; then
 fi
 
 # Environment variables
-export PATH="/opt/homebrew/opt/sqlite/bin:$PATH"
 export SHELL=$(command -v bash)
 export EDITOR=$(command -v nvim)
 export XDG_CONFIG_HOME="$HOME/.config"
