@@ -3,6 +3,10 @@
 # Exit early for non-interactive shells
 [[ $- != *i* ]] && return
 
+_NIX_DAEMON_PROFILE=/nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh
+[[ -r "$_NIX_DAEMON_PROFILE" ]] && source "$_NIX_DAEMON_PROFILE"
+unset _NIX_DAEMON_PROFILE
+
 # Disable control character display (^C, ^D, etc.)
 stty -echoctl 2>/dev/null
 
@@ -211,7 +215,7 @@ else
   PS1='\[\e[0m\]\n\[\e[90m\]\w\[\e[0m\]\n\[\e[1;31m\]\$ \[\e[0m\]'
 fi
 
-export PATH="$HOME/.local/bin:$HOME/dotfiles/bin:$HOME/.bun/bin:$HOME/.cargo/bin:$HOME/bin:$HOME/.npm/bin:/usr/local/bin:/opt/homebrew/bin:/opt/homebrew/sbin:$HOME/go/bin:$PATH:node_modules/.bin:../node_modules/.bin"
+export PATH="$HOME/.nix-profile/bin:$HOME/.local/bin:$HOME/dotfiles/bin:$HOME/.bun/bin:$HOME/.cargo/bin:$HOME/bin:$HOME/.npm/bin:/usr/local/bin:/opt/homebrew/bin:/opt/homebrew/sbin:$HOME/go/bin:$PATH:node_modules/.bin:../node_modules/.bin"
 
 # Per-directory history using nohi
 if [[ -n "$BASH_VERSION" ]] && command -v nohi &>/dev/null; then
