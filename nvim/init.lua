@@ -93,6 +93,10 @@ end
 -- `{ force = true }`.
 vim.pack.add({ "https://github.com/nvim-mini/mini.nvim" }, { confirm = false })
 
+vim.api.nvim_create_user_command("Update", function()
+  vim.pack.update()
+end, { desc = "Update all vim.pack plugins" })
+
 -- Loading helpers used to organize the config into fail-safe parts. They wrap
 -- each step in `MiniMisc.safely()` so a single error doesn't abort startup.
 -- These replace 'mini.deps' `MiniDeps.now`/`MiniDeps.later`. Example usage:

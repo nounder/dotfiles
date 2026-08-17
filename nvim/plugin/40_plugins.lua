@@ -107,6 +107,20 @@ later(function()
   vim.keymap.set({ "n", "x", "o" }, "<C-@>", ts_incremental, { desc = "Treesitter Incremental Selection" })
 end)
 
+-- HTML/CSS abbreviation expansion via emmet-vim. Expand is wired into
+-- `<Tab>` / `<C-l>` multisteps in 'plugin/30_mini.lua'; do not install Emmet's
+-- global `<C-y>` mappings as well.
+later(function()
+  -- emmet-vim reads mapping options while its plugin script is sourced, so all
+  -- globals must be configured before `add()` loads it.
+  vim.g.user_emmet_install_global = 0
+  vim.g.user_emmet_settings = {
+    javascript = { extends = "jsx" },
+    typescript = { extends = "tsx" },
+  }
+  add({ "https://github.com/mattn/emmet-vim" })
+end)
+
 -- Git client a'la magit
 local function load_neogit()
   add({
@@ -238,7 +252,7 @@ later(function()
       },
       dprint = {
         -- `dprint` is a `#!/usr/bin/env bun` shim. A GUI-launched Neovim gets the
-        -- bare launchd PATH (no `~/.bun/bin` or `/opt/homebrew/bin`), so the shebang
+        -- bare launchd PATH (no `~/.bun/bin`), so the shebang
         -- can't find `bun`, dprint exits non-zero ("unknown error" in conform's log),
         -- and conform falls back to the much slower LSP formatter. Invoke via
         -- `bunx --no-install dprint` and inject a PATH that includes bun so it works
@@ -246,11 +260,11 @@ later(function()
         -- Absolute path: conform's availability check runs `vim.fn.executable(command)`
         -- against the (possibly bare) launchd PATH, so a bare "bunx" would read as
         -- unavailable under a GUI nvim before the `env` override below ever applies.
-        command = vim.fn.executable("bunx") == 1 and "bunx" or "/opt/homebrew/bin/bunx",
+        command = vim.fn.executable("bunx") == 1 and "bunx" or vim.fn.expand("~/.bun/bin/bunx"),
         args = { "--no-install", "dprint", "fmt", "--stdin", "$FILENAME" },
         stdin = true,
         env = {
-          PATH = vim.fn.expand("~/.bun/bin") .. ":/opt/homebrew/bin:" .. (vim.env.PATH or "/usr/bin:/bin"),
+          PATH = vim.fn.expand("~/.bun/bin") .. ":" .. (vim.env.PATH or "/usr/bin:/bin"),
         },
         condition = function(ctx)
           return vim.fs.find({ "dprint.json" }, { path = ctx.filename, upward = true })[1]

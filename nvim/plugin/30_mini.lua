@@ -255,12 +255,9 @@ vim.o.showtabline = 0
 --   the signature of the current function/method. It gets updated as you type
 --   showing the currently active parameter.
 --
--- Example usage in Insert mode without an attached LSP or in places not
--- supported by the LSP (like comments):
--- - Start typing a word that is present in current or opened buffers.
--- - After 100ms popup menu with candidates appears.
--- - Navigate with `<Tab>` / `<S-Tab>` or `<C-n>` / `<C-p>`. This also updates
---   buffer text. If happy with choice, keep typing. Stop with `<C-e>`.
+-- Without an attached LSP (or when it has no candidates), no automatic popup
+-- is shown. Buffer-word fallback is intentionally disabled; built-in completion
+-- can still be invoked explicitly with `<C-x>` mappings.
 --
 -- It also works with snippet candidates provided by LSP server. Best experience
 -- when paired with 'mini.snippets' (which is set up in this file).
@@ -362,6 +359,9 @@ now_if_args(function()
     return MiniCompletion.default_process_items(items, base, process_items_opts)
   end
   require("mini.completion").setup({
+    -- Do not fall back to `<C-n>`, which suggests every word from open buffers.
+    -- Completion should contain LSP candidates only.
+    fallback_action = function() end,
     lsp_completion = {
       -- Without this config autocompletion is set up through `:h 'completefunc'`.
       -- Although not needed, setting up through `:h 'omnifunc'` is cleaner
@@ -758,8 +758,24 @@ end)
 -- - `:h MiniKeymap.map_combo()` - map combo
 later(function()
   require("mini.keymap").setup()
+  -- Emmet expand (from mattn/emmet-vim) when the word under the cursor is a
+  -- valid abbreviation in a filetype supported by Emmet.
+  local emmet_expand = {
+    condition = function()
+      return vim.g.loaded_emmet_vim == 1
+        and vim.fn["emmet#getBaseType"](vim.bo.filetype) ~= ""
+        and vim.fn["emmet#isExpandable"]() ~= 0
+    end,
+    action = function()
+      -- Use Emmet's native Insert-mode expression sequence: dismiss completion
+      -- first, then expand. Calling expandAbbr() directly here raises E565
+      -- because MiniKeymap implements multisteps as expression mappings.
+      return '<C-r>=emmet#util#closePopup()<CR><C-r>=emmet#expandAbbr(0, "")<CR>'
+    end,
+  }
   -- Navigate 'mini.completion' menu with `<Tab>` /  `<S-Tab>`
-  MiniKeymap.map_multistep("i", "<Tab>", { "pmenu_next" })
+  -- `<Tab>` also expands emmet when there is no popup (falls back to real Tab).
+  MiniKeymap.map_multistep("i", "<Tab>", { "pmenu_next", emmet_expand })
   MiniKeymap.map_multistep("i", "<S-Tab>", { "pmenu_prev" })
   MiniKeymap.map_multistep("i", "<C-j>", { "pmenu_next" })
   MiniKeymap.map_multistep("i", "<C-k>", { "pmenu_prev" })
@@ -768,11 +784,12 @@ later(function()
       return true
     end,
     action = function()
-      MiniCompletion.complete_twostage()
+      MiniCompletion.complete_twostage(false)
       return ""
     end,
   }
-  MiniKeymap.map_multistep("i", "<C-l>", { "pmenu_accept", show_completion })
+  -- Emmet takes priority over completion on `<C-l>`, even if its popup is open.
+  MiniKeymap.map_multistep("i", "<C-l>", { emmet_expand, "pmenu_accept", show_completion })
 
   MiniKeymap.map_multistep("i", "<CR>", { "pmenu_accept", "minipairs_cr" })
   MiniKeymap.map_multistep("i", "<BS>", { "minipairs_bs" })
