@@ -25,9 +25,11 @@ Or open the app bundle:
 open ~/.nix-profile/Applications/Chromium.app
 ```
 
-The profile installer creates a lightweight launcher app at
-`~/Applications/Ungoogled Chromium.app` and registers it with Launch Services and
-Spotlight. It has the browser's icon and launches the app stored in the Nix profile.
+The profile installer copies the signed `Chromium.app` to
+`~/Applications/Chromium.app` and registers it with Launch Services and
+Spotlight. Chromium cannot be launched from a trampoline that `exec`s the
+browser binary: Launch Services keeps the trampoline's identity and Chromium
+aborts with `EXC_BREAKPOINT` (`SIGTRAP`).
 
 You can also run it without installing:
 
