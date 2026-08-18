@@ -16,7 +16,7 @@
   ],
   "hideThinkingBlock": false,
   "pi-codex-fast": {
-    "enabled": false
+    "enabled": true
   },
   "theme": "dark"
 }

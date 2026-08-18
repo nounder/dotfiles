@@ -316,7 +316,7 @@ export default function codexFastExtension(pi: ExtensionAPI): void {
         }
 
         if (supportsPriorityServiceTier(ctx)) {
-            ctx.ui.notify(`Fast mode enabled. ${PRIORITY_MODEL_LABEL} requests will send service_tier=priority.`, "info");
+            ctx.ui.notify("Fast mode enabled. Requests will use the priority service tier.", "info");
             return;
         }
 
