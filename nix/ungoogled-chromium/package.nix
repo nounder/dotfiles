@@ -1,6 +1,6 @@
 {
   lib,
-  stdenvNoCC,
+  stdenv,
   fetchurl,
   undmg,
 }:
@@ -20,10 +20,10 @@ let
   };
 
   source =
-    sources.${stdenvNoCC.hostPlatform.system}
-      or (throw "ungoogled-chromium-macos: unsupported system ${stdenvNoCC.hostPlatform.system}");
+    sources.${stdenv.hostPlatform.system}
+      or (throw "ungoogled-chromium-macos: unsupported system ${stdenv.hostPlatform.system}");
 in
-stdenvNoCC.mkDerivation {
+stdenv.mkDerivation {
   pname = "ungoogled-chromium";
   inherit version;
 
@@ -40,11 +40,18 @@ stdenvNoCC.mkDerivation {
     runHook postUnpack
   '';
 
+  buildPhase = ''
+    runHook preBuild
+    $CC -Os -Wall -Wextra -Werror ${./launcher.c} -o ungoogled-chromium-launcher
+    runHook postBuild
+  '';
+
   installPhase = ''
     runHook preInstall
 
-    mkdir -p "$out/Applications" "$out/bin"
+    mkdir -p "$out/Applications" "$out/bin" "$out/libexec"
     cp -R Chromium.app "$out/Applications/Chromium.app"
+    install -m755 ungoogled-chromium-launcher "$out/libexec/ungoogled-chromium-launcher"
     cat > "$out/bin/ungoogled-chromium" <<EOF
     #!/bin/sh
     exec "$out/Applications/Chromium.app/Contents/MacOS/Chromium" "\$@"
