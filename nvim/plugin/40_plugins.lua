@@ -154,17 +154,19 @@ local function load_neogit()
       -- (Dotfiles uses diffview=true; minimax deliberately keeps mini.diff.)
       diffview = false,
     },
-    -- Open the status buffer in its own tab page rather than a floating window.
-    kind = "tab",
+    -- Reuse the current window while leaving every other split/pane intact.
+    kind = "replace",
   })
 end
 
--- The stub forwards args/range/bang to Neogit's real `:Neogit` after loading.
+-- The stub forwards arguments to Neogit's real `:Neogit` after loading.
 vim.api.nvim_create_user_command("Neogit", function(opts)
   -- Drop the stub so `add()`/'plugin/neogit.lua' can install the real command.
   vim.api.nvim_del_user_command("Neogit")
   load_neogit()
-  vim.cmd(("Neogit%s %s"):format(opts.bang and "!" or "", opts.args))
+  -- Keep every original farg intact; rebuilding a raw Ex command from
+  -- `opts.args` would split a `cwd=...` value when its path contains spaces.
+  vim.cmd.Neogit({ args = opts.fargs })
 end, {
   nargs = "*",
   bang = true,

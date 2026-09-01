@@ -237,7 +237,11 @@ nmap_leader('fD', '<Cmd>Pick diagnostic scope="current"<CR>',   'Diagnostic buff
 nmap_leader('ff', '<Cmd>Pick files<CR>',                        'Files')
 -- `<Leader><Leader>` (i.e. <Space><Space>) is an alias for `<Leader>ff` so the
 -- most common action (find files) is reachable with a double tap of Leader.
-nmap_leader(' ', '<Cmd>Pick files<CR>',                         'Files')
+-- Pass the cwd explicitly so window-local `:lcd` and tab-local `:tcd` are
+-- respected as well as the global working directory.
+nmap_leader(' ', function()
+  require('mini.pick').builtin.files(nil, { source = { cwd = vim.fn.getcwd() } })
+end, 'Files (cwd)')
 nmap_leader('fg', '<Cmd>Pick grep_live<CR>',                    'Grep live')
 nmap_leader('fG', '<Cmd>Pick grep pattern="<cword>"<CR>',       'Grep current word')
 nmap_leader('fh', '<Cmd>Pick help<CR>',                         'Help tags')
@@ -267,7 +271,10 @@ nmap_leader('gc', '<Cmd>Git commit<CR>',                    'Commit')
 nmap_leader('gC', '<Cmd>Git commit --amend<CR>',            'Commit amend')
 nmap_leader('gd', '<Cmd>Git diff<CR>',                      'Diff')
 nmap_leader('gD', '<Cmd>Git diff -- %<CR>',                 'Diff buffer')
-nmap_leader('gg', '<Cmd>Neogit<CR>',                        'Neogit status')
+nmap_leader('gg', function()
+  -- A structured command keeps paths containing spaces in a single argument.
+  vim.cmd.Neogit({ args = { 'cwd=' .. vim.fn.getcwd() } })
+end, 'Neogit status (cwd)')
 nmap_leader('gl', '<Cmd>' .. git_log_cmd .. '<CR>',         'Log')
 nmap_leader('gL', '<Cmd>' .. git_log_buf_cmd .. '<CR>',     'Log buffer')
 nmap_leader('go', '<Cmd>lua MiniDiff.toggle_overlay()<CR>', 'Toggle overlay')
