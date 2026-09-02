@@ -1110,6 +1110,34 @@ later(function()
     },
   })
 
+  -- Terminal paste can arrive in several chunks, which MiniPick rejects by
+  -- default. Buffer those chunks and replay them as one supported paste so
+  -- regular clipboard paste (for example, Cmd-V in Ghostty) works at the caret.
+  local mini_pick_paste = vim.paste
+  local paste_lines = nil
+  vim.paste = function(lines, phase)
+    if not pick.is_picker_active() or phase == -1 then
+      return mini_pick_paste(lines, phase)
+    end
+
+    if phase == 1 or paste_lines == nil then
+      paste_lines = {}
+    end
+    for i, line in ipairs(lines) do
+      if i == 1 and #paste_lines > 0 then
+        paste_lines[#paste_lines] = paste_lines[#paste_lines] .. line
+      else
+        table.insert(paste_lines, line)
+      end
+    end
+
+    if phase == 3 then
+      local complete_paste = paste_lines
+      paste_lines = nil
+      return mini_pick_paste(complete_paste, -1)
+    end
+  end
+
   -- Theming. `25_colorscheme.lua` loads first (alphabetical) and has already
   -- applied base16 + transparency, so pull live accent colors from existing
   -- groups rather than hardcoding hexes — this follows any palette swap.
