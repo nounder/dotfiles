@@ -1,0 +1,4 @@
+interface:
+  display_name: "Git Commit"
+  short_description: "Commit this session in the repository's style"
+  default_prompt: "Use $git-commit to commit all changes from this session."
