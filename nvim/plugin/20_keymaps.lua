@@ -234,14 +234,10 @@ nmap_leader('fc', '<Cmd>Pick git_commits<CR>',                  'Commits (all)')
 nmap_leader('fC', '<Cmd>Pick git_commits path="%"<CR>',         'Commits (buf)')
 nmap_leader('fd', '<Cmd>Pick diagnostic scope="all"<CR>',       'Diagnostic workspace')
 nmap_leader('fD', '<Cmd>Pick diagnostic scope="current"<CR>',   'Diagnostic buffer')
-nmap_leader('ff', '<Cmd>Pick files<CR>',                        'Files')
+nmap_leader('ff', '<Cmd>Pick files<CR>',                        'Files (cwd)')
 -- `<Leader><Leader>` (i.e. <Space><Space>) is an alias for `<Leader>ff` so the
 -- most common action (find files) is reachable with a double tap of Leader.
--- Pass the cwd explicitly so window-local `:lcd` and tab-local `:tcd` are
--- respected as well as the global working directory.
-nmap_leader(' ', function()
-  require('mini.pick').builtin.files(nil, { source = { cwd = vim.fn.getcwd() } })
-end, 'Files (cwd)')
+nmap_leader(' ', '<Cmd>Pick files<CR>',                        'Files (cwd)')
 nmap_leader('fg', '<Cmd>Pick grep_live<CR>',                    'Grep live')
 nmap_leader('fG', '<Cmd>Pick grep pattern="<cword>"<CR>',       'Grep current word')
 nmap_leader('fh', '<Cmd>Pick help<CR>',                         'Help tags')
