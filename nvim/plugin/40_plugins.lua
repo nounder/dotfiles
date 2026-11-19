@@ -183,6 +183,18 @@ end, {
 later(function()
   add({ "https://github.com/stevearc/conform.nvim" })
 
+  local oxfmt_configs = { ".oxfmtrc.json", ".oxfmtrc.jsonc", "oxfmt.config.ts", "vite.config.ts", "vite.config.js" }
+  local dprint_configs = { "dprint.json", ".dprint.json", "dprint.jsonc", ".dprint.jsonc" }
+  local other_formatter_configs = vim.list_extend(vim.deepcopy(oxfmt_configs), dprint_configs)
+  vim.list_extend(other_formatter_configs, { "biome.json", "biome.jsonc", ".prettierrc" })
+  for _, ext in ipairs({ "json", "json5", "yml", "yaml", "toml", "js", "cjs", "mjs", "ts", "cts", "mts" }) do
+    table.insert(other_formatter_configs, ".prettierrc." .. ext)
+    table.insert(other_formatter_configs, "prettier.config." .. ext)
+  end
+  local function find_config(names, ctx)
+    return vim.fs.find(names, { path = vim.fs.dirname(ctx.filename), upward = true })[1]
+  end
+
   -- Filetypes handled by 'oxfmt' (preferred) then 'dprint' as fallback.
   local oxfmt_supported = {
     "javascript",
@@ -207,7 +219,13 @@ later(function()
     "toml",
   }
 
-  -- Build `formatters_by_ft`: oxfmt first (priority), then dprint.
+  local bun_supported = {
+    "javascript", "typescript", "javascriptreact", "typescriptreact",
+    "css", "scss", "less", "html", "vue", "svelte", "json", "jsonc",
+    "yaml", "toml", "markdown", "markdown.mdx", "graphql", "handlebars",
+  }
+
+  -- Prefer configured formatters, then Bun for projects without another config.
   local formatters_by_ft = {
     lua = { "stylua" },
     sql = { "pg_format" },
@@ -222,6 +240,11 @@ later(function()
   for _, ft in ipairs(dprint_supported) do
     formatters_by_ft[ft] = formatters_by_ft[ft] or {}
     table.insert(formatters_by_ft[ft], "dprint")
+  end
+  for _, ft in ipairs(bun_supported) do
+    formatters_by_ft[ft] = formatters_by_ft[ft] or {}
+    table.insert(formatters_by_ft[ft], "bun_fmt")
+    formatters_by_ft[ft].stop_after_first = true
   end
   -- For web filetypes with both formatters available, use the first that runs.
   for _, ft in ipairs(oxfmt_supported) do
@@ -241,15 +264,14 @@ later(function()
       lsp_format = "fallback",
     },
     formatters_by_ft = formatters_by_ft,
-    -- Per-formatter overrides. oxfmt/dprint only run when their config file is
-    -- found upward from the file, matching the LazyVim behavior.
+    -- Select formatters by config files found upward from the buffer.
     formatters = {
       oxfmt = {
         command = "oxfmt",
         args = { "--stdin-filepath", "$FILENAME" },
         stdin = true,
-        condition = function(ctx)
-          return vim.fs.find({ ".oxfmtrc.json", ".oxfmtrc.jsonc" }, { path = ctx.filename, upward = true })[1]
+        condition = function(_, ctx)
+          return find_config(oxfmt_configs, ctx)
         end,
       },
       dprint = {
@@ -268,8 +290,30 @@ later(function()
         env = {
           PATH = vim.fn.expand("~/.bun/bin") .. ":" .. (vim.env.PATH or "/usr/bin:/bin"),
         },
-        condition = function(ctx)
-          return vim.fs.find({ "dprint.json" }, { path = ctx.filename, upward = true })[1]
+        condition = function(_, ctx)
+          return find_config(dprint_configs, ctx)
+        end,
+      },
+      bun_fmt = {
+        command = vim.fn.executable("bun") == 1 and "bun" or vim.fn.expand("~/.bun/bin/bun"),
+        args = { "fmt", "--no-script", "--stdin-filepath", "$FILENAME" },
+        stdin = true,
+        cwd = require("conform.util").root_file({ "bunfig.toml" }),
+        require_cwd = true,
+        condition = function(_, ctx)
+          if not find_config({ "bunfig.toml" }, ctx) or find_config(other_formatter_configs, ctx) then
+            return false
+          end
+          -- Prettier also allows its config inside package.json.
+          for dir in vim.fs.parents(ctx.filename) do
+            local ok, package = pcall(function()
+              return vim.json.decode(table.concat(vim.fn.readfile(dir .. "/package.json"), "\n"))
+            end)
+            if ok and type(package) == "table" and package.prettier ~= nil then
+              return false
+            end
+          end
+          return true
         end,
       },
     },
