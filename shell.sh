@@ -252,6 +252,7 @@ export SHELL=$(command -v bash)
 export EDITOR=$(command -v nvim)
 export XDG_CONFIG_HOME="$HOME/.config"
 export NOM_DEFAULT_OPTS='--cycle --layout=default --height=90% --preview-window=wrap --marker="*" --no-scrollbar --preview-window=border-left'
+export NOM_SRC="$HOME/Work/nom"
 NOM_CMD="nom --icon always"
 export TERM=xterm-256color
 
@@ -298,6 +299,9 @@ alias gc1="git clone --depth=1"
 alias py="python"
 alias ..="cd .."
 alias codex="codex --yolo"
+alias astra="codex --model gpt-6-astra"
+alias sol="codex --model gpt-6-sol"
+alias luna="codex --model gpt-6-luna"
 alias claude="claude --dangerously-skip-permissions"
 alias sonnet="claude --model sonnet"
 alias opus="claude --model opus"
@@ -452,16 +456,26 @@ _nom_tab_complete() {
   local prompt="Complete"
 
   if [[ ${#words[@]} -le 1 && "$line" != *" " ]]; then
-    # Completing command name + local files/directories
+    # Completing command name + local files/directories.
+    # CWD entries first so --scheme=path can keep them above PATH commands.
     prompt="Command"
-    completions=$(compgen -c -- "$word" 2>/dev/null | head -100)
-    local local_files=$(compgen -f -- "$word" 2>/dev/null | sed '/^\.\//!s|^|./|')
-    [[ -n "$local_files" ]] && completions="${completions}${completions:+$'\n'}${local_files}"
-    # Substring match for local files
+    local local_files=$(compgen -f -- "$word" 2>/dev/null)
     if [[ -n "$word" ]]; then
-      local local_substr=$( (shopt -s nocaseglob; compgen -G "*${word}*" 2>/dev/null) | sed '/^\.\//!s|^|./|')
-      [[ -n "$local_substr" ]] && completions="${completions}${completions:+$'\n'}${local_substr}"
+      local local_substr=$( (shopt -s nocaseglob; compgen -G "*${word}*" 2>/dev/null) )
+      [[ -n "$local_substr" ]] && local_files="${local_files}${local_files:+$'\n'}${local_substr}"
     fi
+    if [[ -n "$local_files" ]]; then
+      # Dedup ./foo vs foo; ./ only on bare names so they stay executable.
+      completions=$(printf '%s\n' "$local_files" | awk '{
+        key = $0
+        sub(/^\.\//, "", key)
+        if (key == "" || seen[key]++) next
+        if (index(key, "/")) print key
+        else print "./" key
+      }')
+    fi
+    local cmds=$(compgen -c -- "$word" 2>/dev/null | head -100)
+    [[ -n "$cmds" ]] && completions="${completions}${completions:+$'\n'}${cmds}"
   else
     # Completing arguments - try to get context-aware completions
 
@@ -636,7 +650,7 @@ _nom_tab_complete() {
       return
     else
       local nom_out nom_key
-      nom_out=$(echo "$unique_completions" | $NOM_CMD --height=40% --reverse --prompt="${prompt}> " --query="$nom_query" --expect=tab)
+      nom_out=$(echo "$unique_completions" | $NOM_CMD --scheme=path --height=40% --reverse --prompt="${prompt}> " --query="$nom_query" --expect=tab)
       printf '%s' "$_TERM_RESET"
       nom_key=${nom_out%%$'\n'*}
       selected=${nom_out#*$'\n'}
@@ -676,3 +690,8 @@ fi
 
 
 export PI_OFFLINE=1
+
+# >>> grok installer >>>
+export PATH="$HOME/.grok/bin:$PATH"
+[[ -r "$HOME/.grok/completions/bash/grok.bash" ]] && source "$HOME/.grok/completions/bash/grok.bash"
+# <<< grok installer <<<
